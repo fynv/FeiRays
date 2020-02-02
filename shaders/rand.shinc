@@ -1,0 +1,250 @@
+struct V5
+{
+	uint v0;
+	uint v1;
+	uint v2;
+	uint v3;
+	uint v4;
+};
+
+struct RNGState 
+{
+	V5 v;
+	uint d;
+};
+
+
+#if 0 // initialization not working
+
+layout(buffer_reference, std430, buffer_reference_align = 4) buffer MatrixBuf
+{
+	uint v;
+};
+
+struct MatrixL
+{
+	V5 m[160];
+};
+
+void matvec_i(int i, uint v_i, in MatrixBuf matrix, inout V5 result)
+{
+	for (int j = 0; j < 32; j++)
+		if ((v_i & (1 << j))!=0)
+		{
+			int k = (i * 32 + j)*5;			
+			result.v0 ^= matrix[k].v;
+			result.v1 ^= matrix[k+1].v;
+			result.v2 ^= matrix[k+2].v;
+			result.v3 ^= matrix[k+3].v;
+			result.v4 ^= matrix[k+4].v;
+		}
+}
+
+void matvec(in V5 vector, in MatrixBuf matrix, inout V5 result)
+{
+	result.v0 = result.v1 = result.v2 = result.v3 = result.v4 = 0;
+	matvec_i(0, vector.v0, matrix, result);
+	matvec_i(1, vector.v1, matrix, result);
+	matvec_i(2, vector.v2, matrix, result);
+	matvec_i(3, vector.v3, matrix, result);
+	matvec_i(4, vector.v4, matrix, result);					
+}
+
+void matvec_i(int i, uint v_i, in MatrixL matrix, inout V5 result)
+{
+	for (int j = 0; j < 32; j++)
+		if ((v_i & (1 << j))!=0)
+		{
+			int k = i * 32 + j;		
+			V5 mat_row = matrix.m[k];	
+			result.v0 ^= mat_row.v0;
+			result.v1 ^= mat_row.v1;
+			result.v2 ^= mat_row.v2;
+			result.v3 ^= mat_row.v3;
+			result.v4 ^= mat_row.v4;
+		}
+}
+
+void matvec(in V5 vector, in MatrixL matrix, inout V5 result)
+{
+	result.v0 = result.v1 = result.v2 = result.v3 = result.v4 = 0;
+	matvec_i(0, vector.v0, matrix, result);
+	matvec_i(1, vector.v1, matrix, result);
+	matvec_i(2, vector.v2, matrix, result);
+	matvec_i(3, vector.v3, matrix, result);
+	matvec_i(4, vector.v4, matrix, result);					
+}
+
+void matmat(inout MatrixL matrixA, in MatrixL matrixB)
+{
+	V5 result;
+	for (int i = 0; i < 160; i++)
+	{
+		matvec(matrixA.m[i], matrixB, result);
+		matrixA.m[i] = result;
+	}
+}
+
+
+void state_init(in MatrixBuf d_sequence_matrix, in MatrixBuf d_offset_matrix,
+	uint64_t seed, uint64_t subsequence, uint64_t offset, inout RNGState state)
+{
+	uint s0 = uint(seed) ^ 0xaad26b49U;
+	uint s1 = uint(seed >> 32) ^ 0xf7dcefddU;
+	uint t0 = 1099087573U * s0;
+	uint t1 = 2591861531U * s1;
+	state.d = 6615241 + t1 + t0;
+	state.v.v0 = 123456789U + t0;
+	state.v.v1 = 362436069U ^ t0;
+	state.v.v2 = 521288629U + t1;
+	state.v.v3 = 88675123U ^ t1;
+	state.v.v4 = 5783321U + t0;
+
+	// apply sequence matrix
+	V5 result;
+	uint64_t p = subsequence;
+	int i_mat = 0;
+	MatrixL matrix, matrixA;
+
+	while (p!=0 && i_mat<7)
+	{
+		for (uint t = 0; t < (p & 3); t++)
+		{
+			matvec(state.v, d_sequence_matrix + i_mat*800, result);
+			state.v = result;
+		}
+		p >>= 2;
+		i_mat++;
+	}
+
+	if (p!=0)
+	{
+		for (int j =0; j<160; j++)
+		{
+			int k = i_mat * 800 + j*5;
+			uint r;
+			r = d_sequence_matrix[k].v;
+			matrix.m[j].v0 = r;
+			matrixA.m[j].v0 = r;
+
+			r = d_sequence_matrix[k + 1].v;
+			matrix.m[j].v1 = r;
+			matrixA.m[j].v1 = r;
+
+			r = d_sequence_matrix[k + 2].v;
+			matrix.m[j].v2 = r;
+			matrixA.m[j].v2 = r;
+
+			r = d_sequence_matrix[k + 3].v;
+			matrix.m[j].v3 = r;
+			matrixA.m[j].v3 = r;
+
+			r = d_sequence_matrix[k + 4].v;
+			matrix.m[j].v4 = r;
+			matrixA.m[j].v4 = r;
+		}		
+	}
+
+	while (p!=0)
+	{
+		for (uint t = 0; t < (p & 0xF); t++)
+		{
+			matvec(state.v, matrixA, result);
+			state.v = result;
+		}
+		p >>= 4;
+		if (p!=0)
+		{
+			for (int i = 0; i < 4; i++) 
+			{
+				matmat(matrix, matrixA);
+				matrixA = matrix;
+			}
+		}
+	}
+
+	// apply offset matrix
+	p = offset;
+	i_mat = 0;
+	while (p!=0 && i_mat < 7)
+	{
+		for (uint t = 0; t < (p & 3); t++)
+		{
+			matvec(state.v, d_offset_matrix + i_mat * 800, result);
+			state.v = result;
+		}
+		p >>= 2;
+		i_mat++;
+	}
+
+	if (p!=0)
+	{
+		for (int j =0; j<160; j++)
+		{
+			int k = i_mat * 800 + j*5;
+			uint r;
+			r = d_offset_matrix[k].v;
+			matrix.m[j].v0 = r;
+			matrixA.m[j].v0 = r;
+
+			r = d_offset_matrix[k + 1].v;
+			matrix.m[j].v1 = r;
+			matrixA.m[j].v1 = r;
+
+			r = d_offset_matrix[k + 2].v;
+			matrix.m[j].v2 = r;
+			matrixA.m[j].v2 = r;
+
+			r = d_offset_matrix[k + 3].v;
+			matrix.m[j].v3 = r;
+			matrixA.m[j].v3 = r;
+
+			r = d_offset_matrix[k + 4].v;
+			matrix.m[j].v4 = r;
+			matrixA.m[j].v4 = r;
+		}		
+	}
+
+
+	while (p!=0)
+	{
+		for (uint t = 0; t < (p & 0xF); t++)
+		{
+			matvec(state.v, matrixA, result);
+			state.v = result;
+		}
+		p >>= 4;
+		if (p!=0)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				matmat(matrix, matrixA);
+				matrixA = matrix;
+			}
+		}
+	}
+
+	state.d += 362437 * uint(offset);
+}
+
+#endif
+
+uint rand(inout RNGState state)
+{
+	uint t;
+	t = (state.v.v0 ^ (state.v.v0 >> 2));
+	state.v.v0 = state.v.v1;
+	state.v.v1 = state.v.v2;
+	state.v.v2 = state.v.v3;
+	state.v.v3 = state.v.v4;
+	state.v.v4 = (state.v.v4 ^ (state.v.v4 << 4)) ^ (t ^ (t << 1));
+	state.d += 362437;
+	return state.v.v4 + state.d;
+}
+
+float rand01(inout RNGState state)
+{
+	uint64_t urand = rand(state);
+	return float(urand) / float(1UL << 32);
+}
+

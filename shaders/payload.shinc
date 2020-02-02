@@ -1,0 +1,7 @@
+
+struct Payload
+{
+    vec4 color_dis;
+    vec4 normal;
+};
+

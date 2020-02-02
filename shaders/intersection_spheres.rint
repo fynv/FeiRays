@@ -1,0 +1,44 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
+#extension GL_EXT_buffer_reference2 : enable
+#extension GL_NV_ray_tracing : enable
+
+hitAttributeNV vec4 hitpoint;
+
+void main()
+{
+	vec3 origin = gl_ObjectRayOriginNV;
+	vec3 direction = gl_ObjectRayDirectionNV;
+	float tMin = gl_RayTminNV;
+	float tMax = gl_RayTmaxNV;
+
+	const float a = dot(direction, direction);
+	const float b = dot(origin, direction);
+	const float c = dot(origin, origin) - 1.0;
+	const float discriminant = b * b - a * c;
+
+	if (discriminant >= 0)
+	{
+		const float t1 = (-b - sqrt(discriminant)) / a;
+		const float t2 = (-b + sqrt(discriminant)) / a;
+
+		if ((tMin <= t1 && t1 < tMax) || (tMin <= t2 && t2 < tMax))
+		{
+			float t = t1;
+			if (tMin <= t1 && t1 < tMax)
+			{
+				hitpoint = vec4(origin + direction * t1, 1.0);
+			}
+			else
+			{
+				t = t2;
+				hitpoint = vec4(origin + direction * t2, -1.0);
+			}
+			reportIntersectionNV(t, 0);
+		}
+	}
+
+}
+
+

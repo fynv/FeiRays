@@ -1,0 +1,22 @@
+layout(buffer_reference, std430, buffer_reference_align = 4) buffer PixBuf
+{
+    vec4 v;
+};
+
+struct Image
+{
+    PixBuf data;
+    int width;
+    int height;
+};
+
+vec4 read_pixel (in Image img, int x, int y)
+{
+    return img.data[x + y*img.width].v;
+}
+
+void write_pixel(in Image img, int x, int y, in vec4 v)
+{
+    img.data[x + y*img.width].v = v;
+}
+

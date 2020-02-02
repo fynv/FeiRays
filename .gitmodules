@@ -1,0 +1,9 @@
+[submodule "thirdparty/glm"]
+	path = thirdparty/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "thirdparty/volk"]
+	path = thirdparty/volk
+	url = https://github.com/zeux/volk.git
+[submodule "thirdparty/Vulkan-Headers"]
+	path = thirdparty/Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git
