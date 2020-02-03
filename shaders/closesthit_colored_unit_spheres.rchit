@@ -9,7 +9,7 @@
 layout(location = 0) rayPayloadInNV Payload payload;
 hitAttributeNV vec4 hitpoint;
 
-struct Sphere
+struct ColoredUnitSphere
 {
 	mat3 normalMat;
 	vec4 color;
@@ -18,12 +18,12 @@ struct Sphere
 
 layout(std430, binding = 4) buffer Params
 {
-	Sphere[] spheres;	
+	ColoredUnitSphere[] coloredUnitSpheres;	
 };
 
 void main()
 {
-	Sphere instance = spheres[gl_InstanceCustomIndexNV];
+	ColoredUnitSphere instance = coloredUnitSpheres[gl_InstanceCustomIndexNV];
 	vec3 normal = normalize(instance.normalMat * hitpoint.xyz) * hitpoint.w;
 	payload.color_dis = vec4(instance.color.xyz, gl_HitTNV);
   	payload.normal = vec4(normal, 0.0);

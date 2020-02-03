@@ -11,7 +11,7 @@ public:
 	virtual ~ColoredUnitSphere();
 
 	virtual GeoCls cls() const;
-	virtual void get_view(char* view_buf) const;
+	virtual void get_view(void* view_buf) const;
 
 
 private:

@@ -9,17 +9,17 @@ struct Vertex
 	glm::vec2 TexCoord;
 };
 
-class ColoredTriangleList : public Geometry
+class ColoredIndexedTriangleList : public Geometry
 {
 public:
 	DeviceBuffer* vertex_buffer() const { return m_vertexBuffer; }
 	DeviceBuffer* index_buffer() const { return m_indexBuffer; }
 
-	ColoredTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, glm::vec3 color = { 1.0f, 1.0f, 1.0f });
-	virtual ~ColoredTriangleList();
+	ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, glm::vec3 color = { 1.0f, 1.0f, 1.0f });
+	virtual ~ColoredIndexedTriangleList();
 
 	virtual GeoCls cls() const;
-	virtual void get_view(char* view_buf) const;
+	virtual void get_view(void* view_buf) const;
 
 private:
 	void _blas_create();

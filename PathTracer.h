@@ -28,7 +28,7 @@ public:
 	virtual ~Geometry();
 
 	virtual GeoCls cls() const = 0;
-	virtual void get_view(char* view_buf) const = 0;
+	virtual void get_view(void* view_buf) const = 0;
 
 protected:
 	glm::mat4x4 m_model;

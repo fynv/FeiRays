@@ -1,7 +1,7 @@
 #include "volk.h"
 
 #include "PathTracer.h"
-#include "ColoredTriangleList.h"
+#include "ColoredIndexedTriangleList.h"
 #include "ColoredUnitSphere.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +12,9 @@
 #ifndef PI
 #define PI 3.1415926f
 #endif
+
+typedef ColoredIndexedTriangleList TriangleMesh;
+typedef ColoredUnitSphere Sphere;
 
 
 int main()
@@ -78,28 +81,28 @@ int main()
 	glm::mat4x4 model0 = glm::translate(identity, glm::vec3(0.0, 1.0, -2.0));
 	model0 = glm::rotate(model0, 45.0f / 180.0f*PI, glm::vec3(0.0, 1.0, 0.0f));
 
-	ColoredTriangleList cube0(model0, cube_vertices, cube_indices, { 0.8, 0.6, 0.8 });
+	TriangleMesh cube0(model0, cube_vertices, cube_indices, { 0.8, 0.6, 0.8 });
 
 	glm::mat4x4 model1 = glm::translate(identity, glm::vec3(4.0, 1.0, -2.0));
 	model1 = glm::rotate(model1, -45.0f / 180.0f*PI, glm::vec3(0.0, 1.0, 0.0f));
-	ColoredTriangleList cube1(model1, cube_vertices, cube_indices, { 0.8, 0.8, 0.6 });
+	TriangleMesh cube1(model1, cube_vertices, cube_indices, { 0.8, 0.8, 0.6 });
 
 	glm::mat4x4 model2 = glm::translate(identity, glm::vec3(-4.0, 1.0, -2.0));
 	model2 = glm::rotate(model2, -45.0f / 180.0f*PI, glm::vec3(0.0, 1.0, 0.0f));
-	ColoredTriangleList cube2(model2, cube_vertices, cube_indices, { 0.6, 0.8, 0.8 });
+	TriangleMesh cube2(model2, cube_vertices, cube_indices, { 0.6, 0.8, 0.8 });
 
 	glm::mat4x4 model3 = glm::translate(identity, glm::vec3(0.0, -0.2, 0.0));
 	model3 = glm::scale(model3, glm::vec3(6.0f, 0.2f, 6.0f));
-	ColoredTriangleList cube3(model3, cube_vertices, cube_indices, { 1.0, 1.0, 1.0 });
+	TriangleMesh cube3(model3, cube_vertices, cube_indices, { 1.0, 1.0, 1.0 });
 
 	glm::mat4x4 model4 = glm::translate(identity, glm::vec3(0.0, 1.0, 2.0));
-	ColoredUnitSphere sphere4(model4, { 0.8, 0.6, 0.8 });
+	Sphere sphere4(model4, { 0.8, 0.6, 0.8 });
 
 	glm::mat4x4 model5 = glm::translate(identity, glm::vec3(4.0, 1.0, 2.0));
-	ColoredUnitSphere sphere5(model5, { 0.6, 0.8, 0.8 });
+	Sphere sphere5(model5, { 0.6, 0.8, 0.8 });
 
 	glm::mat4x4 model6 = glm::translate(identity, glm::vec3(-4.0, 1.0, 2.0));
-	ColoredUnitSphere sphere6(model6, { 0.8, 0.8, 0.6 });
+	Sphere sphere6(model6, { 0.8, 0.8, 0.6 });
 
 	Image target(view_width, view_height);
 

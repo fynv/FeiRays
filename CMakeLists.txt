@@ -23,7 +23,7 @@ set (SOURCE
 context.cpp
 rand_state_init.cu
 PathTracer.cpp
-ColoredTriangleList.cpp
+ColoredIndexedTriangleList.cpp
 ColoredUnitSphere.cpp
 )
 
@@ -33,7 +33,7 @@ RNGState.h
 xor_wow_data.hpp
 rand_state_init.hpp
 PathTracer.h
-ColoredTriangleList.h
+ColoredIndexedTriangleList.h
 ColoredUnitSphere.h
 )
 

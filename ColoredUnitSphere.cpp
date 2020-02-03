@@ -53,12 +53,12 @@ GeoCls ColoredUnitSphere::cls() const
 	cls.name = s_name;
 	cls.size_view = sizeof(SphereView);
 	cls.binding_view = 4;
-	cls.fn_intersection = "../shaders/intersection_spheres.spv";
-	cls.fn_closesthit = "../shaders/closesthit_spheres.spv";
+	cls.fn_intersection = "../shaders/intersection_colored_unit_spheres.spv";
+	cls.fn_closesthit = "../shaders/closesthit_colored_unit_spheres.spv";
 	return cls;
 }
 
-void ColoredUnitSphere::get_view(char* view_buf) const
+void ColoredUnitSphere::get_view(void* view_buf) const
 {
 	SphereView& view = *(SphereView*)view_buf;
 	view.normalMat = m_norm_mat;

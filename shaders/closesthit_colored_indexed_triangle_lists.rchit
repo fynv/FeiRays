@@ -40,7 +40,7 @@ layout(buffer_reference, std430, buffer_reference_align = 4) buffer IndexBuf
 	uint i;
 };
 
-struct TriangleMesh
+struct ColoredIndexedTriangleList
 {
 	mat3 normalMat;
 	vec4 color;
@@ -50,12 +50,12 @@ struct TriangleMesh
 
 layout(std430, binding = 3) buffer Params
 {
-	TriangleMesh[] triangleMeshes;
+	ColoredIndexedTriangleList[] coloredIndexedTriangleLists;
 };
 
 void main()
 {
-	TriangleMesh instance = triangleMeshes[gl_InstanceCustomIndexNV];
+	ColoredIndexedTriangleList instance = coloredIndexedTriangleLists[gl_InstanceCustomIndexNV];
 
 	IndexBuf indBuf = instance.indexBuf;
 	VextexBuf vertexBuf = instance.vertexBuf;

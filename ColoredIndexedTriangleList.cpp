@@ -1,8 +1,8 @@
 #include "context.h"
-#include "ColoredTriangleList.h"
+#include "ColoredIndexedTriangleList.h"
 
 
-void ColoredTriangleList::_blas_create()
+void ColoredIndexedTriangleList::_blas_create()
 {
 	const Context& ctx = Context::get_context();
 
@@ -29,7 +29,7 @@ void ColoredTriangleList::_blas_create()
 }
 
 
-ColoredTriangleList::ColoredTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, glm::vec3 color) : Geometry(model)
+ColoredIndexedTriangleList::ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, glm::vec3 color) : Geometry(model)
 {
 	m_color = color;
 
@@ -44,7 +44,7 @@ ColoredTriangleList::ColoredTriangleList(const glm::mat4x4& model, const std::ve
 	_blas_create();
 }
 
-ColoredTriangleList::~ColoredTriangleList()
+ColoredIndexedTriangleList::~ColoredIndexedTriangleList()
 {
 	delete m_indexBuffer;
 	delete m_vertexBuffer;
@@ -59,19 +59,19 @@ struct TriangleMeshView
 	VkDeviceAddress indexBuf;
 };
 
-GeoCls ColoredTriangleList::cls() const
+GeoCls ColoredIndexedTriangleList::cls() const
 {
-	static const char s_name[] = "ColoredTriangleList";
+	static const char s_name[] = "ColoredIndexedTriangleList";
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(TriangleMeshView);
 	cls.binding_view = 3;
 	cls.fn_intersection = nullptr;
-	cls.fn_closesthit = "../shaders/closesthit_triangles.spv";
+	cls.fn_closesthit = "../shaders/closesthit_colored_indexed_triangle_lists.spv";
 	return cls;
 }
 
-void ColoredTriangleList::get_view(char* view_buf) const
+void ColoredIndexedTriangleList::get_view(void* view_buf) const
 {
 	TriangleMeshView& view = *(TriangleMeshView*)view_buf;
 	view.normalMat = m_norm_mat;
