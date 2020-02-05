@@ -248,3 +248,21 @@ float rand01(inout RNGState state)
 	return float(urand) / float(1UL << 32);
 }
 
+vec3 rand_in_unit_sphere(inout RNGState rstate)
+{
+	vec3 ret;
+	do{
+		ret = vec3(rand01(rstate)*2.0 - 1.0, rand01(rstate)*2.0 - 1.0, rand01(rstate)*2.0 - 1.0);
+	} while (length(ret) > 1.0);
+	return ret;
+}
+
+vec2 rand_in_unit_disk(inout RNGState rstate)
+{
+	vec2 ret;
+	do {
+		ret = vec2(rand01(rstate)*2.0 - 1.0, rand01(rstate)*2.0 - 1.0);
+	} while (length(ret) > 1.0);
+	return ret;
+}
+

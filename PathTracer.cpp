@@ -79,12 +79,13 @@ void PathTracer::add_geometry(Geometry* geo)
 	m_geo_lists[cls.name].list.push_back(geo);
 }
 
-void PathTracer::set_camera(glm::vec3 lookfrom, glm::vec3 lookat, glm::vec3 vup, float vfov, float focus_dist)
+void PathTracer::set_camera(glm::vec3 lookfrom, glm::vec3 lookat, glm::vec3 vup, float vfov, float aperture, float focus_dist)
 {
 	m_lookfrom = lookfrom;
 	m_lookat = lookat;
 	m_vup = vup;
 	m_vfov = vfov;
+	m_aperture = aperture;
 	m_focus_dist = focus_dist;
 }
 
@@ -102,6 +103,7 @@ struct RayGenParams
 	glm::vec4 ux;
 	glm::vec4 uy;
 	ImageView target;
+	float lens_radius;
 	int num_iter;
 };
 
@@ -568,6 +570,7 @@ void PathTracer::_calc_raygen(RayTrace& rt) const
 	raygen_params.upper_left = glm::vec4(upper_left, 1.0f);
 	raygen_params.ux = glm::vec4(ux, 1.0f);
 	raygen_params.uy = glm::vec4(uy, 1.0f);
+	raygen_params.lens_radius = m_aperture * 0.5f;
 	raygen_params.num_iter = rt.num_iter;
 
 	rt.params_raygen->upload(&raygen_params);

@@ -1,0 +1,12 @@
+
+layout(std140, binding = 1) uniform Params
+{
+	vec4 origin;
+	vec4 upper_left;
+	vec4 ux;
+	vec4 uy;
+	Image target;
+    float lens_radius;
+    int num_iter;
+};
+

@@ -7,19 +7,9 @@
 #include "payload.shinc"
 #include "rand.shinc"
 #include "image.shinc"
+#include "raygen_params.shinc"
 
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
-
-layout(std140, binding = 1) uniform Params
-{
-	vec4 origin;
-	vec4 upper_left;
-	vec4 ux;
-	vec4 uy;
-	Image target;
-    int num_iter;
-};
-
 
 layout(std430, binding = 2) buffer BufStates
 {
@@ -29,24 +19,6 @@ layout(std430, binding = 2) buffer BufStates
 layout(location = 0) rayPayloadNV Payload payload;
 layout(location = 1) rayPayloadNV bool isShadowed;
 
-float sqrlen(vec3 v)
-{
-    return dot(v,v);
-}
-
-vec3 rand_in_unit_sphere(inout RNGState rstate)
-{
-    vec3 ret;
-    do
-    {
-        ret = vec3(rand01(rstate)*2.0 - 1.0, rand01(rstate)*2.0 - 1.0, rand01(rstate)*2.0 - 1.0);
-    } 
-    while (sqrlen(ret) > 1.0);
-
-    return ret;
-}
-
-
 void main() 
 {
     uint ray_id = gl_LaunchIDNV.x + gl_LaunchIDNV.y*target.width;
@@ -55,13 +27,24 @@ void main()
 	float fy = float(gl_LaunchIDNV.y)+ rand01(states[ray_id]);
 
 	vec3 pos_pix = upper_left.xyz + fx * ux.xyz + fy * uy.xyz;
-	vec3 direction =  normalize(pos_pix - origin.xyz);
-
+	
 	uint cullMask = 0xff;
     float tmin = 0.0001;
     float tmax = 10000.0;
 
     vec3 ray_origin = origin.xyz;
+
+    if (lens_radius > 0.0f)
+    {
+        vec3 u = normalize(ux.xyz);
+        vec3 v = normalize(uy.xyz);
+        vec2 rd = lens_radius * rand_in_unit_disk(states[ray_id]);
+        ray_origin += u * rd.x + v * rd.y;
+    }
+
+    vec3 direction =  normalize(pos_pix - ray_origin);
+
+
     vec3 color = vec3(0.0, 0.0, 0.0);
     vec3 f_att = vec3(1.0, 1.0, 1.0);
     int depth = 0;

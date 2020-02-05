@@ -74,7 +74,7 @@ public:
 	
 	void set_target(Image* target) { m_target = target;  }
 	void add_geometry(Geometry* geo);
-	void set_camera(glm::vec3 lookfrom, glm::vec3 lookat, glm::vec3 vup, float vfov, float focus_dist = 1.0f);
+	void set_camera(glm::vec3 lookfrom, glm::vec3 lookat, glm::vec3 vup, float vfov, float aperture = 0.0f, float focus_dist = 1.0f);
 
 	void trace(int num_iter = 100) const;
 
@@ -87,6 +87,7 @@ private:
 	glm::vec3 m_lookat;
 	glm::vec3 m_vup;
 	float m_vfov;
+	float m_aperture;
 	float m_focus_dist;
 
 	void _tlas_create(RayTrace& rt) const;

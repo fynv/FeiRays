@@ -115,7 +115,7 @@ int main()
 	pt.add_geometry(&sphere4);
 	pt.add_geometry(&sphere5);
 	pt.add_geometry(&sphere6);
-	pt.set_camera({ 0.0f, 8.0f, 8.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f);
+	pt.set_camera({ 0.0f, 8.0f, 8.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 1.0f, 10.0f);
 
 	pt.trace();
 
