@@ -7,7 +7,7 @@ class ColoredUnitSphere : public Geometry
 public:
 	DeviceBuffer* aabb_buffer() const { return m_aabb_buf; }
 
-	ColoredUnitSphere(const glm::mat4x4& model, glm::vec3 color = { 1.0f, 1.0f, 1.0f });
+	ColoredUnitSphere(const glm::mat4x4& model, glm::vec3 color = { 1.0f, 1.0f, 1.0f }, Material material = lamertian, float fuzz = 0.0f, float ref_idx = 0.0f);
 	virtual ~ColoredUnitSphere();
 
 	virtual GeoCls cls() const;
@@ -19,5 +19,8 @@ private:
 	DeviceBuffer* m_aabb_buf;
 
 	glm::vec3 m_color;
+	Material m_material;
+	float m_fuzz;
+	float m_ref_idx;
 
 };

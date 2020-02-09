@@ -23,9 +23,12 @@ void ColoredUnitSphere::_blas_create()
 }
 
 
-ColoredUnitSphere::ColoredUnitSphere(const glm::mat4x4& model, glm::vec3 color) : Geometry(model)
+ColoredUnitSphere::ColoredUnitSphere(const glm::mat4x4& model, glm::vec3 color, Material material, float fuzz, float ref_idx) : Geometry(model)
 {
 	m_color = color;
+	m_material = material;
+	m_fuzz = fuzz;
+	m_ref_idx = ref_idx;
 
 	static float s_aabb[6] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
 
@@ -44,6 +47,10 @@ struct SphereView
 {
 	glm::mat3x4 normalMat;
 	glm::vec4 color;
+	unsigned material; // 0: lamertian, 1: metal, 2: dielectric	
+	float fuzz;
+	float ref_idx;
+	int dummy;
 };
 
 GeoCls ColoredUnitSphere::cls() const
@@ -63,5 +70,8 @@ void ColoredUnitSphere::get_view(void* view_buf) const
 	SphereView& view = *(SphereView*)view_buf;
 	view.normalMat = m_norm_mat;
 	view.color = { m_color, 1.0f };
+	view.material = m_material;
+	view.fuzz = m_fuzz;
+	view.ref_idx = m_ref_idx;
 }
 

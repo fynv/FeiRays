@@ -29,9 +29,13 @@ void ColoredIndexedTriangleList::_blas_create()
 }
 
 
-ColoredIndexedTriangleList::ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, glm::vec3 color) : Geometry(model)
+ColoredIndexedTriangleList::ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, 
+	glm::vec3 color, Material material, float fuzz, float ref_idx) : Geometry(model)
 {
 	m_color = color;
+	m_material = material;
+	m_fuzz = fuzz;
+	m_ref_idx = ref_idx;
 
 	m_vertexCount = (unsigned)vertices.size();
 	m_indexCount = (unsigned)indices.size();
@@ -57,6 +61,10 @@ struct TriangleMeshView
 	glm::vec4 color;
 	VkDeviceAddress vertexBuf;
 	VkDeviceAddress indexBuf;
+	unsigned material; // 0: lamertian, 1: metal, 2: dielectric	
+	float fuzz;
+	float ref_idx;
+	int dummy;
 };
 
 GeoCls ColoredIndexedTriangleList::cls() const
@@ -78,4 +86,7 @@ void ColoredIndexedTriangleList::get_view(void* view_buf) const
 	view.color = { m_color, 1.0f };
 	view.vertexBuf = m_vertexBuffer->get_device_address();
 	view.indexBuf = m_indexBuffer->get_device_address();
+	view.material = m_material;
+	view.fuzz = m_fuzz;
+	view.ref_idx = m_ref_idx;
 }

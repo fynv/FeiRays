@@ -17,6 +17,13 @@ struct GeoCls
 	const char* fn_closesthit = nullptr;
 };
 
+enum Material
+{
+	lamertian,
+	metal,
+	dielectric
+};
+
 class Geometry
 {
 public:

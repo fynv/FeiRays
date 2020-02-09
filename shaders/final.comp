@@ -16,6 +16,16 @@ void main()
 	if (x>=target.width || y>=target.height) return;
 	vec4 v = read_pixel(target, x, y);
 	v.xyz *= 1.0/float(num_iter);
+	v.x = sqrt(v.x);
+	v.y = sqrt(v.y);
+	v.z = sqrt(v.z);
+	if (v.x < 0.0) v.x = 0.0;
+	if (v.x > 1.0) v.x = 1.0;
+	if (v.y < 0.0) v.y = 0.0;
+	if (v.y > 1.0) v.y = 1.0;
+	if (v.z < 0.0) v.z = 0.0;
+	if (v.z > 1.0) v.z = 1.0;
+
 	write_pixel(target, x, y, v);
 }
 

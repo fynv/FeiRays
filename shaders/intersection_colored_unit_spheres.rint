@@ -4,7 +4,7 @@
 #extension GL_EXT_buffer_reference2 : enable
 #extension GL_NV_ray_tracing : enable
 
-hitAttributeNV vec4 hitpoint;
+hitAttributeNV vec3 hitpoint;
 
 void main()
 {
@@ -28,12 +28,12 @@ void main()
 			float t = t1;
 			if (tMin <= t1 && t1 < tMax)
 			{
-				hitpoint = vec4(origin + direction * t1, 1.0);
+				hitpoint = origin + direction * t1;
 			}
 			else
 			{
 				t = t2;
-				hitpoint = vec4(origin + direction * t2, -1.0);
+				hitpoint = origin + direction * t2;
 			}
 			reportIntersectionNV(t, 0);
 		}

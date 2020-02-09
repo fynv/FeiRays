@@ -46,6 +46,9 @@ struct ColoredIndexedTriangleList
 	vec4 color;
 	VextexBuf vertexBuf;
 	IndexBuf indexBuf;
+	uint material; // 0: lamertian, 1: metal, 2: dielectric	
+	float fuzz;
+	float ref_idx;
 };
 
 layout(std430, binding = 3) buffer Params
@@ -72,5 +75,8 @@ void main()
 
 	payload.color_dis = vec4(instance.color.xyz, gl_HitTNV);
   	payload.normal = vec4(normal, 0.0);
+  	payload.material = instance.material;
+  	payload.fuzz = instance.fuzz;
+  	payload.ref_idx = instance.ref_idx;
 }
 

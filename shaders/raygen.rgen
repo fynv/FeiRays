@@ -19,6 +19,15 @@ layout(std430, binding = 2) buffer BufStates
 layout(location = 0) rayPayloadNV Payload payload;
 layout(location = 1) rayPayloadNV bool isShadowed;
 
+
+float schlick(float cosine, float ref_idx)
+{
+    float r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+    r0 = r0 * r0;
+    return r0 + (1.0 - r0)*pow(1.0 - cosine, 5.0);
+}
+
+
 void main() 
 {
     uint ray_id = gl_LaunchIDNV.x + gl_LaunchIDNV.y*target.width;
@@ -59,7 +68,6 @@ void main()
         if (t>0.0)
         {
             ray_origin += direction*t;
-            f_att *= payload.color_dis.xyz;
 
             /*vec3 lightVector = normalize(vec3(5, 4, 3));
             float dot_product = dot(lightVector, payload.normal.xyz);
@@ -71,7 +79,71 @@ void main()
             if (!isShadowed)
                 color += vec3(0.7,0.7,0.7)*dot_product*f_att;*/
 
-            direction = normalize(rand_in_unit_sphere(states[ray_id]) + payload.normal.xyz);
+            vec3 fuzz_dir = payload.normal.xyz;
+
+            if (payload.material == 0 || payload.material == 1)
+            {
+                f_att *= payload.color_dis.xyz;
+            }
+
+            if (payload.material == 0)
+            {
+                direction = normalize(rand_in_unit_sphere(states[ray_id]) + payload.normal.xyz);
+            }
+            else if (payload.material == 1)
+            {
+                direction = reflect(direction, payload.normal.xyz);
+            }
+            else if (payload.material == 2)
+            {
+                float reflect_prob = 1.0f;
+                bool enter = false;
+                float ref_idx = payload.ref_idx;
+                vec3 normal = -payload.normal.xyz;
+                if (dot(direction, payload.normal.xyz)<0)
+                {
+                    enter = true;
+                    ref_idx = 1.0 / ref_idx;
+                    normal = payload.normal.xyz;
+                }
+
+                vec3 refracted = refract(direction, normal, ref_idx);
+                if (refracted.x != 0.0 || refracted.y!= 0.0 || refracted.z != 0.0)
+                {
+                    float cosine = -dot(direction, normal);
+                    reflect_prob = schlick(cosine, ref_idx);
+                }
+
+                if (rand01(states[ray_id]) < reflect_prob)
+                {
+                    direction = reflect(direction, normal);
+                    fuzz_dir = normal;
+                }
+                else
+                {
+                    direction = refracted;
+                    fuzz_dir = - fuzz_dir;
+                }
+
+                if (!enter)
+                {
+                    f_att.x *= pow(payload.color_dis.x, t);
+                    f_att.y *= pow(payload.color_dis.y, t);
+                    f_att.z *= pow(payload.color_dis.z, t);
+                }
+            }
+
+            if (payload.fuzz>0.0 && (payload.material == 1 || payload.material == 2))            
+            {
+                float f = payload.fuzz; if (f > 1.0f) f = 1.0f;
+                direction = direction + f * rand_in_unit_sphere(states[ray_id]);
+                if (dot(direction, fuzz_dir) <= 0.0f)
+                {
+                    f_att = vec3(0.0);
+                    break;
+                }
+                direction = normalize(direction);
+            }
         }
         else 
         {

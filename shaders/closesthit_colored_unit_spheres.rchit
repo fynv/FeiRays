@@ -7,12 +7,15 @@
 #include "payload.shinc"
 
 layout(location = 0) rayPayloadInNV Payload payload;
-hitAttributeNV vec4 hitpoint;
+hitAttributeNV vec3 hitpoint;
 
 struct ColoredUnitSphere
 {
 	mat3 normalMat;
 	vec4 color;
+	uint material; // 0: lamertian, 1: metal, 2: dielectric	
+	float fuzz;
+	float ref_idx;
 };
 
 
@@ -24,8 +27,18 @@ layout(std430, binding = 4) buffer Params
 void main()
 {
 	ColoredUnitSphere instance = coloredUnitSpheres[gl_InstanceCustomIndexNV];
-	vec3 normal = normalize(instance.normalMat * hitpoint.xyz) * hitpoint.w;
+	vec3 normal = normalize(instance.normalMat * hitpoint);
 	payload.color_dis = vec4(instance.color.xyz, gl_HitTNV);
   	payload.normal = vec4(normal, 0.0);
+  	payload.material = instance.material;
+  	payload.fuzz = instance.fuzz;
+  	payload.ref_idx = instance.ref_idx;
+
+  	if (instance.material == 2 && instance.ref_idx<1.0)
+  	{
+  		payload.ref_idx = 1.0 / instance.ref_idx;
+  		payload.normal = vec4(-normal, 0.0);
+  	}
 }
+
 
