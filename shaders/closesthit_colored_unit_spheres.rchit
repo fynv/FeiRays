@@ -33,12 +33,6 @@ void main()
   	payload.material = instance.material;
   	payload.fuzz = instance.fuzz;
   	payload.ref_idx = instance.ref_idx;
-
-  	if (instance.material == 2 && instance.ref_idx<1.0)
-  	{
-  		payload.ref_idx = 1.0 / instance.ref_idx;
-  		payload.normal = vec4(-normal, 0.0);
-  	}
 }
 
 

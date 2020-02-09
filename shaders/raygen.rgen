@@ -97,12 +97,13 @@ void main()
             else if (payload.material == 2)
             {
                 float reflect_prob = 1.0f;
-                bool enter = false;
+                bool enter = payload.ref_idx < 1.0;
                 float ref_idx = payload.ref_idx;
                 vec3 normal = -payload.normal.xyz;
+
                 if (dot(direction, payload.normal.xyz)<0)
                 {
-                    enter = true;
+                    enter = !enter;
                     ref_idx = 1.0 / ref_idx;
                     normal = payload.normal.xyz;
                 }
