@@ -9,9 +9,6 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
-#ifndef PI
-#define PI 3.1415926f
-#endif
 
 typedef ColoredIndexedTriangleList TriangleMesh;
 typedef ColoredUnitSphere Sphere;
@@ -56,7 +53,7 @@ int main()
 	
 	pt.set_camera({ 3.0f, 3.0f, 2.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f }, 20.0f, 0.5f, 5.2f);
 
-	pt.trace(1000);
+	pt.trace(100);
 
 	float* hbuffer = (float*)malloc(view_width * view_height * sizeof(float) * 4);
 	target.to_host(hbuffer);
