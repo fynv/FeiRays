@@ -28,6 +28,7 @@ ColoredUnitSphere.cpp
 )
 
 set (HEADER
+Timing.h
 context.h
 RNGState.h
 xor_wow_data.hpp

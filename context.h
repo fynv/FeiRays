@@ -37,17 +37,17 @@ private:
 
 };
 
-class OneTimeCommandBuffer
+class NTimeCommandBuffer
 {
 public:
 	const VkCommandBuffer& buf() const { return m_buf; }
 
-	OneTimeCommandBuffer();
-	~OneTimeCommandBuffer();
+	NTimeCommandBuffer(size_t n = 1);
+	~NTimeCommandBuffer();
 
 private:
 	VkCommandBuffer m_buf;
-
+	size_t m_n;
 };
 
 class Buffer

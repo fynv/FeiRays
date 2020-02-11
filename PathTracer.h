@@ -83,7 +83,7 @@ public:
 	void add_geometry(Geometry* geo);
 	void set_camera(glm::vec3 lookfrom, glm::vec3 lookat, glm::vec3 vup, float vfov, float aperture = 0.0f, float focus_dist = 1.0f);
 
-	void trace(int num_iter = 100) const;
+	void trace(int num_iter = 100, int interval = -1) const;
 
 private:
 	Image* m_target;

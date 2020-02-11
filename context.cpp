@@ -160,7 +160,7 @@ Context::~Context()
 	vkDestroyInstance(m_instance, nullptr);
 }
 
-OneTimeCommandBuffer::OneTimeCommandBuffer()
+NTimeCommandBuffer::NTimeCommandBuffer(size_t n) : m_n(n)
 {
 	const Context& ctx = Context::get_context();
 
@@ -174,12 +174,13 @@ OneTimeCommandBuffer::OneTimeCommandBuffer()
 
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	if (n==1)
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	vkBeginCommandBuffer(m_buf, &beginInfo);
 }
 
-OneTimeCommandBuffer::~OneTimeCommandBuffer()
+NTimeCommandBuffer::~NTimeCommandBuffer()
 {
 	const Context& ctx = Context::get_context();
 
@@ -188,7 +189,10 @@ OneTimeCommandBuffer::~OneTimeCommandBuffer()
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &m_buf;
-	vkQueueSubmit(ctx.queue(), 1, &submitInfo, 0);
+
+	for (size_t i = 0; i< m_n; i++)
+		vkQueueSubmit(ctx.queue(), 1, &submitInfo, 0);
+
 	vkQueueWaitIdle(ctx.queue());
 
 	vkFreeCommandBuffers(ctx.device(), ctx.commandPool(), 1, &m_buf);
@@ -322,7 +326,7 @@ void DeviceBuffer::upload(const void* hdata)
 	staging_buf.upload(hdata);
 
 	{
-		OneTimeCommandBuffer cmdBuf;
+		NTimeCommandBuffer cmdBuf;
 
 		VkBufferCopy copyRegion = {};
 		copyRegion.srcOffset = 0;
@@ -338,7 +342,7 @@ void DeviceBuffer::zero()
 	staging_buf.zero();
 
 	{
-		OneTimeCommandBuffer cmdBuf;
+		NTimeCommandBuffer cmdBuf;
 
 		VkBufferCopy copyRegion = {};
 		copyRegion.srcOffset = 0;
@@ -356,7 +360,7 @@ void DeviceBuffer::download(void* hdata, VkDeviceSize begin, VkDeviceSize end)
 	DownloadBuffer staging_buf(end - begin);
 
 	{
-		OneTimeCommandBuffer cmdBuf;
+		NTimeCommandBuffer cmdBuf;
 
 		VkBufferCopy copyRegion = {};
 		copyRegion.srcOffset = begin;
@@ -416,7 +420,7 @@ BaseLevelAS::BaseLevelAS(uint32_t geometryCount, const VkGeometryNV* pGeometries
 	m_resultBuffer = new DeviceBuffer(resultSizeInBytes, VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
 
 	{
-		OneTimeCommandBuffer cmdBuf;
+		NTimeCommandBuffer cmdBuf;
 
 		VkBindAccelerationStructureMemoryInfoNV bindInfo = {};
 		bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
@@ -524,7 +528,7 @@ TopLevelAS::TopLevelAS(size_t num_hitgroups, size_t* num_instances, const VkAcce
 	m_instancesBuffer->upload(geometryInstances.data());
 
 	{
-		OneTimeCommandBuffer cmdBuf;
+		NTimeCommandBuffer cmdBuf;
 
 		VkBindAccelerationStructureMemoryInfoNV bindInfo = {};
 		bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;

@@ -3,6 +3,8 @@
 #include "PathTracer.h"
 #include "ColoredIndexedTriangleList.h"
 #include "ColoredUnitSphere.h"
+#include "Timing.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -27,6 +29,8 @@ int main()
 	const int view_width = 900;
 	const int view_height = 600;
 
+	printf("Generating scene..\n");
+	double time0 = GetTime();
 
 	glm::mat4x4 identity = glm::identity<glm::mat4x4>();
 
@@ -88,7 +92,8 @@ int main()
 			}
 
 		}
-
+	double time1 = GetTime();
+	printf("Done generating scene.. %f secs\n", time1-time0);
 
 
 	Image target(view_width, view_height);

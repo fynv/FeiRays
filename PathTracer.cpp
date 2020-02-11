@@ -11,6 +11,7 @@
 #include <memory.h>
 #include "context.h"
 #include "PathTracer.h"
+#include "Timing.h"
 
 #ifndef PI
 #define PI 3.1415926f
@@ -687,7 +688,7 @@ void PathTracer::_rt_clean(RayTrace& rt) const
 }
 
 
-void PathTracer::trace(int num_iter) const
+void PathTracer::trace(int num_iter, int interval) const
 {
 	if (m_target == nullptr) return;
 	if (m_geo_lists.size() == 0) return;
@@ -695,27 +696,45 @@ void PathTracer::trace(int num_iter) const
 	RayTrace rt;
 	rt.num_iter = num_iter;
 
+	printf("Preparing ray-tracing..\n");
+	double time0 = GetTime();
+
 	_tlas_create(rt);
 	_args_create(rt);
 	_rt_pipeline_create(rt);
 	_comp_pipeline_create(rt);
 	_calc_raygen(rt);
+
+	double time1 = GetTime();
+	printf("Done preparing ray-tracing.. %f secs\n", time1-time0);
+
+	printf("Initializing RNG states..\n");
 	_rand_init_cuda(rt);
 	//_rand_init_cpu(rt);
+
+	double time2 = GetTime();
+	printf("Done initializing RNG states.. %f secs\n", time2- time1);
 
 	m_target->clear();
 
 	const Context& ctx = Context::get_context();
 	unsigned progIdSize = ctx.raytracing_properties().shaderGroupHandleSize;
 
+	if (interval == -1) interval = num_iter;
+	
+	printf("Doing ray-tracing..\n");
+	double time3 = GetTime();
+
+	int i = 0;
+	while (i < num_iter)
 	{
-		OneTimeCommandBuffer cmdBuf;
+		int end = i + interval;
+		if (end > num_iter) end = num_iter;
 
-		vkCmdBindPipeline(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, rt.rt_pipeline);
-		vkCmdBindDescriptorSets(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, rt.rt_pipelineLayout, 0, 1, &rt.descriptorSet, 0, nullptr);
-
-		for (int i = 0; i < num_iter; i++)
 		{
+			NTimeCommandBuffer cmdBuf(end-i);
+			vkCmdBindPipeline(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, rt.rt_pipeline);
+			vkCmdBindDescriptorSets(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, rt.rt_pipelineLayout, 0, 1, &rt.descriptorSet, 0, nullptr);
 			vkCmdTraceRaysNV(cmdBuf.buf(),
 				rt.shaderBindingTableBuffer->buf(), 0,
 				rt.shaderBindingTableBuffer->buf(), progIdSize, progIdSize,
@@ -728,8 +747,16 @@ void PathTracer::trace(int num_iter) const
 			memoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 			vkCmdPipelineBarrier(cmdBuf.buf(), VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
-	   	}
+			
+			i = end;
+		}
 
+		if (i < num_iter)
+			printf("%.2f%%%\n", (float)i / (float)num_iter*100.0f);
+	}
+
+	{
+		NTimeCommandBuffer cmdBuf;
 		int group_x = (m_target->width() + 15) / 16;
 		int group_y = (m_target->height() + 15) / 16;
 		{
@@ -738,5 +765,9 @@ void PathTracer::trace(int num_iter) const
 			vkCmdDispatch(cmdBuf.buf(), group_x, group_y, 1);
 		}
 	}
+
+	double time4 = GetTime();
+	printf("Done ray-tracing.. %f secs\n", time4 - time3);
+
 	_rt_clean(rt);
 }
