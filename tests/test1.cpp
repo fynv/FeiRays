@@ -57,7 +57,7 @@ int main()
 
 	float* hbuffer = (float*)malloc(view_width * view_height * sizeof(float) * 4);
 	target.to_host(hbuffer);
-	FILE* fp = fopen("dump.raw", "wb");
+	FILE* fp = fopen("test1.raw", "wb");
 	for (unsigned i = 0; i < view_width * view_height; i++)
 	{
 		unsigned char pix[3];
