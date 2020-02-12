@@ -80,7 +80,7 @@ This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material 
 	Doing ray-tracing..
 	Done ray-tracing.. 0.078203 secs
 
-Besides spheres, triangle-mesh (triangle list) is also implemented.
+Besides spheres, triangle-meshes (triangle-lists) are also implemented.
 
 ### Next
 
@@ -88,7 +88,7 @@ Now looking at "Ray Tracing - The Next Week":
 
 * Chapter 1: Motion Blur
 
-Skipped. For triangle mesh, the acceleration structure provided by Vulkan seems doesn't support it directly. Not having a workaround yet.
+Skipped. For triangle mesh, the acceleration structure provided by Vulkan doesn't seem support it directly. Not having a workaround yet.
 
 * Chapter 2: Bounding Volume Hierarchies
 
