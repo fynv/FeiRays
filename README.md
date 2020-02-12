@@ -5,7 +5,7 @@ The code is evolved from [VkRayTraceWeekend](https://github.com/fynv/VkRayTraceW
 
 Here, I'm trying to make it more extendable and reusable, so I can have more fun with it.
 
-## Building
+## Building and Running
 
 Building the project is simple. 
 
@@ -17,7 +17,9 @@ But be sure to have the latest graphics driver installed, one that supports Vulk
 
 * Clone the repo and update the submodules
 * Use CMake to generate a VS solution at FeiRays/build (Linux build not tested yet).
-* Build and run the tests. Shaders (spv) are expected at ../shaders relative to the starting folder.
+* Build and run the tests. 
+* Shaders (spv) are expected at ../shaders relative to the starting folder.
+* Output file are in 24bit R8G8B8 raw format.
 
 ## Progress
 
