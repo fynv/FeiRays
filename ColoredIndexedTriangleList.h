@@ -16,7 +16,7 @@ public:
 	DeviceBuffer* index_buffer() const { return m_indexBuffer; }
 
 	ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, 
-		glm::vec3 color = { 1.0f, 1.0f, 1.0f }, Material material = lamertian, float fuzz = 0.0f, float ref_idx = 0.0f);
+		glm::vec3 color = { 1.0f, 1.0f, 1.0f }, Material material = lambertian, float fuzz = 0.0f, float ref_idx = 0.0f);
 
 	virtual ~ColoredIndexedTriangleList();
 

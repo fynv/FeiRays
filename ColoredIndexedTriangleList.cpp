@@ -61,7 +61,7 @@ struct TriangleMeshView
 	glm::vec4 color;
 	VkDeviceAddress vertexBuf;
 	VkDeviceAddress indexBuf;
-	unsigned material; // 0: lamertian, 1: metal, 2: dielectric	
+	unsigned material; // 0: lambertian, 1: metal, 2: dielectric	
 	float fuzz;
 	float ref_idx;
 	int dummy;

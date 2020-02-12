@@ -40,7 +40,7 @@ int main()
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(0.0f, -1000.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(1000.0f, 1000.0f, 1000.0f));
-		Sphere* sphere = new Sphere(model, { 0.5f, 0.5f, 0.5f }, lamertian);
+		Sphere* sphere = new Sphere(model, { 0.5f, 0.5f, 0.5f }, lambertian);
 		spheres.push_back(sphere);
 	}
 
@@ -52,7 +52,7 @@ int main()
 
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(-4.0f, 1.0f, 0.0f));
-		Sphere* sphere = new Sphere(model, { 0.4f, 0.2f, 0.1f }, lamertian);
+		Sphere* sphere = new Sphere(model, { 0.4f, 0.2f, 0.1f }, lambertian);
 		spheres.push_back(sphere);
 	}
 
@@ -77,7 +77,7 @@ int main()
 
 			if (choose_mat < 0.75f)			
 			{			
-				Sphere* sphere = new Sphere(model, { rand01()*rand01(), rand01()*rand01(), rand01()*rand01() }, lamertian);
+				Sphere* sphere = new Sphere(model, { rand01()*rand01(), rand01()*rand01(), rand01()*rand01() }, lambertian);
 				spheres.push_back(sphere);
 			}
 			else if (choose_mat < 0.90f)

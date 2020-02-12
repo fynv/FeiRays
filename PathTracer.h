@@ -19,7 +19,7 @@ struct GeoCls
 
 enum Material
 {
-	lamertian,
+	lambertian,
 	metal,
 	dielectric
 };
