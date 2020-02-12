@@ -49,7 +49,9 @@ There is abstract class called "Geometry". Each sub-class can have its own close
 
 The class "PathTracer" maintains a list of the geometries and path-traces them.
 
-### rt_weekend
+### Ray Tracing in One Weekend
+
+#### rt_weekend
 
 <img src="gallery/rt_weekend.png" width="900px">
 
@@ -67,7 +69,7 @@ The class "PathTracer" maintains a list of the geometries and path-traces them.
 This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material are implemented.
 
 
-### test1
+#### test1
 
 <img src="gallery/test1.png" width="800px">
 
@@ -82,20 +84,31 @@ This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material 
 
 Besides spheres, triangle-meshes (triangle-lists) are also implemented.
 
-### Next
+### Ray Tracing - The Next Week
 
-Now looking at "Ray Tracing - The Next Week":
-
-* Chapter 1: Motion Blur
+#### Chapter 1: Motion Blur
 
 Skipped. For triangle mesh, the acceleration structure provided by Vulkan doesn't seem support it directly. Not having a workaround yet.
 
-* Chapter 2: Bounding Volume Hierarchies
+#### Chapter 2: Bounding Volume Hierarchies
 
 Skipped. We are using the acceleration structure provided by Vulkan.
 
-* Chapter 3 Solid Textures
+#### Chapter 3 Solid Textures (test2)
 
-Now working on it.
+<img src="gallery/test2.png" width="900px">
+
+	900 x 600 x 100 rays:
+
+	Generating scene..
+	Done generating scene.. 0.937592 secs
+	Preparing ray-tracing..
+	Done preparing ray-tracing.. 0.026536 secs
+	Initializing RNG states..
+	Done initializing RNG states.. 1.513306 secs
+	Doing ray-tracing..
+	Done ray-tracing.. 0.197588 secs
+
+Sphere with checker texture.
 
 

@@ -25,6 +25,7 @@ rand_state_init.cu
 PathTracer.cpp
 ColoredIndexedTriangleList.cpp
 ColoredUnitSphere.cpp
+UnitSphereCheckerTex.cpp
 )
 
 set (HEADER
@@ -36,6 +37,7 @@ rand_state_init.hpp
 PathTracer.h
 ColoredIndexedTriangleList.h
 ColoredUnitSphere.h
+UnitSphereCheckerTex.h
 )
 
 if (WIN32) 
@@ -53,8 +55,11 @@ add_definitions(${DEFINES})
 
 cuda_add_library(FeiRays ${SOURCE} ${HEADER})
 
+add_executable(rt_weekend tests/rt_weekend.cpp)
+target_link_libraries(rt_weekend FeiRays volk)
+
 add_executable(test1 tests/test1.cpp)
 target_link_libraries(test1 FeiRays volk)
 
-add_executable(rt_weekend tests/rt_weekend.cpp)
-target_link_libraries(rt_weekend FeiRays volk)
+add_executable(test2 tests/test2.cpp)
+target_link_libraries(test2 FeiRays volk)
