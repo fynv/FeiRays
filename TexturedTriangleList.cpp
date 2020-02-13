@@ -1,8 +1,7 @@
 #include "context.h"
-#include "ColoredIndexedTriangleList.h"
+#include "TexturedTriangleList.h"
 
-
-void ColoredIndexedTriangleList::_blas_create()
+void TexturedTriangleList::_blas_create()
 {
 	const Context& ctx = Context::get_context();
 
@@ -16,10 +15,10 @@ void ColoredIndexedTriangleList::_blas_create()
 	geometry.geometry.triangles.vertexCount = (unsigned)(m_vertexBuffer->size() / sizeof(Vertex));
 	geometry.geometry.triangles.vertexStride = sizeof(Vertex);
 	geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-	geometry.geometry.triangles.indexData = m_indexBuffer->buf();
+	geometry.geometry.triangles.indexData = nullptr;
 	geometry.geometry.triangles.indexOffset = 0;
-	geometry.geometry.triangles.indexCount = (unsigned)(m_indexBuffer->size() / sizeof(unsigned));
-	geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+	geometry.geometry.triangles.indexCount = 0;
+	geometry.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_NV;
 	geometry.geometry.triangles.transformData = VK_NULL_HANDLE;
 	geometry.geometry.triangles.transformOffset = 0;
 	geometry.geometry.aabbs = { VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV };
@@ -29,64 +28,54 @@ void ColoredIndexedTriangleList::_blas_create()
 }
 
 
-ColoredIndexedTriangleList::ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, 
-	glm::vec3 color, Material material, float fuzz, float ref_idx) : Geometry(model)
-{
-	m_color = color;
-	m_material = material;
-	m_fuzz = fuzz;
-	m_ref_idx = ref_idx;
 
+TexturedTriangleList::TexturedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<Material>& materials, const int* materialIdx) : Geometry(model)
+{
 	m_vertexCount = (unsigned)vertices.size();
-	m_indexCount = (unsigned)indices.size();
+	m_materialCount = (unsigned)materials.size();
 
 	m_vertexBuffer = new DeviceBuffer(sizeof(Vertex)* m_vertexCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
 	m_vertexBuffer->upload(vertices.data());
-	m_indexBuffer = new DeviceBuffer(sizeof(unsigned)*m_indexCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
-	m_indexBuffer->upload(indices.data());
+	m_materialBuffer = new DeviceBuffer(sizeof(Material)* m_materialCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_materialBuffer->upload(materials.data());
+	m_materialIdxBuffer = new DeviceBuffer(sizeof(int)* m_vertexCount/3, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_materialIdxBuffer->upload(materialIdx);
 
 	_blas_create();
 }
 
-ColoredIndexedTriangleList::~ColoredIndexedTriangleList()
+TexturedTriangleList::~TexturedTriangleList()
 {
-	delete m_indexBuffer;
+	delete m_materialIdxBuffer;
+	delete m_materialBuffer;
 	delete m_vertexBuffer;
 }
-
 
 struct TriangleMeshView
 {
 	glm::mat3x4 normalMat;
-	glm::vec4 color;
 	VkDeviceAddress vertexBuf;
-	VkDeviceAddress indexBuf;
-	unsigned material; // 0: lambertian, 1: metal, 2: dielectric	
-	float fuzz;
-	float ref_idx;
-	int dummy;
+	VkDeviceAddress materialBuf;
+	VkDeviceAddress materialIdxBuf;
 };
 
-GeoCls ColoredIndexedTriangleList::cls() const
+GeoCls TexturedTriangleList::cls() const
 {
-	static const char s_name[] = "ColoredIndexedTriangleList";
+	static const char s_name[] = "TexturedTriangleList";
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(TriangleMeshView);
-	cls.binding_view = 4;
+	cls.binding_view = 7;
 	cls.fn_intersection = nullptr;
-	cls.fn_closesthit = "../shaders/closesthit_colored_indexed_triangle_lists.spv";
+	cls.fn_closesthit = "../shaders/closesthit_textured_triangle_lists.spv";
 	return cls;
 }
 
-void ColoredIndexedTriangleList::get_view(void* view_buf) const
+void TexturedTriangleList::get_view(void* view_buf) const
 {
 	TriangleMeshView& view = *(TriangleMeshView*)view_buf;
 	view.normalMat = m_norm_mat;
-	view.color = { m_color, 1.0f };
 	view.vertexBuf = m_vertexBuffer->get_device_address();
-	view.indexBuf = m_indexBuffer->get_device_address();
-	view.material = m_material;
-	view.fuzz = m_fuzz;
-	view.ref_idx = m_ref_idx;
+	view.materialBuf = m_materialBuffer->get_device_address();
+	view.materialIdxBuf = m_materialIdxBuffer->get_device_address();	
 }

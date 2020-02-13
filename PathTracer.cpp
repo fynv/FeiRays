@@ -32,6 +32,16 @@ Geometry::~Geometry()
 	delete m_blas;
 }
 
+RGBATexture::RGBATexture(int width, int height, void* data)
+{
+	m_data = new Texture(width, height, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+	m_data->uploadTexture(data);
+}
+
+RGBATexture::~RGBATexture()
+{
+	delete m_data;
+}
 
 Image::Image(int width, int height, float* hdata)
 {
@@ -64,11 +74,13 @@ PathTracer::PathTracer()
 {
 	m_target = nullptr;
 	set_camera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f }, 90.0f);
+
+	m_Sampler = new Sampler;
 }
 
 PathTracer::~PathTracer()
 {
-
+	delete m_Sampler;
 }
 
 void PathTracer::add_geometry(Geometry* geo)
@@ -78,6 +90,13 @@ void PathTracer::add_geometry(Geometry* geo)
 	if (iter == m_geo_lists.end())
 		m_geo_lists[cls.name].cls = cls;
 	m_geo_lists[cls.name].list.push_back(geo);
+}
+
+int PathTracer::add_texture(RGBATexture* tex)
+{
+	int id = (int)m_textures.size();
+	m_textures.push_back(tex);
+	return id;
 }
 
 void PathTracer::set_camera(glm::vec3 lookfrom, glm::vec3 lookat, glm::vec3 vup, float vfov, float aperture, float focus_dist)
@@ -200,29 +219,51 @@ void PathTracer::_args_create(RayTrace& rt) const
 	rt.params_raygen = new DeviceBuffer(sizeof(RayGenParams), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	rt.rand_states = new DeviceBuffer(sizeof(RNGState) * m_target->width()*m_target->height(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
 
-	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(3 + num_hitgroups);
+	std::vector<RGBATexture*> _textures;
+	const std::vector<RGBATexture*>* p_textures = &m_textures;
 
+	if (m_textures.size() == 0)
+	{
+		unsigned buf[4];
+		RGBATexture* _tmp = new RGBATexture(2, 2, buf);
+		_textures.push_back(_tmp);
+		p_textures = &_textures;
+	}
+
+
+	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(4 + num_hitgroups);
+
+	descriptorSetLayoutBindings[0] = {};
 	descriptorSetLayoutBindings[0].binding = 0;
 	descriptorSetLayoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
 	descriptorSetLayoutBindings[0].descriptorCount = 1;
 	descriptorSetLayoutBindings[0].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
+	descriptorSetLayoutBindings[1] = {};
 	descriptorSetLayoutBindings[1].binding = 1;
 	descriptorSetLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorSetLayoutBindings[1].descriptorCount = 1;
 	descriptorSetLayoutBindings[1].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_COMPUTE_BIT;
+	descriptorSetLayoutBindings[2] = {};
 	descriptorSetLayoutBindings[2].binding = 2;
 	descriptorSetLayoutBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	descriptorSetLayoutBindings[2].descriptorCount = 1;
 	descriptorSetLayoutBindings[2].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
+	descriptorSetLayoutBindings[3] = {};
+	descriptorSetLayoutBindings[3].binding = 3;
+	descriptorSetLayoutBindings[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorSetLayoutBindings[3].descriptorCount = (uint32_t)(p_textures->size());
+	descriptorSetLayoutBindings[3].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+
 
 	i = 0;
 	iter = m_geo_lists.begin();
 	while (iter != m_geo_lists.end())
 	{
-		descriptorSetLayoutBindings[3 + i].binding = iter->second.cls.binding_view;
-		descriptorSetLayoutBindings[3 + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		descriptorSetLayoutBindings[3 + i].descriptorCount = 1;
-		descriptorSetLayoutBindings[3 + i].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+		descriptorSetLayoutBindings[4 + i] = {};
+		descriptorSetLayoutBindings[4 + i].binding = iter->second.cls.binding_view;
+		descriptorSetLayoutBindings[4 + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		descriptorSetLayoutBindings[4 + i].descriptorCount = 1;
+		descriptorSetLayoutBindings[4 + i].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
 		iter++;
 		i++;
@@ -235,18 +276,20 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 	vkCreateDescriptorSetLayout(ctx.device(), &descriptorSetLayoutCreateInfo, nullptr, &rt.descriptorSetLayout);
 
-	std::vector<VkDescriptorPoolSize> descriptorPoolSize(3 + num_hitgroups);
+	std::vector<VkDescriptorPoolSize> descriptorPoolSize(4 + num_hitgroups);
 	descriptorPoolSize[0].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
 	descriptorPoolSize[0].descriptorCount = 1;
 	descriptorPoolSize[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorPoolSize[1].descriptorCount = 1;
 	descriptorPoolSize[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	descriptorPoolSize[2].descriptorCount = 1;
+	descriptorPoolSize[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorPoolSize[3].descriptorCount = (uint32_t)(p_textures->size());
 
 	for (i = 0; i < num_hitgroups; i++)
 	{
-		descriptorPoolSize[3 + i].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		descriptorPoolSize[3 + i].descriptorCount = 1;
+		descriptorPoolSize[4 + i].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		descriptorPoolSize[4 + i].descriptorCount = 1;
 	}
 
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
@@ -278,6 +321,15 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorBufferInfo_rand_states.buffer = rt.rand_states->buf();
 	descriptorBufferInfo_rand_states.range = VK_WHOLE_SIZE;
 
+	std::vector<VkDescriptorImageInfo> imageInfos(p_textures->size());
+	for (size_t i = 0; i < p_textures->size(); ++i)
+	{
+		imageInfos[i] = {};
+		imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfos[i].imageView = (*p_textures)[i]->data()->view();
+		imageInfos[i].sampler = m_Sampler->sampler();
+	}
+
 	std::vector<VkDescriptorBufferInfo> descriptorBufferInfo_geo_views(num_hitgroups);
 	for (i = 0; i < num_hitgroups; i++)
 	{
@@ -285,7 +337,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 		descriptorBufferInfo_geo_views[i].range = VK_WHOLE_SIZE;
 	}
 
-	std::vector<VkWriteDescriptorSet> writeDescriptorSet(3 + num_hitgroups);
+	std::vector<VkWriteDescriptorSet> writeDescriptorSet(4 + num_hitgroups);
 
 	writeDescriptorSet[0] = {};
 	writeDescriptorSet[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -311,18 +363,31 @@ void PathTracer::_args_create(RayTrace& rt) const
 	writeDescriptorSet[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	writeDescriptorSet[2].pBufferInfo = &descriptorBufferInfo_rand_states;
 
+	writeDescriptorSet[3] = {};
+	writeDescriptorSet[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeDescriptorSet[3].dstSet = rt.descriptorSet;
+	writeDescriptorSet[3].dstBinding = 3;
+	writeDescriptorSet[3].descriptorCount = (uint32_t)(p_textures->size());
+	writeDescriptorSet[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	writeDescriptorSet[3].pImageInfo = imageInfos.data();
+
 	for (i = 0; i < num_hitgroups; i++)
 	{
-		writeDescriptorSet[3 + i] = {};
-		writeDescriptorSet[3 + i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeDescriptorSet[3 + i].dstSet = rt.descriptorSet;
-		writeDescriptorSet[3 + i].dstBinding = descriptorSetLayoutBindings[3 + i].binding;
-		writeDescriptorSet[3 + i].descriptorCount = 1;
-		writeDescriptorSet[3 + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		writeDescriptorSet[3 + i].pBufferInfo = &descriptorBufferInfo_geo_views[i];
+		writeDescriptorSet[4 + i] = {};
+		writeDescriptorSet[4 + i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSet[4 + i].dstSet = rt.descriptorSet;
+		writeDescriptorSet[4 + i].dstBinding = descriptorSetLayoutBindings[4 + i].binding;
+		writeDescriptorSet[4 + i].descriptorCount = 1;
+		writeDescriptorSet[4 + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		writeDescriptorSet[4 + i].pBufferInfo = &descriptorBufferInfo_geo_views[i];
 	}
 
 	vkUpdateDescriptorSets(ctx.device(), (uint32_t)writeDescriptorSet.size(), writeDescriptorSet.data(), 0, nullptr);
+
+	if (m_textures.size() == 0)
+	{
+		delete _textures[0];
+	}
 }
 
 
@@ -752,7 +817,7 @@ void PathTracer::trace(int num_iter, int interval) const
 		}
 
 		if (i < num_iter)
-			printf("%.2f%%%\n", (float)i / (float)num_iter*100.0f);
+			printf("%.2f%%\n", (float)i / (float)num_iter*100.0f);
 	}
 
 	{

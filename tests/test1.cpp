@@ -1,5 +1,3 @@
-#include "volk.h"
-
 #include "PathTracer.h"
 #include "ColoredIndexedTriangleList.h"
 #include "ColoredUnitSphere.h"
@@ -19,7 +17,7 @@ typedef ColoredUnitSphere Sphere;
 
 int main()
 {
-	std::vector<Vertex> cube_vertices =
+	std::vector<TriangleMesh::Vertex> cube_vertices =
 	{
 		{{-1.0f, -1.0f, -1.0f}, {-1.0f, 0.0f, 0.0f }, {0.0f, 0.0f} },
 		{{-1.0f, -1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f }, {1.0f, 0.0f} },

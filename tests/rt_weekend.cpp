@@ -1,5 +1,3 @@
-#include "volk.h"
-
 #include "PathTracer.h"
 #include "ColoredIndexedTriangleList.h"
 #include "ColoredUnitSphere.h"

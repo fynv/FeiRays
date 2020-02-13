@@ -2,16 +2,16 @@
 
 #include "PathTracer.h"
 
-struct Vertex
-{
-	glm::vec3 Position;
-	glm::vec3 Normal;
-	glm::vec2 TexCoord;
-};
-
 class ColoredIndexedTriangleList : public Geometry
 {
 public:
+	struct Vertex
+	{
+		glm::vec3 Position;
+		glm::vec3 Normal;
+		glm::vec2 TexCoord;
+	};
+
 	DeviceBuffer* vertex_buffer() const { return m_vertexBuffer; }
 	DeviceBuffer* index_buffer() const { return m_indexBuffer; }
 

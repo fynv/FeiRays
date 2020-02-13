@@ -4,7 +4,8 @@ project(FeiRays)
 
 find_package(CUDA REQUIRED)
 
-set (INCLUDE_DIR 
+set (INCLUDE_DIR
+thirdparty
 thirdparty/volk
 thirdparty/Vulkan-Headers/include
 thirdparty/glm/glm
@@ -26,6 +27,7 @@ PathTracer.cpp
 ColoredIndexedTriangleList.cpp
 ColoredUnitSphere.cpp
 UnitSphereCheckerTex.cpp
+TexturedTriangleList.cpp
 )
 
 set (HEADER
@@ -38,6 +40,7 @@ PathTracer.h
 ColoredIndexedTriangleList.h
 ColoredUnitSphere.h
 UnitSphereCheckerTex.h
+TexturedTriangleList.h
 )
 
 if (WIN32) 
@@ -63,3 +66,7 @@ target_link_libraries(test1 FeiRays volk)
 
 add_executable(test2 tests/test2.cpp)
 target_link_libraries(test2 FeiRays volk)
+
+add_executable(test3 tests/test3.cpp tests/lambertian_obj.cpp tests/lambertian_obj.h)
+target_link_libraries(test3 FeiRays volk)
+

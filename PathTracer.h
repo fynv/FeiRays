@@ -7,6 +7,8 @@
 
 class BaseLevelAS;
 class DeviceBuffer;
+class Texture;
+class Sampler;
 
 struct GeoCls
 {
@@ -42,6 +44,18 @@ protected:
 	glm::mat4x4 m_norm_mat;
 	BaseLevelAS* m_blas;
 
+};
+
+class RGBATexture
+{
+public:
+	Texture* data() const { return m_data; }
+
+	RGBATexture(int width, int height, void* data);
+	~RGBATexture();	
+
+private:
+	Texture *m_data;	
 };
 
 
@@ -81,6 +95,7 @@ public:
 	
 	void set_target(Image* target) { m_target = target;  }
 	void add_geometry(Geometry* geo);
+	int add_texture(RGBATexture* tex);
 	void set_camera(glm::vec3 lookfrom, glm::vec3 lookat, glm::vec3 vup, float vfov, float aperture = 0.0f, float focus_dist = 1.0f);
 
 	void trace(int num_iter = 100, int interval = -1) const;
@@ -88,6 +103,8 @@ public:
 private:
 	Image* m_target;
 	std::unordered_map<std::string, GeoList> m_geo_lists;
+	std::vector<RGBATexture*> m_textures;
+	Sampler* m_Sampler;
 
 	// camera
 	glm::vec3 m_lookfrom;

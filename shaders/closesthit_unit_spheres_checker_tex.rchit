@@ -18,7 +18,7 @@ struct UnitSphereCheckerTex
 	float interval;
 };
 
-layout(std430, binding = 5) buffer Params
+layout(std430, binding = 6) buffer Params
 {
 	UnitSphereCheckerTex[] UnitSpheres_checker_tex;	
 };

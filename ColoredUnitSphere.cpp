@@ -59,7 +59,7 @@ GeoCls ColoredUnitSphere::cls() const
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(SphereView);
-	cls.binding_view = 4;
+	cls.binding_view = 5;
 	cls.fn_intersection = "../shaders/intersection_unit_spheres.spv";
 	cls.fn_closesthit = "../shaders/closesthit_colored_unit_spheres.spv";
 	return cls;

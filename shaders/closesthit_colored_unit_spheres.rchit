@@ -19,7 +19,7 @@ struct ColoredUnitSphere
 };
 
 
-layout(std430, binding = 4) buffer Params
+layout(std430, binding = 5) buffer Params
 {
 	ColoredUnitSphere[] coloredUnitSpheres;	
 };

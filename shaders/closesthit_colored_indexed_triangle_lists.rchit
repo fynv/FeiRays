@@ -51,7 +51,7 @@ struct ColoredIndexedTriangleList
 	float ref_idx;
 };
 
-layout(std430, binding = 3) buffer Params
+layout(std430, binding = 4) buffer Params
 {
 	ColoredIndexedTriangleList[] coloredIndexedTriangleLists;
 };

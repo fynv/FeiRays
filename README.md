@@ -99,3 +99,19 @@ Besides spheres, triangle-meshes (triangle-lists) are also implemented.
 Sphere with checker texture. (Chapter 3, Ray Tracing - The Next Week)
 
 
+### test3
+
+<img src="gallery/test3.png" width="900px">
+
+	900 x 600 x 100 rays:
+
+	Preparing ray-tracing..
+	Done preparing ray-tracing.. 0.027754 secs
+	Initializing RNG states..
+	Done initializing RNG states.. 1.496481 secs
+	Doing ray-tracing..
+	Done ray-tracing.. 0.218745 secs
+
+Triangle mesh with diffuse textures.
+
+
