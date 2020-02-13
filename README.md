@@ -25,6 +25,8 @@ But be sure to have the latest graphics driver installed, one that supports Vulk
 
 In case someone is interested in the progress of the project, here is a list of what have been implemented so far.
 
+All performance numbers are grabbed using a RTX 2060 super.
+
 
 ### Random Number Generator for Shaders
 
