@@ -108,7 +108,7 @@ void main()
 		c*= texture(textureSamplers[mat.textureId], texCoord).xyz;
 	}
 
-	c = vec3(c.x*c.x, c.y*c.y, c.z*c.z)
+	c = vec3(c.x*c.x, c.y*c.y, c.z*c.z);
 
 	payload.color_dis = vec4(c, gl_HitTNV);
   	payload.normal = vec4(normal, 0.0);
