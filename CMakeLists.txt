@@ -28,6 +28,7 @@ ColoredIndexedTriangleList.cpp
 ColoredUnitSphere.cpp
 UnitSphereCheckerTex.cpp
 TexturedTriangleList.cpp
+TexturedUnitSphere.cpp
 )
 
 set (HEADER
@@ -41,6 +42,7 @@ ColoredIndexedTriangleList.h
 ColoredUnitSphere.h
 UnitSphereCheckerTex.h
 TexturedTriangleList.h
+TexturedUnitSphere.h
 )
 
 if (WIN32) 

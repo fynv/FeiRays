@@ -9,7 +9,13 @@
 #include "lambertian_obj.h"
 #include "TexturedTriangleList.h"
 #include "ColoredUnitSphere.h"
-#include "UnitSphereCheckerTex.h"
+#include "TexturedUnitSphere.h"
+
+#include "stb_image.h"
+
+#ifndef PI
+#define PI 3.1415926f
+#endif
 
 int main()
 {
@@ -23,9 +29,16 @@ int main()
 
 	glm::mat4x4 identity = glm::identity<glm::mat4x4>();
 
-	glm::mat4x4 model0 = glm::translate(identity, glm::vec3(0.0f, -1000.0f, 0.0f));
-	model0 = glm::scale(model0, glm::vec3(1000.0f, 1000.0f, 1000.0f));
-	UnitSphereCheckerTex sphere0(model0, 0.3f, { 0.2f, 0.3f, 0.1f }, { 0.9f, 0.9f, 0.9f });
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load("../data/moon_map.jpg", &texWidth, &texHeight, &texChannels, 4);
+	RGBATexture tex(texWidth, texHeight, pixels);
+	stbi_image_free(pixels);
+	int tex_id = pt.add_texture(&tex);
+
+	glm::mat4x4 model0 = glm::translate(identity, glm::vec3(0.0f, -100.0f, 0.0f));
+	model0 = glm::scale(model0, glm::vec3(100.0f, 100.0f, 100.0f));
+	model0 = glm::rotate(model0, PI / 6, glm::vec3(1.0f, 0.0f, 1.0f));
+	TexturedUnitSphere sphere0(model0, tex_id);
 	pt.add_geometry(&sphere0);
 
 	glm::mat4x4 model1 = glm::translate(identity, glm::vec3(0.0f, 1.0f, 3.0f));
@@ -39,7 +52,7 @@ int main()
 	LambertianObject obj(pt, "../data/Medieval_building", "Medieval_building.obj", identity);
 	pt.add_geometry(obj.get_geo());
 
-	pt.set_camera({ -12.0f, 6.0f, 12.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 20.0f, 0.2f, 16.0f);
+	pt.set_camera({ -12.0f, 6.0f, 12.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 30.0f, 0.2f, 16.0f);
 	pt.trace(100);
 
 	float* hbuffer = (float*)malloc(view_width * view_height * sizeof(float) * 4);
