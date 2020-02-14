@@ -13,12 +13,19 @@
 
 #include "stb_image.h"
 
+#include "dds_reader.hpp"
+
 #ifndef PI
 #define PI 3.1415926f
 #endif
 
 int main()
 {
+	int cubeWidth, cubeHeight, cubeChannels, isCube;
+	void *cube_pixels = dds_load("../data/sky_cube.dds", &cubeWidth, &cubeHeight, &cubeChannels, &isCube);
+	RGBACubemap cubemap(cubeWidth, cubeHeight, cube_pixels);
+	dds_free(cube_pixels);
+
 	const int view_width = 900;
 	const int view_height = 600;
 
@@ -26,6 +33,10 @@ int main()
 
 	PathTracer pt;
 	pt.set_target(&target);
+
+	int id_skybox= pt.add_cubemap(&cubemap);
+	TexturedSkyBox skybox(id_skybox);
+	pt.set_skybox(&skybox);
 
 	glm::mat4x4 identity = glm::identity<glm::mat4x4>();
 
@@ -37,7 +48,7 @@ int main()
 
 	glm::mat4x4 model0 = glm::translate(identity, glm::vec3(0.0f, -100.0f, 0.0f));
 	model0 = glm::scale(model0, glm::vec3(100.0f, 100.0f, 100.0f));
-	model0 = glm::rotate(model0, PI / 6, glm::vec3(1.0f, 0.0f, 1.0f));
+	model0 = glm::rotate(model0, PI / 6.0f, glm::vec3(1.0f, 0.0f, 1.0f));
 	TexturedUnitSphere sphere0(model0, tex_id);
 	pt.add_geometry(&sphere0);
 
@@ -51,8 +62,8 @@ int main()
 
 	LambertianObject obj(pt, "../data/Medieval_building", "Medieval_building.obj", identity);
 	pt.add_geometry(obj.get_geo());
-
 	pt.set_camera({ -12.0f, 6.0f, 12.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 30.0f, 0.2f, 16.0f);
+
 	pt.trace(100);
 
 	float* hbuffer = (float*)malloc(view_width * view_height * sizeof(float) * 4);

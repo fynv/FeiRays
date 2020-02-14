@@ -6,6 +6,7 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 
 #include "payload.shinc"
+#include "bindings.h"
 
 layout(location = 0) rayPayloadInNV Payload payload;
 hitAttributeNV vec2 attribs;
@@ -76,7 +77,7 @@ struct TexturedTriangleList
 	MaterialIndexBuf materialIdxBuf;
 };
 
-layout(std430, binding = 7) buffer Params
+layout(std430, binding = BINDING_TexturedTriangleList) buffer Params
 {
 	TexturedTriangleList[] texturedTriangleList;
 };

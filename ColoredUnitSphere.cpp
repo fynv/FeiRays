@@ -1,5 +1,6 @@
 #include "context.h"
 #include "ColoredUnitSphere.h"
+#include "shaders/bindings.h"
 
 
 void ColoredUnitSphere::_blas_create()
@@ -59,7 +60,7 @@ GeoCls ColoredUnitSphere::cls() const
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(SphereView);
-	cls.binding_view = 5;
+	cls.binding_view = BINDING_ColoredUnitSphere;
 	cls.fn_intersection = "../shaders/intersection_unit_spheres.spv";
 	cls.fn_closesthit = "../shaders/closesthit_colored_unit_spheres.spv";
 	return cls;

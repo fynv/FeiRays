@@ -715,7 +715,167 @@ void Texture::uploadTexture(const void* hdata)
 
 		}
 	}
+}
 
+Cubemap::Cubemap(int width, int height, int pixel_size, VkFormat format, VkImageAspectFlags aspectFlags, VkImageUsageFlags usage)
+{
+	m_width = width;
+	m_height = height;
+	m_pixel_size = pixel_size;
+	m_format = format;
+	if (width == 0 || height == 0) return;
+
+	const Context& ctx = Context::get_context();
+
+	VkImageCreateInfo imageInfo = {};
+	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageInfo.extent.width = width;
+	imageInfo.extent.height = height;
+	imageInfo.extent.depth = 1;
+	imageInfo.mipLevels = 1;
+	imageInfo.arrayLayers = 6;
+	imageInfo.format = format;
+	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+	vkCreateImage(ctx.device(), &imageInfo, nullptr, &m_image);
+
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(ctx.device(), m_image, &memRequirements);
+
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(ctx.physicalDevice(), &memProperties);
+
+	uint32_t memoryTypeIndex = VK_MAX_MEMORY_TYPES;
+	for (uint32_t k = 0; k < memProperties.memoryTypeCount; k++)
+	{
+		if ((memRequirements.memoryTypeBits & (1 << k)) == 0) continue;
+		if ((VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT & memProperties.memoryTypes[k].propertyFlags) == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		{
+			memoryTypeIndex = k;
+			break;
+		}
+	}
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = memoryTypeIndex;
+
+	vkAllocateMemory(ctx.device(), &allocInfo, nullptr, &m_mem);
+	vkBindImageMemory(ctx.device(), m_image, m_mem, 0);
+
+	VkImageViewCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	createInfo.image = m_image;
+	createInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+	createInfo.format = format;
+	createInfo.subresourceRange.aspectMask = aspectFlags;
+	createInfo.subresourceRange.baseMipLevel = 0;
+	createInfo.subresourceRange.levelCount = 1;
+	createInfo.subresourceRange.baseArrayLayer = 0;
+	createInfo.subresourceRange.layerCount = 6;
+	vkCreateImageView(ctx.device(), &createInfo, nullptr, &m_view);
+}
+
+Cubemap::~Cubemap()
+{
+	if (m_width == 0 || m_height == 0) return;
+	const Context& ctx = Context::get_context();
+	vkDestroyImageView(ctx.device(), m_view, nullptr);
+	vkDestroyImage(ctx.device(), m_image, nullptr);
+	vkFreeMemory(ctx.device(), m_mem, nullptr);
+}
+
+void Cubemap::uploadTexture(const void* hdata)
+{
+	if (m_width == 0 || m_height == 0) return;
+	UploadBuffer staging_buf(m_width*m_height*m_pixel_size*6);
+	staging_buf.upload(hdata);
+
+	{
+		NTimeCommandBuffer cmdBuf;
+
+		{
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = m_image;
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseMipLevel = 0;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 6;
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+			vkCmdPipelineBarrier(
+				cmdBuf.buf(),
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &barrier
+			);
+		}
+
+		{
+			VkBufferImageCopy region = {};
+			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.imageSubresource.layerCount = 6;
+			region.imageExtent = {
+				(uint32_t)m_width,
+				(uint32_t)m_height,
+				1
+			};
+
+			vkCmdCopyBufferToImage(
+				cmdBuf.buf(),
+				staging_buf.buf(),
+				m_image,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				1,
+				&region
+			);
+		}
+
+		{
+
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = m_image;
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseMipLevel = 0;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 6;
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			vkCmdPipelineBarrier(
+				cmdBuf.buf(),
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &barrier
+			);
+		}
+	}
 }
 
 Sampler::Sampler()

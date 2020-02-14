@@ -6,6 +6,7 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 
 #include "payload.shinc"
+#include "bindings.h"
 
 layout(location = 0) rayPayloadInNV Payload payload;
 hitAttributeNV vec3 hitpoint;
@@ -19,7 +20,7 @@ struct TexturedUnitSphere
 	int textureId;
 };
 
-layout(std430, binding = 8) buffer Params
+layout(std430, binding = BINDING_TexturedUnitSphere) buffer Params
 {
 	TexturedUnitSphere[] texturedUnitSpheres;	
 };

@@ -108,12 +108,13 @@ Sphere with checker texture. (Chapter 3, Ray Tracing - The Next Week)
 	900 x 600 x 100 rays:
 
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.027262 secs
+	Done preparing ray-tracing.. 0.028303 secs
 	Initializing RNG states..
-	Done initializing RNG states.. 1.506520 secs
+	Done initializing RNG states.. 1.503367 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.143834 secs
+	Done ray-tracing.. 0.156522 secs
 
 Triangle mesh and sphere with diffuse textures.
+Sky-box using a cubemap texture.
 
 

@@ -165,6 +165,34 @@ private:
 
 };
 
+class Cubemap
+{
+public:
+	int width() const { return m_width; }
+	int height() const { return m_height; }
+	int pixel_size() const { return m_pixel_size; }
+	const VkFormat& format() const { return m_format; }
+	const VkImage& image() const { return m_image; }
+	const VkDeviceMemory& memory() const { return m_mem; }
+	const VkImageView& view() const { return m_view; }
+
+	Cubemap(int width, int height, int pixel_size, VkFormat format, VkImageAspectFlags aspectFlags, VkImageUsageFlags usage);
+	~Cubemap();
+
+	void uploadTexture(const void* hdata);
+
+private:
+	int m_width;
+	int m_height;
+	int m_pixel_size;
+	VkFormat m_format;
+
+	VkImage m_image;
+	VkDeviceMemory m_mem;
+	VkImageView m_view;
+};
+
+
 class Sampler
 {
 public:

@@ -69,6 +69,6 @@ target_link_libraries(test1 FeiRays volk)
 add_executable(test2 tests/test2.cpp)
 target_link_libraries(test2 FeiRays volk)
 
-add_executable(test3 tests/test3.cpp tests/lambertian_obj.cpp tests/lambertian_obj.h)
+add_executable(test3 tests/test3.cpp tests/dds_reader.hpp tests/lambertian_obj.cpp tests/lambertian_obj.h)
 target_link_libraries(test3 FeiRays volk)
 

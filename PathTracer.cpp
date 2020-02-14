@@ -11,6 +11,7 @@
 #include <memory.h>
 #include "context.h"
 #include "PathTracer.h"
+#include "shaders/bindings.h"
 #include "Timing.h"
 
 #ifndef PI
@@ -32,6 +33,29 @@ Geometry::~Geometry()
 	delete m_blas;
 }
 
+SkyBox::SkyBox()
+{
+
+}
+
+SkyBox::~SkyBox()
+{
+
+}
+
+SkyCls SkyBox::cls() const
+{
+	SkyCls cls;
+	cls.fn_missing = "../shaders/miss.spv";
+	cls.size_view = 0;
+	return cls;
+}
+
+void SkyBox::get_view(void* view_buf) const
+{
+	return;
+}
+
 RGBATexture::RGBATexture(int width, int height, void* data)
 {
 	m_data = new Texture(width, height, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -41,6 +65,59 @@ RGBATexture::RGBATexture(int width, int height, void* data)
 RGBATexture::~RGBATexture()
 {
 	delete m_data;
+}
+
+
+RGBACubemap::RGBACubemap(int width, int height, void* data)
+{
+	m_data = new Cubemap(width, height, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+	m_data->uploadTexture(data);
+}
+
+
+RGBACubemap::~RGBACubemap()
+{
+	delete m_data;
+}
+
+TexturedSkyBox::TexturedSkyBox(int texId)
+{
+	m_texId = texId;
+	m_transform = glm::identity<glm::mat4x4>();
+	m_gamma = 1.0f;
+}
+
+TexturedSkyBox::~TexturedSkyBox()
+{
+
+}
+
+void TexturedSkyBox::rotate(float angle, const glm::vec3& v)
+{
+	m_transform = glm::rotate(m_transform, angle, v);
+}
+
+struct View_TexturedSkyBox
+{
+	glm::mat3x4 transform;
+	int texIdx;
+	float gamma;
+};
+
+SkyCls TexturedSkyBox::cls() const
+{
+	SkyCls cls;
+	cls.fn_missing = "../shaders/miss_tex_skys.spv";
+	cls.size_view = sizeof(View_TexturedSkyBox);
+	return cls;
+}
+
+void TexturedSkyBox::get_view(void* view_buf) const
+{
+	View_TexturedSkyBox& view = *(View_TexturedSkyBox*)view_buf;
+	view.transform = m_transform;
+	view.texIdx = m_texId;
+	view.gamma = m_gamma;
 }
 
 Image::Image(int width, int height, float* hdata)
@@ -76,6 +153,9 @@ PathTracer::PathTracer()
 	set_camera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f }, 90.0f);
 
 	m_Sampler = new Sampler;
+
+	static SkyBox _sky_box;
+	m_current_sky_box = &_sky_box;
 }
 
 PathTracer::~PathTracer()
@@ -96,6 +176,13 @@ int PathTracer::add_texture(RGBATexture* tex)
 {
 	int id = (int)m_textures.size();
 	m_textures.push_back(tex);
+	return id;
+}
+
+int PathTracer::add_cubemap(RGBACubemap* tex)
+{
+	int id = (int)m_cubemaps.size();
+	m_cubemaps.push_back(tex);
 	return id;
 }
 
@@ -137,6 +224,7 @@ struct RayTrace
 	std::vector<DeviceBuffer*> buf_views;
 	DeviceBuffer* params_raygen;
 	DeviceBuffer* rand_states;
+	DeviceBuffer* params_sky;
 
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkDescriptorPool descriptorPool;
@@ -193,6 +281,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 {
 	const Context& ctx = Context::get_context();
 	size_t num_hitgroups = m_geo_lists.size();
+	SkyCls sky_cls = m_current_sky_box->cls();
 
 	rt.buf_views.resize(num_hitgroups);
 
@@ -219,19 +308,19 @@ void PathTracer::_args_create(RayTrace& rt) const
 	rt.params_raygen = new DeviceBuffer(sizeof(RayGenParams), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	rt.rand_states = new DeviceBuffer(sizeof(RNGState) * m_target->width()*m_target->height(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
 
-	std::vector<RGBATexture*> _textures;
-	const std::vector<RGBATexture*>* p_textures = &m_textures;
-
-	if (m_textures.size() == 0)
+	if (sky_cls.size_view > 0)
 	{
-		unsigned buf[4];
-		RGBATexture* _tmp = new RGBATexture(2, 2, buf);
-		_textures.push_back(_tmp);
-		p_textures = &_textures;
+		rt.params_sky = new DeviceBuffer(sky_cls.size_view, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+		std::vector<char> buf(sky_cls.size_view);
+		m_current_sky_box->get_view(buf.data());
+		rt.params_sky->upload(buf.data());
+	}
+	else
+	{
+		rt.params_sky = nullptr;
 	}
 
-
-	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(4 + num_hitgroups);
+	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(BINDING_START + num_hitgroups);
 
 	descriptorSetLayoutBindings[0] = {};
 	descriptorSetLayoutBindings[0].binding = 0;
@@ -251,19 +340,28 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorSetLayoutBindings[3] = {};
 	descriptorSetLayoutBindings[3].binding = 3;
 	descriptorSetLayoutBindings[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorSetLayoutBindings[3].descriptorCount = (uint32_t)(p_textures->size());
+	descriptorSetLayoutBindings[3].descriptorCount = (uint32_t)(m_textures.size());
 	descriptorSetLayoutBindings[3].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
-
+	descriptorSetLayoutBindings[4] = {};
+	descriptorSetLayoutBindings[4].binding = 4;
+	descriptorSetLayoutBindings[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorSetLayoutBindings[4].descriptorCount = (uint32_t)(m_cubemaps.size());
+	descriptorSetLayoutBindings[4].stageFlags = VK_SHADER_STAGE_MISS_BIT_NV;
+	descriptorSetLayoutBindings[5] = {};
+	descriptorSetLayoutBindings[5].binding = 5;
+	descriptorSetLayoutBindings[5].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorSetLayoutBindings[5].descriptorCount = 1;
+	descriptorSetLayoutBindings[5].stageFlags = VK_SHADER_STAGE_MISS_BIT_NV;
 
 	i = 0;
 	iter = m_geo_lists.begin();
 	while (iter != m_geo_lists.end())
 	{
-		descriptorSetLayoutBindings[4 + i] = {};
-		descriptorSetLayoutBindings[4 + i].binding = iter->second.cls.binding_view;
-		descriptorSetLayoutBindings[4 + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		descriptorSetLayoutBindings[4 + i].descriptorCount = 1;
-		descriptorSetLayoutBindings[4 + i].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+		descriptorSetLayoutBindings[BINDING_START + i] = {};
+		descriptorSetLayoutBindings[BINDING_START + i].binding = iter->second.cls.binding_view;
+		descriptorSetLayoutBindings[BINDING_START + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		descriptorSetLayoutBindings[BINDING_START + i].descriptorCount = 1;
+		descriptorSetLayoutBindings[BINDING_START + i].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
 		iter++;
 		i++;
@@ -276,28 +374,21 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 	vkCreateDescriptorSetLayout(ctx.device(), &descriptorSetLayoutCreateInfo, nullptr, &rt.descriptorSetLayout);
 
-	std::vector<VkDescriptorPoolSize> descriptorPoolSize(4 + num_hitgroups);
+	VkDescriptorPoolSize descriptorPoolSize[4];
 	descriptorPoolSize[0].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
 	descriptorPoolSize[0].descriptorCount = 1;
 	descriptorPoolSize[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorPoolSize[1].descriptorCount = 1;
+	descriptorPoolSize[1].descriptorCount = 2;
 	descriptorPoolSize[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	descriptorPoolSize[2].descriptorCount = 1;
+	descriptorPoolSize[2].descriptorCount = (uint32_t)(1 + num_hitgroups);
 	descriptorPoolSize[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorPoolSize[3].descriptorCount = (uint32_t)(p_textures->size());
-
-	for (i = 0; i < num_hitgroups; i++)
-	{
-		descriptorPoolSize[4 + i].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		descriptorPoolSize[4 + i].descriptorCount = 1;
-	}
+	descriptorPoolSize[3].descriptorCount = (uint32_t)(m_textures.size()+ m_cubemaps.size());
 
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
 	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	descriptorPoolCreateInfo.maxSets = 1;
-	descriptorPoolCreateInfo.poolSizeCount = (uint32_t)descriptorPoolSize.size();
-	descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSize.data();
-
+	descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSize[3].descriptorCount>0?4:3;
+	descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSize;
 	vkCreateDescriptorPool(ctx.device(), &descriptorPoolCreateInfo, nullptr, &rt.descriptorPool);
 
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
@@ -321,14 +412,29 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorBufferInfo_rand_states.buffer = rt.rand_states->buf();
 	descriptorBufferInfo_rand_states.range = VK_WHOLE_SIZE;
 
-	std::vector<VkDescriptorImageInfo> imageInfos(p_textures->size());
-	for (size_t i = 0; i < p_textures->size(); ++i)
+	std::vector<VkDescriptorImageInfo> imageInfos(m_textures.size());
+	for (size_t i = 0; i < m_textures.size(); ++i)
 	{
 		imageInfos[i] = {};
 		imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfos[i].imageView = (*p_textures)[i]->data()->view();
+		imageInfos[i].imageView = m_textures[i]->data()->view();
 		imageInfos[i].sampler = m_Sampler->sampler();
 	}
+
+	std::vector<VkDescriptorImageInfo> cubemapInfos(m_cubemaps.size());
+	for (size_t i = 0; i < m_cubemaps.size(); ++i)
+	{
+		cubemapInfos[i] = {};
+		cubemapInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		cubemapInfos[i].imageView = m_cubemaps[i]->data()->view();
+		cubemapInfos[i].sampler = m_Sampler->sampler();
+	}
+
+	VkDescriptorBufferInfo descriptorBufferInfo_sky = {};
+	if (rt.params_sky!=nullptr)
+		descriptorBufferInfo_sky.buffer = rt.params_sky->buf();
+	descriptorBufferInfo_sky.range = VK_WHOLE_SIZE;
+
 
 	std::vector<VkDescriptorBufferInfo> descriptorBufferInfo_geo_views(num_hitgroups);
 	for (i = 0; i < num_hitgroups; i++)
@@ -337,7 +443,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 		descriptorBufferInfo_geo_views[i].range = VK_WHOLE_SIZE;
 	}
 
-	std::vector<VkWriteDescriptorSet> writeDescriptorSet(4 + num_hitgroups);
+	std::vector<VkWriteDescriptorSet> writeDescriptorSet(3 + num_hitgroups);
 
 	writeDescriptorSet[0] = {};
 	writeDescriptorSet[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -363,31 +469,55 @@ void PathTracer::_args_create(RayTrace& rt) const
 	writeDescriptorSet[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	writeDescriptorSet[2].pBufferInfo = &descriptorBufferInfo_rand_states;
 
-	writeDescriptorSet[3] = {};
-	writeDescriptorSet[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	writeDescriptorSet[3].dstSet = rt.descriptorSet;
-	writeDescriptorSet[3].dstBinding = 3;
-	writeDescriptorSet[3].descriptorCount = (uint32_t)(p_textures->size());
-	writeDescriptorSet[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	writeDescriptorSet[3].pImageInfo = imageInfos.data();
-
 	for (i = 0; i < num_hitgroups; i++)
 	{
-		writeDescriptorSet[4 + i] = {};
-		writeDescriptorSet[4 + i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeDescriptorSet[4 + i].dstSet = rt.descriptorSet;
-		writeDescriptorSet[4 + i].dstBinding = descriptorSetLayoutBindings[4 + i].binding;
-		writeDescriptorSet[4 + i].descriptorCount = 1;
-		writeDescriptorSet[4 + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		writeDescriptorSet[4 + i].pBufferInfo = &descriptorBufferInfo_geo_views[i];
+		writeDescriptorSet[3 + i] = {};
+		writeDescriptorSet[3 + i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSet[3 + i].dstSet = rt.descriptorSet;
+		writeDescriptorSet[3 + i].dstBinding = descriptorSetLayoutBindings[BINDING_START + i].binding;
+		writeDescriptorSet[3 + i].descriptorCount = 1;
+		writeDescriptorSet[3 + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		writeDescriptorSet[3 + i].pBufferInfo = &descriptorBufferInfo_geo_views[i];
+	}
+
+	if (m_textures.size() > 0)
+	{
+		VkWriteDescriptorSet wds = {};
+		wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		wds.dstSet = rt.descriptorSet;
+		wds.dstBinding = 3;
+		wds.descriptorCount = (uint32_t)(m_textures.size());
+		wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		wds.pImageInfo = imageInfos.data();
+		writeDescriptorSet.push_back(wds);
+	}
+
+	if (m_cubemaps.size() > 0)
+	{
+		VkWriteDescriptorSet wds = {};
+		wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		wds.dstSet = rt.descriptorSet;
+		wds.dstBinding = 4;
+		wds.descriptorCount = (uint32_t)(m_cubemaps.size());
+		wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		wds.pImageInfo = cubemapInfos.data();
+		writeDescriptorSet.push_back(wds);
+	}
+
+	if (rt.params_sky!=nullptr)
+	{
+		VkWriteDescriptorSet wds = {};
+		wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		wds.dstSet = rt.descriptorSet;
+		wds.dstBinding = 5;
+		wds.descriptorCount = 1;
+		wds.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		wds.pBufferInfo = &descriptorBufferInfo_sky;
+		writeDescriptorSet.push_back(wds);
 	}
 
 	vkUpdateDescriptorSets(ctx.device(), (uint32_t)writeDescriptorSet.size(), writeDescriptorSet.data(), 0, nullptr);
 
-	if (m_textures.size() == 0)
-	{
-		delete _textures[0];
-	}
 }
 
 
@@ -422,9 +552,10 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 {
 	const Context& ctx = Context::get_context();
 	size_t num_hitgroups = m_geo_lists.size();
+	SkyCls sky_cls = m_current_sky_box->cls();
 
 	VkShaderModule rayGenModule = _createShaderModule_from_spv("../shaders/raygen.spv");
-	VkShaderModule missModule = _createShaderModule_from_spv("../shaders/miss.spv");
+	VkShaderModule missModule = _createShaderModule_from_spv(sky_cls.fn_missing);
 	VkShaderModule missShadowModule = _createShaderModule_from_spv("../shaders/miss_shadow.spv");
 
 	std::vector<VkShaderModule> intersection_modules(num_hitgroups);
@@ -743,6 +874,7 @@ void PathTracer::_rt_clean(RayTrace& rt) const
 	vkDestroyDescriptorPool(ctx.device(), rt.descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(ctx.device(), rt.descriptorSetLayout, nullptr);
 
+	delete rt.params_sky;
 	delete rt.rand_states;
 	delete rt.params_raygen;
 

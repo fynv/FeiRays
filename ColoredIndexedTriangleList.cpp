@@ -1,6 +1,6 @@
 #include "context.h"
 #include "ColoredIndexedTriangleList.h"
-
+#include "shaders/bindings.h"
 
 void ColoredIndexedTriangleList::_blas_create()
 {
@@ -73,7 +73,7 @@ GeoCls ColoredIndexedTriangleList::cls() const
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(TriangleMeshView);
-	cls.binding_view = 4;
+	cls.binding_view = BINDING_ColoredIndexedTriangleList;
 	cls.fn_intersection = nullptr;
 	cls.fn_closesthit = "../shaders/closesthit_colored_indexed_triangle_lists.spv";
 	return cls;

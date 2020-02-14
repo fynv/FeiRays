@@ -1,6 +1,6 @@
 #include "context.h"
 #include "TexturedUnitSphere.h"
-
+#include "shaders/bindings.h"
 
 void TexturedUnitSphere::_blas_create()
 {
@@ -54,7 +54,7 @@ GeoCls TexturedUnitSphere::cls() const
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(SphereView);
-	cls.binding_view = 8;
+	cls.binding_view = BINDING_TexturedUnitSphere;
 	cls.fn_intersection = "../shaders/intersection_unit_spheres.spv";
 	cls.fn_closesthit = "../shaders/closesthit_textured_unit_spheres.spv";
 	return cls;

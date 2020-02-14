@@ -5,6 +5,7 @@
 #extension GL_NV_ray_tracing : enable
 
 #include "payload.shinc"
+#include "bindings.h"
 
 layout(location = 0) rayPayloadInNV Payload payload;
 hitAttributeNV vec2 attribs;
@@ -51,7 +52,7 @@ struct ColoredIndexedTriangleList
 	float ref_idx;
 };
 
-layout(std430, binding = 4) buffer Params
+layout(std430, binding = BINDING_ColoredIndexedTriangleList) buffer Params
 {
 	ColoredIndexedTriangleList[] coloredIndexedTriangleLists;
 };

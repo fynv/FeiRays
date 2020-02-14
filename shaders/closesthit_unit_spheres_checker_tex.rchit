@@ -5,6 +5,7 @@
 #extension GL_NV_ray_tracing : enable
 
 #include "payload.shinc"
+#include "bindings.h"
 
 layout(location = 0) rayPayloadInNV Payload payload;
 hitAttributeNV vec3 hitpoint;
@@ -18,7 +19,7 @@ struct UnitSphereCheckerTex
 	float interval;
 };
 
-layout(std430, binding = 6) buffer Params
+layout(std430, binding = BINDING_UnitSphereCheckerTex) buffer Params
 {
 	UnitSphereCheckerTex[] UnitSpheres_checker_tex;	
 };

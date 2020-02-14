@@ -1,5 +1,6 @@
 #include "context.h"
 #include "TexturedTriangleList.h"
+#include "shaders/bindings.h"
 
 void TexturedTriangleList::_blas_create()
 {
@@ -26,7 +27,6 @@ void TexturedTriangleList::_blas_create()
 
 	m_blas = new BaseLevelAS(1, &geometry);
 }
-
 
 
 TexturedTriangleList::TexturedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<Material>& materials, const int* materialIdx) : Geometry(model)
@@ -65,7 +65,7 @@ GeoCls TexturedTriangleList::cls() const
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(TriangleMeshView);
-	cls.binding_view = 7;
+	cls.binding_view = BINDING_TexturedTriangleList;
 	cls.fn_intersection = nullptr;
 	cls.fn_closesthit = "../shaders/closesthit_textured_triangle_lists.spv";
 	return cls;

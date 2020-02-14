@@ -5,6 +5,7 @@
 #extension GL_NV_ray_tracing : enable
 
 #include "payload.shinc"
+#include "bindings.h"
 
 layout(location = 0) rayPayloadInNV Payload payload;
 hitAttributeNV vec3 hitpoint;
@@ -19,7 +20,7 @@ struct ColoredUnitSphere
 };
 
 
-layout(std430, binding = 5) buffer Params
+layout(std430, binding = BINDING_ColoredUnitSphere) buffer Params
 {
 	ColoredUnitSphere[] coloredUnitSpheres;	
 };
