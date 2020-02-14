@@ -174,8 +174,10 @@ NTimeCommandBuffer::NTimeCommandBuffer(size_t n) : m_n(n)
 
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	if (n==1)
+	if (n == 1)
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	else
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
 	vkBeginCommandBuffer(m_buf, &beginInfo);
 }
