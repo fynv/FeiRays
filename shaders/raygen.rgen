@@ -123,7 +123,7 @@ void main()
                 else
                 {
                     direction = refracted;
-                    fuzz_dir = - fuzz_dir;
+                    fuzz_dir = - normal;
                 }
 
                 if (!enter)
