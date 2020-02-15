@@ -21,18 +21,18 @@
 
 int main()
 {
+	const int view_width = 900;
+	const int view_height = 600;
+
+	PathTracer pt;
+
+	Image target(view_width, view_height);
+	pt.set_target(&target);
+
 	int cubeWidth, cubeHeight, cubeChannels, isCube;
 	void *cube_pixels = dds_load("../data/sky_cube.dds", &cubeWidth, &cubeHeight, &cubeChannels, &isCube);
 	RGBACubemap cubemap(cubeWidth, cubeHeight, cube_pixels);
 	dds_free(cube_pixels);
-
-	const int view_width = 900;
-	const int view_height = 600;
-
-	Image target(view_width, view_height);
-
-	PathTracer pt;
-	pt.set_target(&target);
 
 	int id_skybox= pt.add_cubemap(&cubemap);
 	TexturedSkyBox skybox(id_skybox);

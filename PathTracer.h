@@ -109,6 +109,7 @@ class Image
 {
 public:
 	DeviceBuffer* data() const { return m_data; }
+	DeviceBuffer* rng_states(); 
 	int width() const { return m_width; }
 	int height() const { return m_height; }
 
@@ -120,9 +121,12 @@ public:
 
 private:
 	DeviceBuffer* m_data;
+	DeviceBuffer* m_rng_states;
 	int m_width;
 	int m_height;
 
+	void _rand_init_cpu() const;
+	void _rand_init_cuda() const;
 };
 
 struct GeoList
@@ -169,8 +173,6 @@ private:
 	void _rt_pipeline_create(RayTrace& rt) const;
 	void _comp_pipeline_create(RayTrace& rt) const;
 	void _calc_raygen(RayTrace& rt) const;
-	void _rand_init_cpu(RayTrace& rt) const;
-	void _rand_init_cuda(RayTrace& rt) const;
 
 	void _rt_clean(RayTrace& rt) const;
 	

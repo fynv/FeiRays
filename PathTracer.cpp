@@ -12,6 +12,7 @@
 #include "context.h"
 #include "PathTracer.h"
 #include "shaders/bindings.h"
+#include "rand_state_init.hpp"
 #include "Timing.h"
 
 #ifndef PI
@@ -19,6 +20,7 @@
 #endif
 
 #include <gtc/matrix_transform.hpp>
+
 
 Geometry::Geometry(const glm::mat4x4& model)
 {
@@ -129,11 +131,121 @@ Image::Image(int width, int height, float* hdata)
 
 	if (hdata != nullptr)
 		m_data->upload(hdata);
+
+	m_rng_states = nullptr;
 }
 
 Image::~Image()
 {
+	delete m_rng_states;
 	delete m_data;
+}
+
+
+void Image::_rand_init_cpu() const
+{
+	unsigned count = unsigned(m_width*m_height);
+	RNGState* states = new RNGState[count];
+
+	RNG rng;
+	rng.p_sequence_matrix = xorwow_sequence_matrix;
+	rng.p_offset_matrix = xorwow_offset_matrix;
+
+	for (int i = 0; i < m_width*m_height; i++)
+		rng.state_init(1234, i, 0, states[i]);
+
+	m_rng_states->upload(states);
+
+	delete[] states;
+}
+
+
+#ifdef _WIN64 // For windows
+HANDLE getVkMemHandle(DeviceBuffer& buf, VkExternalMemoryHandleTypeFlagsKHR externalMemoryHandleType)
+{
+	const Context& ctx = Context::get_context();
+
+	HANDLE handle;
+
+	VkMemoryGetWin32HandleInfoKHR vkMemoryGetWin32HandleInfoKHR = {};
+	vkMemoryGetWin32HandleInfoKHR.sType = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
+	vkMemoryGetWin32HandleInfoKHR.pNext = NULL;
+	vkMemoryGetWin32HandleInfoKHR.memory = buf.memory();
+	vkMemoryGetWin32HandleInfoKHR.handleType = (VkExternalMemoryHandleTypeFlagBitsKHR)externalMemoryHandleType;
+
+	vkGetMemoryWin32HandleKHR(ctx.device(), &vkMemoryGetWin32HandleInfoKHR, &handle);
+	return handle;
+}
+#else
+int getVkMemHandle(DeviceBuffer& buf, VkExternalMemoryHandleTypeFlagsKHR externalMemoryHandleType)
+{
+	const Context& ctx = Context::get_context();
+
+	if (externalMemoryHandleType == VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) {
+		int fd;
+
+		VkMemoryGetFdInfoKHR vkMemoryGetFdInfoKHR = {};
+		vkMemoryGetFdInfoKHR.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
+		vkMemoryGetFdInfoKHR.pNext = NULL;
+		vkMemoryGetFdInfoKHR.memory = buf.memory();
+		vkMemoryGetFdInfoKHR.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+
+		vkGetMemoryFdKHR(ctx.device(), &vkMemoryGetFdInfoKHR, &fd);
+
+		return fd;
+	}
+	return -1;
+}
+#endif
+
+void cu_rand_init(unsigned count, RNGState* d_states);
+void h_rand_init(unsigned count, RNGState* h_states);
+
+
+void Image::_rand_init_cuda() const
+{
+	unsigned count = unsigned(m_width*m_height);
+
+	cudaExternalMemoryHandleDesc cudaExtMemHandleDesc = {};
+#ifdef _WIN64
+	cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueWin32Kmt;
+	cudaExtMemHandleDesc.handle.win32.handle = getVkMemHandle(*m_rng_states, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT);
+#else
+	cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueFd;
+	cudaExtMemHandleDesc.handle.fd = getVkMemHandle(*m_rng_states, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT);
+#endif
+	cudaExtMemHandleDesc.size = sizeof(RNGState) * count;
+
+	cudaExternalMemory_t cudaExtMemVertexBuffer;
+	cudaImportExternalMemory(&cudaExtMemVertexBuffer, &cudaExtMemHandleDesc);
+
+	cudaExternalMemoryBufferDesc cudaExtBufferDesc;
+	cudaExtBufferDesc.offset = 0;
+	cudaExtBufferDesc.size = sizeof(RNGState) * count;
+	cudaExtBufferDesc.flags = 0;
+
+	RNGState* d_states;
+	cudaExternalMemoryGetMappedBuffer((void**)&d_states, cudaExtMemVertexBuffer, &cudaExtBufferDesc);
+	cu_rand_init(count, d_states);
+	cudaDestroyExternalMemory(cudaExtMemVertexBuffer);
+}
+
+DeviceBuffer* Image::rng_states()
+{
+	if (m_rng_states == nullptr)
+	{
+		m_rng_states = new DeviceBuffer(sizeof(RNGState) * m_width*m_height, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
+
+		printf("Initializing RNG states..\n");
+		double time0 = GetTime();
+		_rand_init_cuda();
+		//_rand_init_cpu();
+		double time1 = GetTime();
+		printf("Done initializing RNG states.. %f secs\n", time1 - time0);
+
+	}
+	
+	return m_rng_states;
 }
 
 
@@ -214,8 +326,6 @@ struct RayGenParams
 	int num_iter;
 };
 
-#include "rand_state_init.hpp"
-
 struct RayTrace
 {
 	int num_iter;
@@ -223,7 +333,6 @@ struct RayTrace
 	TopLevelAS* tlas;
 	std::vector<DeviceBuffer*> buf_views;
 	DeviceBuffer* params_raygen;
-	DeviceBuffer* rand_states;
 	DeviceBuffer* params_sky;
 
 	VkDescriptorSetLayout descriptorSetLayout;
@@ -306,7 +415,6 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 
 	rt.params_raygen = new DeviceBuffer(sizeof(RayGenParams), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-	rt.rand_states = new DeviceBuffer(sizeof(RNGState) * m_target->width()*m_target->height(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
 
 	if (sky_cls.size_view > 0)
 	{
@@ -408,9 +516,9 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorBufferInfo_raygen.buffer = rt.params_raygen->buf();
 	descriptorBufferInfo_raygen.range = VK_WHOLE_SIZE;
 
-	VkDescriptorBufferInfo descriptorBufferInfo_rand_states = {};
-	descriptorBufferInfo_rand_states.buffer = rt.rand_states->buf();
-	descriptorBufferInfo_rand_states.range = VK_WHOLE_SIZE;
+	VkDescriptorBufferInfo descriptorBufferInfo_rng_states = {};
+	descriptorBufferInfo_rng_states.buffer = m_target->rng_states()->buf();
+	descriptorBufferInfo_rng_states.range = VK_WHOLE_SIZE;
 
 	std::vector<VkDescriptorImageInfo> imageInfos(m_textures.size());
 	for (size_t i = 0; i < m_textures.size(); ++i)
@@ -467,7 +575,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 	writeDescriptorSet[2].dstBinding = 2;
 	writeDescriptorSet[2].descriptorCount = 1;
 	writeDescriptorSet[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	writeDescriptorSet[2].pBufferInfo = &descriptorBufferInfo_rand_states;
+	writeDescriptorSet[2].pBufferInfo = &descriptorBufferInfo_rng_states;
 
 	for (i = 0; i < num_hitgroups; i++)
 	{
@@ -773,92 +881,6 @@ void PathTracer::_calc_raygen(RayTrace& rt) const
 	rt.params_raygen->upload(&raygen_params);
 }
 
-void PathTracer::_rand_init_cpu(RayTrace& rt) const
-{
-	unsigned count = unsigned(m_target->width()*m_target->height());
-	RNGState* states = new RNGState[count];
-
-	RNG rng;
-	rng.p_sequence_matrix = xorwow_sequence_matrix;
-	rng.p_offset_matrix = xorwow_offset_matrix;
-
-	for (int i = 0; i < m_target->width()*m_target->height(); i++)
-		rng.state_init(1234, i, 0, states[i]);
-
-	rt.rand_states->upload(states);
-
-	delete[] states;
-}
-
-
-#ifdef _WIN64 // For windows
-HANDLE getVkMemHandle(DeviceBuffer& buf, VkExternalMemoryHandleTypeFlagsKHR externalMemoryHandleType)
-{
-	const Context& ctx = Context::get_context();
-
-	HANDLE handle;
-
-	VkMemoryGetWin32HandleInfoKHR vkMemoryGetWin32HandleInfoKHR = {};
-	vkMemoryGetWin32HandleInfoKHR.sType = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
-	vkMemoryGetWin32HandleInfoKHR.pNext = NULL;
-	vkMemoryGetWin32HandleInfoKHR.memory = buf.memory();
-	vkMemoryGetWin32HandleInfoKHR.handleType = (VkExternalMemoryHandleTypeFlagBitsKHR)externalMemoryHandleType;
-
-	vkGetMemoryWin32HandleKHR(ctx.device(), &vkMemoryGetWin32HandleInfoKHR, &handle);
-	return handle;
-}
-#else
-int getVkMemHandle(DeviceBuffer& buf, VkExternalMemoryHandleTypeFlagsKHR externalMemoryHandleType)
-{
-	const Context& ctx = Context::get_context();
-
-	if (externalMemoryHandleType == VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) {
-		int fd;
-
-		VkMemoryGetFdInfoKHR vkMemoryGetFdInfoKHR = {};
-		vkMemoryGetFdInfoKHR.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
-		vkMemoryGetFdInfoKHR.pNext = NULL;
-		vkMemoryGetFdInfoKHR.memory = buf.memory();
-		vkMemoryGetFdInfoKHR.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
-
-		vkGetMemoryFdKHR(ctx.device(), &vkMemoryGetFdInfoKHR, &fd);
-
-		return fd;
-	}
-	return -1;
-}
-#endif
-
-void cu_rand_init(unsigned count, RNGState* d_states);
-void h_rand_init(unsigned count, RNGState* h_states);
-
-void PathTracer::_rand_init_cuda(RayTrace& rt) const
-{
-	unsigned count = unsigned(m_target->width()*m_target->height());
-
-	cudaExternalMemoryHandleDesc cudaExtMemHandleDesc = {};
-#ifdef _WIN64
-	cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueWin32Kmt;
-	cudaExtMemHandleDesc.handle.win32.handle = getVkMemHandle(*rt.rand_states, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT);
-#else
-	cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueFd;
-	cudaExtMemHandleDesc.handle.fd = getVkMemHandle(*rt.rand_states, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT);
-#endif
-	cudaExtMemHandleDesc.size = sizeof(RNGState) * count;
-
-	cudaExternalMemory_t cudaExtMemVertexBuffer;
-	cudaImportExternalMemory(&cudaExtMemVertexBuffer, &cudaExtMemHandleDesc);
-
-	cudaExternalMemoryBufferDesc cudaExtBufferDesc;
-	cudaExtBufferDesc.offset = 0;
-	cudaExtBufferDesc.size = sizeof(RNGState) * count;
-	cudaExtBufferDesc.flags = 0;
-
-	RNGState* d_states;
-	cudaExternalMemoryGetMappedBuffer((void**)&d_states, cudaExtMemVertexBuffer, &cudaExtBufferDesc);
-	cu_rand_init(count, d_states);
-	cudaDestroyExternalMemory(cudaExtMemVertexBuffer);
-}
 
 void PathTracer::_rt_clean(RayTrace& rt) const
 {
@@ -875,7 +897,6 @@ void PathTracer::_rt_clean(RayTrace& rt) const
 	vkDestroyDescriptorSetLayout(ctx.device(), rt.descriptorSetLayout, nullptr);
 
 	delete rt.params_sky;
-	delete rt.rand_states;
 	delete rt.params_raygen;
 
 	for (size_t i = 0; i < m_geo_lists.size(); i++)
@@ -889,6 +910,9 @@ void PathTracer::trace(int num_iter, int interval) const
 {
 	if (m_target == nullptr) return;
 	if (m_geo_lists.size() == 0) return;
+
+	// trigger rng-state initialization, for timing
+	m_target->rng_states();
 
 	RayTrace rt;
 	rt.num_iter = num_iter;
@@ -905,13 +929,6 @@ void PathTracer::trace(int num_iter, int interval) const
 	double time1 = GetTime();
 	printf("Done preparing ray-tracing.. %f secs\n", time1-time0);
 
-	printf("Initializing RNG states..\n");
-	_rand_init_cuda(rt);
-	//_rand_init_cpu(rt);
-
-	double time2 = GetTime();
-	printf("Done initializing RNG states.. %f secs\n", time2- time1);
-
 	m_target->clear();
 
 	const Context& ctx = Context::get_context();
@@ -920,7 +937,7 @@ void PathTracer::trace(int num_iter, int interval) const
 	if (interval == -1) interval = num_iter;
 	
 	printf("Doing ray-tracing..\n");
-	double time3 = GetTime();
+	double time2 = GetTime();
 
 	int i = 0;
 	while (i < num_iter)
@@ -963,8 +980,8 @@ void PathTracer::trace(int num_iter, int interval) const
 		}
 	}
 
-	double time4 = GetTime();
-	printf("Done ray-tracing.. %f secs\n", time4 - time3);
+	double time3 = GetTime();
+	printf("Done ray-tracing.. %f secs\n", time3 - time2);
 
 	_rt_clean(rt);
 }
