@@ -118,3 +118,20 @@ Triangle mesh and sphere with diffuse textures.
 Sky-box using a cubemap texture.
 
 
+### test4
+
+<img src="gallery/test3.png" width="900px">
+
+	900 x 600 x 100 rays:
+
+	Initializing RNG states..
+	Done initializing RNG states.. 1.546515 secs
+	Preparing ray-tracing..
+	Done preparing ray-tracing.. 0.027238 secs
+	Doing ray-tracing..
+	Done ray-tracing.. 0.115665 secs
+
+Test using emissive material.
+
+
+

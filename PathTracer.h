@@ -24,7 +24,8 @@ enum Material
 {
 	lambertian,
 	metal,
-	dielectric
+	dielectric,
+	emissive
 };
 
 class Geometry
