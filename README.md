@@ -136,7 +136,7 @@ Test using emissive material.
 
 ### test5
 
-<img src="gallery/test5.png" width="900px">
+<img src="gallery/test5.png" width="800px">
 
 	800 x 800 x 100 rays:
 
