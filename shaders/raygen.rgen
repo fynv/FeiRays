@@ -69,6 +69,12 @@ void main()
         {
             ray_origin += direction*t;
 
+            if (payload.material == 3) // emissive
+            {
+                color += payload.color_dis.xyz * f_att;
+                break;
+            }
+
             /*vec3 lightVector = normalize(vec3(5, 4, 3));
             float dot_product = dot(lightVector, payload.normal.xyz);
 

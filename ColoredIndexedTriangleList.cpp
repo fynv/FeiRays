@@ -30,7 +30,7 @@ void ColoredIndexedTriangleList::_blas_create()
 
 
 ColoredIndexedTriangleList::ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, 
-	glm::vec3 color, Material material, float fuzz, float ref_idx) : Geometry(model)
+	const glm::vec3& color, Material material, float fuzz, float ref_idx) : Geometry(model)
 {
 	m_color = color;
 	m_material = material;

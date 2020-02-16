@@ -7,7 +7,7 @@ class UnitSphereCheckerTex : public Geometry
 public:
 	DeviceBuffer* aabb_buffer() const { return m_aabb_buf; }
 
-	UnitSphereCheckerTex(const glm::mat4x4& model, float interval, glm::vec3 color1 = { 0.0f, 0.0f, 0.0f }, glm::vec3 color2 = { 1.0f, 1.0f, 1.0f });
+	UnitSphereCheckerTex(const glm::mat4x4& model, float interval, const glm::vec3& color1 = { 0.0f, 0.0f, 0.0f }, const glm::vec3& color2 = { 1.0f, 1.0f, 1.0f });
 	virtual ~UnitSphereCheckerTex();
 
 	virtual GeoCls cls() const;

@@ -22,7 +22,7 @@ void TexturedUnitSphere::_blas_create()
 	m_blas = new BaseLevelAS(1, &geometry);
 }
 
-TexturedUnitSphere::TexturedUnitSphere(const glm::mat4x4& model, int tex_id, glm::vec3 color) : Geometry(model)
+TexturedUnitSphere::TexturedUnitSphere(const glm::mat4x4& model, int tex_id, const glm::vec3& color) : Geometry(model)
 {
 	m_color = color;
 	m_tex_id = tex_id;

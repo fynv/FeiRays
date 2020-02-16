@@ -35,28 +35,42 @@ Geometry::~Geometry()
 	delete m_blas;
 }
 
-SkyBox::SkyBox()
+
+struct View_GradientSky
+{
+	glm::vec4 color0;
+	glm::vec4 color1;
+};
+
+
+
+GradientSky::GradientSky(const glm::vec3& color0, const glm::vec3& color1)
+{
+	m_color0 = color0;
+	m_color1 = color1;
+}
+
+GradientSky::~GradientSky()
 {
 
 }
 
-SkyBox::~SkyBox()
-{
 
-}
-
-SkyCls SkyBox::cls() const
+SkyCls GradientSky::cls() const
 {
 	SkyCls cls;
 	cls.fn_missing = "../shaders/miss.spv";
-	cls.size_view = 0;
+	cls.size_view = sizeof(View_GradientSky);
 	return cls;
 }
 
-void SkyBox::get_view(void* view_buf) const
+void GradientSky::get_view(void* view_buf) const
 {
-	return;
+	View_GradientSky& view = *(View_GradientSky*)view_buf;
+	view.color0 = glm::vec4(m_color0, 1.0f);
+	view.color1 = glm::vec4(m_color1, 1.0f);
 }
+
 
 RGBATexture::RGBATexture(int width, int height, void* data)
 {
@@ -266,8 +280,8 @@ PathTracer::PathTracer()
 
 	m_Sampler = new Sampler;
 
-	static SkyBox _sky_box;
-	m_current_sky_box = &_sky_box;
+	static GradientSky _sky;
+	m_current_sky = &_sky;
 }
 
 PathTracer::~PathTracer()
@@ -390,7 +404,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 {
 	const Context& ctx = Context::get_context();
 	size_t num_hitgroups = m_geo_lists.size();
-	SkyCls sky_cls = m_current_sky_box->cls();
+	SkyCls sky_cls = m_current_sky->cls();
 
 	rt.buf_views.resize(num_hitgroups);
 
@@ -420,7 +434,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 	{
 		rt.params_sky = new DeviceBuffer(sky_cls.size_view, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
 		std::vector<char> buf(sky_cls.size_view);
-		m_current_sky_box->get_view(buf.data());
+		m_current_sky->get_view(buf.data());
 		rt.params_sky->upload(buf.data());
 	}
 	else
@@ -660,7 +674,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 {
 	const Context& ctx = Context::get_context();
 	size_t num_hitgroups = m_geo_lists.size();
-	SkyCls sky_cls = m_current_sky_box->cls();
+	SkyCls sky_cls = m_current_sky->cls();
 
 	VkShaderModule rayGenModule = _createShaderModule_from_spv("../shaders/raygen.spv");
 	VkShaderModule missModule = _createShaderModule_from_spv(sky_cls.fn_missing);

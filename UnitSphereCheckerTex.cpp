@@ -23,7 +23,7 @@ void UnitSphereCheckerTex::_blas_create()
 }
 
 
-UnitSphereCheckerTex::UnitSphereCheckerTex(const glm::mat4x4& model, float interval, glm::vec3 color1, glm::vec3 color2) : Geometry(model)
+UnitSphereCheckerTex::UnitSphereCheckerTex(const glm::mat4x4& model, float interval, const glm::vec3& color1, const glm::vec3& color2) : Geometry(model)
 {
 	m_color1 = color1;
 	m_color2 = color2;

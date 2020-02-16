@@ -24,7 +24,7 @@ void ColoredUnitSphere::_blas_create()
 }
 
 
-ColoredUnitSphere::ColoredUnitSphere(const glm::mat4x4& model, glm::vec3 color, Material material, float fuzz, float ref_idx) : Geometry(model)
+ColoredUnitSphere::ColoredUnitSphere(const glm::mat4x4& model, const glm::vec3& color, Material material, float fuzz, float ref_idx) : Geometry(model)
 {
 	m_color = color;
 	m_material = material;

@@ -2,7 +2,7 @@ struct Payload
 {
 	vec4 color_dis;
 	vec4 normal;
-	uint material; // 0: lamertian, 1: metal, 2: dielectric	
+	uint material; // 0: lamertian, 1: metal, 2: dielectric, 3:emissive
 	float fuzz;
 	float ref_idx;
 };

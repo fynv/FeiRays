@@ -8,10 +8,17 @@
 
 layout(location = 0) rayPayloadInNV Payload payload;
 
+layout(std140, binding = 5) uniform Params
+{
+	vec4 color0;
+	vec4 color1;
+};
+
 void main()
 {
 	vec3 direction = gl_WorldRayDirectionNV;
 	float t = 0.5 * (direction.y + 1.0);
-	vec3 color = (1.0 - t)*vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+	vec3 color = (1.0 - t)*color0.xyz + t * color1.xyz;
 	payload.color_dis = vec4(color, -1.0);
 }
+

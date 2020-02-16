@@ -36,7 +36,7 @@ int main()
 
 	int id_skybox= pt.add_cubemap(&cubemap);
 	TexturedSkyBox skybox(id_skybox);
-	pt.set_skybox(&skybox);
+	pt.set_sky(&skybox);
 
 	glm::mat4x4 identity = glm::identity<glm::mat4x4>();
 

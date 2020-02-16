@@ -7,7 +7,7 @@ class TexturedUnitSphere : public Geometry
 public:
 	DeviceBuffer* aabb_buffer() const { return m_aabb_buf; }
 
-	TexturedUnitSphere(const glm::mat4x4& model, int tex_id, glm::vec3 color = { 1.0f, 1.0f, 1.0f });
+	TexturedUnitSphere(const glm::mat4x4& model, int tex_id, const glm::vec3& color = { 1.0f, 1.0f, 1.0f });
 	virtual ~TexturedUnitSphere();
 
 	virtual GeoCls cls() const;

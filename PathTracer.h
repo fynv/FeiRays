@@ -46,21 +46,35 @@ protected:
 	BaseLevelAS* m_blas;
 };
 
+
 struct SkyCls
 {
 	size_t size_view;
 	const char* fn_missing = nullptr;
 };
 
-// This is the default sky-box
-class SkyBox
+class Sky
 {
 public:
-	SkyBox();
-	virtual ~SkyBox();
+	Sky() {}
+	virtual ~Sky() {}
+
+	virtual SkyCls cls() const = 0;
+	virtual void get_view(void* view_buf) const = 0;
+};
+
+class GradientSky : public Sky
+{
+public:
+	GradientSky(const glm::vec3& color0 = { 1.0f, 1.0f, 1.0f }, const glm::vec3& color1 = { 0.5f, 0.7f, 1.0f });
+	virtual ~GradientSky();
 
 	virtual SkyCls cls() const;
 	virtual void get_view(void* view_buf) const;
+
+private:
+	glm::vec3 m_color0;
+	glm::vec3 m_color1;
 };
 
 class RGBATexture
@@ -87,7 +101,7 @@ private:
 	Cubemap* m_data;
 };
 
-class TexturedSkyBox : public SkyBox
+class TexturedSkyBox : public Sky
 {
 public:
 	TexturedSkyBox(int texId);
@@ -144,7 +158,7 @@ public:
 	~PathTracer();
 	
 	void set_target(Image* target) { m_target = target;  }
-	void set_skybox(SkyBox* skybox) { m_current_sky_box = skybox; }
+	void set_sky(Sky* sky) { m_current_sky = sky; }
 	void add_geometry(Geometry* geo);
 	int add_texture(RGBATexture* tex);
 	int add_cubemap(RGBACubemap* tex);
@@ -158,7 +172,7 @@ private:
 	std::vector<RGBATexture*> m_textures;
 	std::vector<RGBACubemap*> m_cubemaps;
 	Sampler* m_Sampler;
-	SkyBox* m_current_sky_box;
+	Sky* m_current_sky;
 
 	// camera
 	glm::vec3 m_lookfrom;
