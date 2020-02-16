@@ -120,7 +120,7 @@ Sky-box using a cubemap texture.
 
 ### test4
 
-<img src="gallery/test3.png" width="900px">
+<img src="gallery/test4.png" width="900px">
 
 	900 x 600 x 100 rays:
 
