@@ -134,4 +134,19 @@ Sky-box using a cubemap texture.
 Test using emissive material.
 
 
+### test5
+
+<img src="gallery/test5.png" width="900px">
+
+	800 x 800 x 100 rays:
+
+	Initializing RNG states..
+	Done initializing RNG states.. 1.947711 secs
+	Preparing ray-tracing..
+	Done preparing ray-tracing.. 0.025238 secs
+	Doing ray-tracing..
+	Done ray-tracing.. 0.285005 secs
+
+The Cornell Box.
+
 
