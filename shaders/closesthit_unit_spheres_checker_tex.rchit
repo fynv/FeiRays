@@ -36,11 +36,13 @@ void main()
 	vec4 color = (i_x+i_y+i_z)%2 == 0 ? instance.color1 : instance.color2;
 
 	vec3 normal = normalize(instance.normalMat * hitpoint);
-	payload.color_dis = vec4(color.xyz, gl_HitTNV);
-  	payload.normal = vec4(normal, 0.0);
-  	payload.material = 0;
-  	payload.fuzz = 0.0;
-  	payload.ref_idx = 0.0;
+
+	payload.t = gl_HitTNV;
+	payload.material_bits = MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT;
+	payload.color1 = color.xyz;
+	payload.f0 = 0.0;
+	payload.normal = normal;
+
 }
 
 

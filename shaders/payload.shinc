@@ -1,9 +1,20 @@
+#define MAT_EMIT_BIT 0x1
+#define MAT_OPAQUE_BIT 0x2
+#define MAT_DIFFUSE_BIT 0x4
+#define MAT_SPECULAR_BIT 0x8
+#define MAT_SCATTER_BIT 0x10
+#define MAT_ABSORB_BIT 0x20
+
 struct Payload
 {
-	vec4 color_dis;
-	vec4 normal;
-	uint material; // 0: lamertian, 1: metal, 2: dielectric, 3:emissive
-	float fuzz;
-	float ref_idx;
+	float t;
+	uint material_bits;
+	vec3 color0; // emission
+	vec3 color1; // diffuse/scattering
+	vec3 color2; // specular/absorption
+	vec3 normal; 
+	float f0; // importance of specular against diffuse / refractive index
+	float f1; // fuzz
+	float f2; // scattering density
 };
 

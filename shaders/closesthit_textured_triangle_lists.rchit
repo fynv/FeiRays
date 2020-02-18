@@ -111,11 +111,11 @@ void main()
 
 	c = vec3(c.x*c.x, c.y*c.y, c.z*c.z);
 
-	payload.color_dis = vec4(c, gl_HitTNV);
-  	payload.normal = vec4(normal, 0.0);
-  	payload.material = 0;
-  	payload.fuzz = 0.0;
-  	payload.ref_idx = 0.0;
+	payload.t = gl_HitTNV;
+	payload.material_bits = MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT;
+	payload.color1 = c;
+	payload.f0 = 0.0;
+	payload.normal = normal;
 }
 
 

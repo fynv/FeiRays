@@ -26,7 +26,9 @@ void main()
 	if (gamma!=1.0)
 		color = vec3(pow(color.x, gamma), pow(color.y, gamma), pow(color.z, gamma));
 
-	payload.color_dis = vec4(color, -1.0);
+	payload.t = -1.0;
+	payload.material_bits = MAT_OPAQUE_BIT | MAT_EMIT_BIT;
+	payload.color0 = color;
 }
 
 

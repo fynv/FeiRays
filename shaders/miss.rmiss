@@ -19,6 +19,8 @@ void main()
 	vec3 direction = gl_WorldRayDirectionNV;
 	float t = 0.5 * (direction.y + 1.0);
 	vec3 color = (1.0 - t)*color0.xyz + t * color1.xyz;
-	payload.color_dis = vec4(color, -1.0);
+	payload.t = -1.0;
+	payload.material_bits = MAT_OPAQUE_BIT | MAT_EMIT_BIT;
+	payload.color0 = color;
 }
 

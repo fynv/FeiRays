@@ -38,11 +38,11 @@ void main()
 	vec3 c_tex = texture(textureSamplers[instance.textureId], texCoord).xyz;
 	c*= vec3(c_tex.x*c_tex.x, c_tex.y*c_tex.y, c_tex.z*c_tex.z);
 
-	payload.color_dis = vec4(c, gl_HitTNV);
-  	payload.normal = vec4(normal, 0.0);
-  	payload.material = 0;
-  	payload.fuzz = 0.0;
-  	payload.ref_idx = 0.0;
+	payload.t = gl_HitTNV;
+	payload.material_bits = MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT;
+	payload.color1 = c;
+	payload.f0 = 0.0;
+	payload.normal = normal;
 
 }
 
