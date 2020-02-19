@@ -60,7 +60,7 @@ layout(std430, binding = BINDING_ColoredIndexedTriangleList) buffer Params
 const uint cPresets[4] = {
 	MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT,
 	MAT_OPAQUE_BIT | MAT_SPECULAR_BIT,
-	MAT_ABSORB_BIT,
+	MAT_FRESNEL_BIT | MAT_ABSORB_BIT,
 	MAT_OPAQUE_BIT | MAT_EMIT_BIT
 };
 

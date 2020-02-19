@@ -53,7 +53,6 @@ void main()
 
     vec3 direction =  normalize(pos_pix - ray_origin);
 
-
     vec3 color = vec3(0.0, 0.0, 0.0);
     vec3 f_att = vec3(1.0, 1.0, 1.0);
     int depth = 0;
@@ -96,83 +95,96 @@ void main()
 
         bool diffusive = false;
         bool directional = false;
-        vec3 dir_base = vec3(0.0);
         vec3 fuzz_dir = payload.normal;
+        float fuzz;
 
-        if (!scattering && (payload.material_bits & MAT_OPAQUE_BIT) !=0) 
+        if (!scattering)
         {
-            switch(payload.material_bits & (MAT_DIFFUSE_BIT | MAT_SPECULAR_BIT))
+            if ((payload.material_bits & MAT_OPAQUE_BIT) !=0) 
             {
-            case MAT_DIFFUSE_BIT:
-                diffusive = true;
-                break;
-            case MAT_SPECULAR_BIT:
-                directional = true;
-                break;
-            case MAT_DIFFUSE_BIT | MAT_SPECULAR_BIT:
+                switch(payload.material_bits & (MAT_DIFFUSE_BIT | MAT_SPECULAR_BIT))
                 {
-                    float r = rand01(states[ray_id]);
-                    if (r<payload.f0)
+                case MAT_DIFFUSE_BIT:
+                    diffusive = true;
+                    break;
+                case MAT_SPECULAR_BIT:
+                    directional = true;
+                    break;
+                case MAT_DIFFUSE_BIT | MAT_SPECULAR_BIT:
                     {
-                        directional = true;
-                        f_att *= 1.0/payload.f0;
+                        float r = rand01(states[ray_id]);
+                        if (r<payload.f0)
+                        {
+                            directional = true;
+                            f_att *= 1.0/payload.f0;
+                        }
+                        else 
+                        {
+                            diffusive = true;
+                            f_att *= 1.0/(1.0 - payload.f0);
+                        }
                     }
-                    else 
-                    {
-                        diffusive = true;
-                        f_att *= 1.0/(1.0 - payload.f0);
-                    }
+                    break;
                 }
-                break;
-            }
 
-            if (diffusive) 
-            {
-                f_att *= payload.color1;
-                dir_base = payload.normal;
+                if (diffusive) 
+                {
+                    f_att *= payload.color1;
+                    direction = payload.normal;
+                    fuzz = 1.0;
+                }
+                else if (directional) 
+                {
+                    f_att *= payload.color2;
+                    direction = reflect(direction, payload.normal);
+                    fuzz = payload.f1; if (fuzz > 1.0) fuzz = 1.0;
+                }
             }
-            if (directional) 
+            else if ((payload.material_bits & MAT_FRESNEL_BIT) !=0) 
             {
-                f_att *= payload.color2;
-                dir_base = reflect(direction, payload.normal);
-            }
-        }
+                bool enter = payload.f0 < 1.0;
+                float ref_idx = payload.f0;
+                vec3 normal = -payload.normal;
 
-        if (!scattering && (payload.material_bits & MAT_OPAQUE_BIT) ==0) 
-        {
-            bool enter = payload.f0 < 1.0;
-            float ref_idx = payload.f0;
-            vec3 normal = -payload.normal;
+                if (dot(direction, payload.normal)<0)
+                {
+                    enter = !enter;
+                    ref_idx = 1.0 / ref_idx;
+                    normal = payload.normal;
+                }
 
-            if (dot(direction, payload.normal)<0)
-            {
-                enter = !enter;
-                ref_idx = 1.0 / ref_idx;
-                normal = payload.normal;
-            }
+                float reflect_prob = 1.0;
+                vec3 refracted = refract(direction, normal, ref_idx);
+                if (refracted.x != 0.0 || refracted.y!= 0.0 || refracted.z != 0.0)
+                {
+                    float cosine = -dot(direction, normal);
+                    reflect_prob = schlick(cosine, ref_idx);
+                }
 
-            float reflect_prob = 1.0;
-            vec3 refracted = refract(direction, normal, ref_idx);
-            if (refracted.x != 0.0 || refracted.y!= 0.0 || refracted.z != 0.0)
-            {
-                float cosine = -dot(direction, normal);
-                reflect_prob = schlick(cosine, ref_idx);
-            }
+                if (rand01(states[ray_id]) < reflect_prob)
+                {
+                    direction = reflect(direction, normal);
+                    fuzz_dir = normal;
+                }
+                else
+                {
+                    direction = refracted;
+                    fuzz_dir = - normal;
+                    in_material = enter;
+                }
 
-            if (rand01(states[ray_id]) < reflect_prob)
-            {
-                dir_base = reflect(direction, normal);
-                fuzz_dir = normal;
+                directional = true;
+                fuzz = payload.f1; if (fuzz > 1.0) fuzz = 1.0;
             }
             else
             {
-                dir_base = refracted;
-                fuzz_dir = - normal;
-                in_material = enter;
+                in_material = dot(direction, payload.normal)<0;
+                directional = true;
+                fuzz = 0.0;
             }
-
-            directional = true;
         }
+
+        if (!scattering && !diffusive && !directional) break;
 
         /*vec3 lightVector = normalize(vec3(5, 4, 3));
         float dot_product = dot(lightVector, payload.normal);
@@ -189,22 +201,11 @@ void main()
         {
             direction = rand_on_unit_sphere(states[ray_id]);
         }
-        else if (diffusive)
+        else if ( (diffusive || directional) &&  fuzz>0.0)
         {
-            direction = normalize(rand_in_unit_sphere(states[ray_id]) + dir_base);
+            direction = normalize(direction + fuzz * rand_in_unit_sphere(states[ray_id]));
+            if (dot(direction, fuzz_dir) <= 0.0) break;
         }
-        else if (directional)
-        {
-            direction = dir_base;
-            if (payload.f1>0.0)
-            {
-                float f = payload.f1; if (f > 1.0) f = 1.0;
-                direction = normalize(direction + f * rand_in_unit_sphere(states[ray_id]));
-                if (dot(direction, fuzz_dir) <= 0.0) break;
-            }
-
-        }
-        else break;   
         
         depth++;
     }
