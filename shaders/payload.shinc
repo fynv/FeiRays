@@ -8,12 +8,15 @@
 
 struct Payload
 {
+	// geometry
 	float t;
+	vec3 normal; 
+
+	// material
 	uint material_bits;
 	vec3 color0; // emission
 	vec3 color1; // diffuse/scattering
 	vec3 color2; // specular/absorption
-	vec3 normal; 
 	float f0; // importance of specular against diffuse / refractive index
 	float f1; // fuzz
 	float f2; // scattering density
