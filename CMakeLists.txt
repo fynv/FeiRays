@@ -38,6 +38,7 @@ context.h
 RNGState.h
 xor_wow_data.hpp
 rand_state_init.hpp
+Material.h
 PathTracer.h
 ColoredIndexedTriangleList.h
 ColoredUnitSphere.h

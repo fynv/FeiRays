@@ -20,13 +20,6 @@ struct GeoCls
 	const char* fn_closesthit = nullptr;
 };
 
-enum Material
-{
-	lambertian,
-	metal,
-	dielectric,
-	emissive
-};
 
 class Geometry
 {

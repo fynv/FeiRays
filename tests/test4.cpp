@@ -93,7 +93,7 @@ int main()
 
 	glm::mat4x4 model0 = glm::translate(identity, glm::vec3(0.0f, -1000.0f, 0.0f));
 	model0 = glm::scale(model0, glm::vec3(1000.0f, 1000.0f, 1000.0f));
-	ColoredUnitSphere sphere0 (model0, { 0.4f, 0.4f, 0.6f }, lambertian);
+	ColoredUnitSphere sphere0(model0, { lambertian, { 0.4f, 0.4f, 0.6f } });
 	pt.add_geometry(&sphere0);
 
 	int texWidth, texHeight, texChannels;
@@ -110,7 +110,7 @@ int main()
 
 	glm::mat4x4 model2 = glm::translate(identity, glm::vec3(4.0f, 2.0f, -2.01f));
 	model2 = glm::scale(model2, glm::vec3(1.0f, 1.0f, 0.01f));
-	ColoredIndexedTriangleList cube2(model2, cube_vertices, cube_indices, { 4.0f, 4.0f, 4.0f }, emissive);
+	ColoredIndexedTriangleList cube2(model2, cube_vertices, cube_indices, { emissive, { 4.0f, 4.0f, 4.0f } });
 	pt.add_geometry(&cube2);
 
 

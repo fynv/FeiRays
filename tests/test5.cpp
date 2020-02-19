@@ -91,44 +91,44 @@ int main()
 
 	glm::mat4x4 model0 = glm::translate(identity, glm::vec3(1110.01f, 555.0f, 555.0f));
 	model0 = glm::scale(model0, glm::vec3(0.01f, 555.0f, 555.0f));
-	ColoredIndexedTriangleList cube0(model0, cube_vertices, cube_indices, { 0.12, 0.45f, 0.15f });
+	ColoredIndexedTriangleList cube0(model0, cube_vertices, cube_indices, { lambertian, { 0.12, 0.45f, 0.15f } });
 	pt.add_geometry(&cube0);
 
 	glm::mat4x4 model1 = glm::translate(identity, glm::vec3(-0.01f, 555.0f, 555.0f));
 	model1 = glm::scale(model1, glm::vec3(0.01f, 555.0f, 555.0f));
-	ColoredIndexedTriangleList cube1(model1, cube_vertices, cube_indices, { 0.65, 0.05f, 0.05f });
+	ColoredIndexedTriangleList cube1(model1, cube_vertices, cube_indices, { lambertian, { 0.65, 0.05f, 0.05f } });
 	pt.add_geometry(&cube1);
 
 	glm::mat4x4 model2 = glm::translate(identity, glm::vec3(555.0f, 1108.0f, 555.0f));
 	model2 = glm::scale(model2, glm::vec3(130.0f, 0.01f, 105.0f));
-	ColoredIndexedTriangleList cube2(model2, cube_vertices, cube_indices, { 15.0f, 15.0f, 15.0f }, emissive);
+	ColoredIndexedTriangleList cube2(model2, cube_vertices, cube_indices, { emissive, { 15.0f, 15.0f, 15.0f } });
 	pt.add_geometry(&cube2);
 
 	glm::mat4x4 model3 = glm::translate(identity, glm::vec3(555.0f, 1110.01f, 555.0f));
 	model3 = glm::scale(model3, glm::vec3(550.0f, 0.01f, 555.0f));
-	ColoredIndexedTriangleList cube3(model3, cube_vertices, cube_indices, { 0.73f, 0.73f, 0.73f });
+	ColoredIndexedTriangleList cube3(model3, cube_vertices, cube_indices, { lambertian, { 0.73f, 0.73f, 0.73f } });
 	pt.add_geometry(&cube3);
 
 	glm::mat4x4 model4 = glm::translate(identity, glm::vec3(555.0f, -0.01f, 555.0f));
 	model4 = glm::scale(model4, glm::vec3(550.0f, 0.01f, 555.0f));
-	ColoredIndexedTriangleList cube4(model4, cube_vertices, cube_indices, { 0.73f, 0.73f, 0.73f });
+	ColoredIndexedTriangleList cube4(model4, cube_vertices, cube_indices, { lambertian, { 0.73f, 0.73f, 0.73f } });
 	pt.add_geometry(&cube4);
 
 	glm::mat4x4 model5 = glm::translate(identity, glm::vec3(555.0f, 555.0f, 1110.01f));
 	model5 = glm::scale(model5, glm::vec3(550.0f, 555.0f, 0.01f));
-	ColoredIndexedTriangleList cube5(model5, cube_vertices, cube_indices, { 0.73f, 0.73f, 0.73f });
+	ColoredIndexedTriangleList cube5(model5, cube_vertices, cube_indices, { lambertian, { 0.73f, 0.73f, 0.73f } });
 	pt.add_geometry(&cube5);
 
 	glm::mat4x4 model6 = glm::translate(identity, glm::vec3(425.0f, 165.0f, 295.0f));
 	model6 = glm::scale(model6, glm::vec3(165.0f, 165.0f, 165.0f));
 	model6 = glm::rotate(model6, -18.0f/180.0f*PI, { 0.0f, 1.0f, 0.0f });
-	ColoredIndexedTriangleList cube6(model6, cube_vertices, cube_indices, { 0.73f, 0.73f, 0.73f });
+	ColoredIndexedTriangleList cube6(model6, cube_vertices, cube_indices, { lambertian, { 0.73f, 0.73f, 0.73f } });
 	pt.add_geometry(&cube6);
 
 	glm::mat4x4 model7 = glm::translate(identity, glm::vec3(695.0f, 330.0f, 755.0f));
 	model7 = glm::scale(model7, glm::vec3(165.0f, 330.0f, 165.0f));
 	model7 = glm::rotate(model7, 15.0f / 180.0f*PI, { 0.0f, 1.0f, 0.0f });
-	ColoredIndexedTriangleList cube7(model7, cube_vertices, cube_indices, { 0.73f, 0.73f, 0.73f });
+	ColoredIndexedTriangleList cube7(model7, cube_vertices, cube_indices, { lambertian, { 0.73f, 0.73f, 0.73f } });
 	pt.add_geometry(&cube7);
 
 	pt.set_camera({ 556.0f, 556.0f, -1600.0f }, { 556.0f, 556.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 40.0f);

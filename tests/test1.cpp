@@ -81,28 +81,34 @@ int main()
 
 	glm::mat4x4 model0 = glm::translate(identity, glm::vec3(0.0f, 1.0f, -2.0f));
 	model0 = glm::rotate(model0, 45.0f / 180.0f*PI, glm::vec3(0.0f, 1.0f, 0.0f));
-	TriangleMesh cube0(model0, cube_vertices, cube_indices, { 0.8f, 0.6f, 0.2f }, metal, 0.3f);
+	TriangleMesh cube0(model0, cube_vertices, cube_indices, { metal, { 0.8f, 0.6f, 0.2f }, 0.3f });
 	
 	glm::mat4x4 model1 = glm::translate(identity, glm::vec3(4.0f, 1.0f, -2.0f));
 	model1 = glm::rotate(model1, -45.0f / 180.0f*PI, glm::vec3(0.0f, 1.0f, 0.0f));
-	TriangleMesh cube1(model1, cube_vertices, cube_indices, { 0.1f, 0.2f, 0.5f }, lambertian);	
+	TriangleMesh cube1(model1, cube_vertices, cube_indices, { lambertian, { 0.1f, 0.2f, 0.5f } });
 
 	glm::mat4x4 model2 = glm::translate(identity, glm::vec3(-4.0, 1.0, -2.0));
 	model2 = glm::rotate(model2, -45.0f / 180.0f*PI, glm::vec3(0.0, 1.0, 0.0f));
-	TriangleMesh cube2(model2, cube_vertices, cube_indices, { 1.0f, 1.0f, 1.0f }, dielectric, 0.0f, 1.5f);
+	TriangleMesh cube2(model2, cube_vertices, cube_indices, { dielectric, { 1.0f, 1.0f, 1.0f }, 0.0f, 1.5f });
 
 	glm::mat4x4 model3 = glm::translate(identity, glm::vec3(0.0, -0.2, 0.0));
 	model3 = glm::scale(model3, glm::vec3(6.0f, 0.2f, 6.0f));
-	TriangleMesh cube3(model3, cube_vertices, cube_indices, { 0.7, 0.7, 0.7 });
+	TriangleMesh cube3(model3, cube_vertices, cube_indices, { lambertian, { 0.7, 0.7, 0.7 } });
 
 	glm::mat4x4 model4 = glm::translate(identity, glm::vec3(0.0, 1.0, 2.0));
-	Sphere sphere4(model4, { 0.1f, 0.2f, 0.5f }, lambertian);
+	Sphere sphere4(model4, { lambertian, { 0.1f, 0.2f, 0.5f } });
 
 	glm::mat4x4 model5 = glm::translate(identity, glm::vec3(4.0, 1.0, 2.0));
-	Sphere sphere5(model5, { 1.0f, 1.0f, 1.0f }, dielectric, 0.0f, 1.5f);	
+	Sphere sphere5(model5, { dielectric, { 1.0f, 1.0f, 1.0f }, 0.0f, 1.5f });
 
 	glm::mat4x4 model6 = glm::translate(identity, glm::vec3(-4.0, 1.0, 2.0));
-	Sphere sphere6(model6, { 0.8f, 0.6f, 0.2f }, metal, 0.3f);	
+	Sphere sphere6(model6, { metal, { 0.8f, 0.6f, 0.2f }, 0.3f });
+
+	glm::mat4x4 model7 = glm::translate(identity, glm::vec3(2.0, 1.0, 4.0));
+	Sphere sphere7(model7, { dielectric, { 0.5f, 1.0f, 0.7f }, 0.0f, 1.5f, 10.0f });
+
+	glm::mat4x4 model8 = glm::translate(identity, glm::vec3(-2.0, 1.0, 4.0));
+	Sphere sphere8(model8, { foggy, { 0.8f, 0.6f, 0.2f }, 0.0f, 1.0f, 1.0f });
 
 	Image target(view_width, view_height);
 
@@ -115,7 +121,9 @@ int main()
 	pt.add_geometry(&sphere4);
 	pt.add_geometry(&sphere5);
 	pt.add_geometry(&sphere6);
-	pt.set_camera({ 0.0f, 8.0f, 8.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 0.3f, 10.0f);
+	pt.add_geometry(&sphere7);
+	pt.add_geometry(&sphere8);
+	pt.set_camera({ 0.0f, 8.0f, 8.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f);
 
 	pt.trace();
 

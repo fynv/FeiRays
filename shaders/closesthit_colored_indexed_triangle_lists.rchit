@@ -47,9 +47,10 @@ struct ColoredIndexedTriangleList
 	vec4 color;
 	VextexBuf vertexBuf;
 	IndexBuf indexBuf;
-	uint material; // 0: lamertian, 1: metal, 2: dielectric, 3: emissive
+	uint type; // 0: lamertian, 1: metal, 2: dielectric, 3: emissive, 4: foggy
 	float fuzz;
 	float ref_idx;
+	float density;
 };
 
 layout(std430, binding = BINDING_ColoredIndexedTriangleList) buffer Params
@@ -57,11 +58,12 @@ layout(std430, binding = BINDING_ColoredIndexedTriangleList) buffer Params
 	ColoredIndexedTriangleList[] coloredIndexedTriangleLists;
 };
 
-const uint cPresets[4] = {
+const uint cPresets[5] = {
 	MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT,
 	MAT_OPAQUE_BIT | MAT_SPECULAR_BIT,
-	MAT_FRESNEL_BIT | MAT_ABSORB_BIT,
-	MAT_OPAQUE_BIT | MAT_EMIT_BIT
+	MAT_FRESNEL_BIT | MAT_SCATTER_BIT,
+	MAT_OPAQUE_BIT | MAT_EMIT_BIT,
+	MAT_SCATTER_BIT
 };
 
 void main()
@@ -81,16 +83,17 @@ void main()
 	vec3 normal = v0.Normal * barycentrics.x + v1.Normal * barycentrics.y + v2.Normal * barycentrics.z;
 	normal = normalize(instance.normalMat * normal);
 
-	payload.material_bits = cPresets[instance.material];
+	payload.material_bits = cPresets[instance.type];
 	payload.t = gl_HitTNV;
 	payload.color0 = instance.color.xyz;
 	payload.color1 = instance.color.xyz;
 	payload.color2 = instance.color.xyz;
 	payload.normal = normal;  	
   	payload.f1 = instance.fuzz;
+  	payload.f2 = instance.density;
 	
-	if (instance.material == 0) payload.f0 = 0.0;
-	if (instance.material == 1) payload.f0 = 1.0;
-	if (instance.material == 2) payload.f0 = instance.ref_idx;	  	
+	if (instance.type == 0) payload.f0 = 0.0;
+	if (instance.type == 1) payload.f0 = 1.0;
+	if (instance.type == 2) payload.f0 = instance.ref_idx;
 }
 

@@ -50,19 +50,19 @@ int main()
 
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(0.0f, 1.0f, 0.0f));
-		SphereA* sphere = new SphereA(model, { 1.0f, 1.0f, 1.0f }, dielectric, 0.0f, 1.5f);
+		SphereA* sphere = new SphereA(model, { dielectric, { 1.0f, 1.0f, 1.0f }, 0.0f, 1.5f });
 		geometries.push_back(sphere);
 	}
 
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(-4.0f, 1.0f, 0.0f));
-		SphereA* sphere = new SphereA(model, { 0.4f, 0.2f, 0.1f }, lambertian);
+		SphereA* sphere = new SphereA(model, { lambertian, { 0.4f, 0.2f, 0.1f } });
 		geometries.push_back(sphere);
 	}
 
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(4.0f, 1.0f, 0.0f));
-		SphereA* sphere = new SphereA(model, { 0.7f, 0.6f, 0.5f }, metal);
+		SphereA* sphere = new SphereA(model, { metal, { 0.7f, 0.6f, 0.5f } });
 		geometries.push_back(sphere);
 	}
 
@@ -81,17 +81,17 @@ int main()
 
 			if (choose_mat < 0.75f)
 			{
-				SphereA* sphere = new SphereA(model, { rand01()*rand01(), rand01()*rand01(), rand01()*rand01() }, lambertian);
+				SphereA* sphere = new SphereA(model, { lambertian, { rand01()*rand01(), rand01()*rand01(), rand01()*rand01() } });
 				geometries.push_back(sphere);
 			}
 			else if (choose_mat < 0.90f)
 			{
-				SphereA* sphere = new SphereA(model, { 0.5f*(1.0f + rand01()), 0.5f*(1.0f + rand01()),0.5f*(1.0f + rand01()) }, metal);
+				SphereA* sphere = new SphereA(model, { metal, { 0.5f*(1.0f + rand01()), 0.5f*(1.0f + rand01()),0.5f*(1.0f + rand01()) } });
 				geometries.push_back(sphere);
 			}
 			else
 			{
-				SphereA* sphere = new SphereA(model, { 1.0f, 1.0f, 1.0f }, dielectric, 0.0f, 1.5f);
+				SphereA* sphere = new SphereA(model, { dielectric, { 1.0f, 1.0f, 1.0f },  0.0f, 1.5f });
 				geometries.push_back(sphere);
 			}
 

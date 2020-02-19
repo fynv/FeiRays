@@ -41,25 +41,25 @@ int main()
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(0.0f, -1000.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(1000.0f, 1000.0f, 1000.0f));
-		Sphere* sphere = new Sphere(model, { 0.5f, 0.5f, 0.5f }, lambertian);
+		Sphere* sphere = new Sphere(model, { lambertian, { 0.5f, 0.5f, 0.5f } });
 		spheres.push_back(sphere);
 	}
 
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(0.0f, 1.0f, 0.0f));
-		Sphere* sphere = new Sphere(model, { 1.0f, 1.0f, 1.0f }, dielectric, 0.0f, 1.5f);
+		Sphere* sphere = new Sphere(model, { dielectric, { 1.0f, 1.0f, 1.0f }, 0.0f, 1.5f });
 		spheres.push_back(sphere);
 	}
 
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(-4.0f, 1.0f, 0.0f));
-		Sphere* sphere = new Sphere(model, { 0.4f, 0.2f, 0.1f }, lambertian);
+		Sphere* sphere = new Sphere(model, { lambertian, { 0.4f, 0.2f, 0.1f } });
 		spheres.push_back(sphere);
 	}
 
 	{
 		glm::mat4x4 model = glm::translate(identity, glm::vec3(4.0f, 1.0f, 0.0f));
-		Sphere* sphere = new Sphere(model, { 0.7f, 0.6f, 0.5f }, metal);
+		Sphere* sphere = new Sphere(model, { metal, { 0.7f, 0.6f, 0.5f } });
 		spheres.push_back(sphere);
 	}
 
@@ -78,17 +78,17 @@ int main()
 
 			if (choose_mat < 0.75f)			
 			{			
-				Sphere* sphere = new Sphere(model, { rand01()*rand01(), rand01()*rand01(), rand01()*rand01() }, lambertian);
+				Sphere* sphere = new Sphere(model, { lambertian, { rand01()*rand01(), rand01()*rand01(), rand01()*rand01() } });
 				spheres.push_back(sphere);
 			}
 			else if (choose_mat < 0.90f)
 			{
-				Sphere* sphere = new Sphere(model, { 0.5f*(1.0f + rand01()), 0.5f*(1.0f + rand01()),0.5f*(1.0f + rand01()) }, metal);
+				Sphere* sphere = new Sphere(model, { metal, { 0.5f*(1.0f + rand01()), 0.5f*(1.0f + rand01()),0.5f*(1.0f + rand01()) } });
 				spheres.push_back(sphere);
 			}
 			else
 			{
-				Sphere* sphere = new Sphere(model, { 1.0f, 1.0f, 1.0f }, dielectric, 0.0f, 1.5f);
+				Sphere* sphere = new Sphere(model, { dielectric, { 1.0f, 1.0f, 1.0f }, 0.0f, 1.5f });
 				spheres.push_back(sphere);
 			}
 

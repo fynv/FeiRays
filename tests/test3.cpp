@@ -56,11 +56,11 @@ int main()
 	pt.add_geometry(&sphere0);
 
 	glm::mat4x4 model1 = glm::translate(identity, glm::vec3(0.0f, 1.0f, 3.0f));
-	ColoredUnitSphere sphere1(model1, { 1.0f, 1.0f, 1.0f }, dielectric, 0.0f, 1.5f);
+	ColoredUnitSphere sphere1(model1, { dielectric, { 1.0f, 1.0f, 1.0f }, 0.0f, 1.5f });
 	pt.add_geometry(&sphere1);
 
 	glm::mat4x4 model2 = glm::translate(identity, glm::vec3(-3.0f, 1.0f, -1.5f));
-	ColoredUnitSphere sphere2(model2, { 0.7f, 0.6f, 0.5f }, metal);
+	ColoredUnitSphere sphere2(model2, { metal, { 0.7f, 0.6f, 0.5f } });
 	pt.add_geometry(&sphere2);
 
 	LambertianObject obj(pt, "../data/Medieval_building", "Medieval_building.obj", identity);

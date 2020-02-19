@@ -74,13 +74,15 @@ This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material 
 	800 x 400 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 0.524628 secs
+	Done initializing RNG states.. 0.565238 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.125071 secs
+	Done preparing ray-tracing.. 0.028349 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.093786 secs
+	Done ray-tracing.. 0.118001 secs
 
 Besides spheres, triangle-meshes (triangle-lists) are also implemented.
+
+Also possible to simulate materials involving partical scattering.
 
 ### test2
 

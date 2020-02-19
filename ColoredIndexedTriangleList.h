@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PathTracer.h"
+#include "Material.h"
 
 class ColoredIndexedTriangleList : public Geometry
 {
@@ -15,8 +16,7 @@ public:
 	DeviceBuffer* vertex_buffer() const { return m_vertexBuffer; }
 	DeviceBuffer* index_buffer() const { return m_indexBuffer; }
 
-	ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, 
-		const glm::vec3& color = { 1.0f, 1.0f, 1.0f }, Material material = lambertian, float fuzz = 0.0f, float ref_idx = 0.0f);
+	ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, const Material& material);
 
 	virtual ~ColoredIndexedTriangleList();
 
@@ -32,9 +32,6 @@ private:
 	DeviceBuffer* m_vertexBuffer;
 	DeviceBuffer* m_indexBuffer;
 
-	glm::vec3 m_color;
 	Material m_material;
-	float m_fuzz;
-	float m_ref_idx;
 
 };
