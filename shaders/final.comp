@@ -17,17 +17,6 @@ void main()
 	vec4 v = read_pixel(target, x, y);
 	v.xyz *= 1.0/float(num_iter);
 
-	float gamma = 1.0/2.2;
-	v.x = pow(v.x, gamma);
-	v.y = pow(v.y, gamma);
-	v.z = pow(v.z, gamma);
-	if (v.x < 0.0) v.x = 0.0;
-	if (v.x > 1.0) v.x = 1.0;
-	if (v.y < 0.0) v.y = 0.0;
-	if (v.y > 1.0) v.y = 1.0;
-	if (v.z < 0.0) v.z = 0.0;
-	if (v.z > 1.0) v.z = 1.0;
-
 	write_pixel(target, x, y, v);
 }
 

@@ -130,7 +130,14 @@ public:
 	~Image();
 
 	void clear();
-	void to_host(void *hdata) const;
+
+	// f32_vec4 - linear
+	void to_host_raw(void *hdata) const;
+
+	// u8_vec3 - srgb
+	void to_host_srgb(void* hdata) const;
+
+
 
 private:
 	DeviceBuffer* m_data;

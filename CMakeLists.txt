@@ -23,6 +23,7 @@ add_subdirectory(thirdparty/volk)
 set (SOURCE
 context.cpp
 rand_state_init.cu
+dump_srgb.cu
 PathTracer.cpp
 ColoredIndexedTriangleList.cpp
 ColoredUnitSphere.cpp

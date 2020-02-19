@@ -145,7 +145,7 @@ Image::Image(int width, int height, float* hdata)
 	m_width = width;
 	m_height = height;
 
-	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT);
+	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT, true);
 
 	if (hdata != nullptr)
 		m_data->upload(hdata);
@@ -272,9 +272,46 @@ void Image::clear()
 	m_data->zero();
 }
 
-void Image::to_host(void *hdata) const
+void Image::to_host_raw(void *hdata) const
 {
 	m_data->download(hdata);
+}
+
+void h_raw_to_srgb(const float* raw, unsigned char* srgb, size_t num_pixels);
+
+void Image::to_host_srgb(void* hdata) const
+{
+	unsigned char* d_srgb;
+	unsigned count = unsigned(m_width*m_height);
+	cudaMalloc(&d_srgb, count * 3);
+
+	{
+		cudaExternalMemoryHandleDesc cudaExtMemHandleDesc = {};
+#ifdef _WIN64
+		cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueWin32Kmt;
+		cudaExtMemHandleDesc.handle.win32.handle = getVkMemHandle(*m_data, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT);
+#else
+		cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueFd;
+		cudaExtMemHandleDesc.handle.fd = getVkMemHandle(*m_data, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT);
+#endif
+		cudaExtMemHandleDesc.size = sizeof(float) * count * 4;
+
+		cudaExternalMemory_t cudaExtMemVertexBuffer;
+		cudaImportExternalMemory(&cudaExtMemVertexBuffer, &cudaExtMemHandleDesc);
+
+		cudaExternalMemoryBufferDesc cudaExtBufferDesc;
+		cudaExtBufferDesc.offset = 0;
+		cudaExtBufferDesc.size = sizeof(float) * count * 4;
+		cudaExtBufferDesc.flags = 0;
+
+		float* d_raw;
+		cudaExternalMemoryGetMappedBuffer((void**)&d_raw, cudaExtMemVertexBuffer, &cudaExtBufferDesc);
+		h_raw_to_srgb(d_raw, d_srgb, count);
+		cudaDestroyExternalMemory(cudaExtMemVertexBuffer);
+	}
+
+	cudaMemcpy(hdata, d_srgb, m_width*m_height * 3, cudaMemcpyDeviceToHost);
+	cudaFree(d_srgb);
 }
 
 PathTracer::PathTracer()

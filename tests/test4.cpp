@@ -115,17 +115,10 @@ int main()
 
 	pt.trace(100);
 
-	float* hbuffer = (float*)malloc(view_width * view_height * sizeof(float) * 4);
-	target.to_host(hbuffer);
+	unsigned char* hbuffer = (unsigned char*)malloc(view_width * view_height * 3);
+	target.to_host_srgb(hbuffer);
 	FILE* fp = fopen("test4.raw", "wb");
-	for (unsigned i = 0; i < view_width * view_height; i++)
-	{
-		unsigned char pix[3];
-		pix[0] = (unsigned char)(hbuffer[i * 4] * 255.0f);
-		pix[1] = (unsigned char)(hbuffer[i * 4 + 1] * 255.0f);
-		pix[2] = (unsigned char)(hbuffer[i * 4 + 2] * 255.0f);
-		fwrite(pix, 1, 3, fp);
-	}
+	fwrite(hbuffer, 1, view_width * view_height * 3, fp);
 	fclose(fp);
 	free(hbuffer);
 
