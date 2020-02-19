@@ -83,7 +83,7 @@ class RGBATexture
 public:
 	Texture* data() const { return m_data; }
 
-	RGBATexture(int width, int height, void* data);
+	RGBATexture(int width, int height, void* data, bool srgb = true);
 	~RGBATexture();	
 
 private:
@@ -95,7 +95,7 @@ class RGBACubemap
 public:
 	Cubemap* data() const { return m_data; }
 
-	RGBACubemap(int width, int height, void* data);
+	RGBACubemap(int width, int height, void* data, bool srgb = true);
 	~RGBACubemap();
 
 private:
@@ -112,12 +112,10 @@ public:
 	virtual void get_view(void* view_buf) const;
 
 	void rotate(float angle, const glm::vec3& v);
-	void set_gamma(float gamma) { m_gamma = gamma;  }
 
 private:
 	int m_texId;
 	glm::mat4x4 m_transform;
-	float m_gamma;
 };
 
 class Image

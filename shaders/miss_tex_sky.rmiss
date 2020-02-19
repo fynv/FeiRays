@@ -15,7 +15,6 @@ layout(std140, binding = 5) uniform Params
 {
 	mat3 transform;
     int tex_idx;
-    float gamma;
 };
 
 
@@ -23,8 +22,6 @@ void main()
 {
 	vec3 direction = transform*gl_WorldRayDirectionNV;
 	vec3 color = texture(cubeSamplers[tex_idx], direction).xyz;
-	if (gamma!=1.0)
-		color = vec3(pow(color.x, gamma), pow(color.y, gamma), pow(color.z, gamma));
 
 	payload.t = -1.0;
 	payload.material_bits = MAT_OPAQUE_BIT | MAT_EMIT_BIT;

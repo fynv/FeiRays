@@ -279,3 +279,28 @@ vec3 rand_on_unit_sphere(inout RNGState rstate)
 	ret.y = r*sin(theta);
 	return ret;
 }
+
+vec2 rand_on_unit_circle(inout RNGState rstate)
+{
+	float theta = rand01(rstate) * radians(360.0);
+	vec2 ret;
+	ret.x = cos(theta);
+	ret.y = sin(theta);
+	return ret;
+}
+
+/*
+vec3 rand_in_unit_sphere(inout RNGState rstate)
+{
+	vec3 v = rand_on_unit_sphere(rstate);
+	float r = pow(rand01(rstate), 1.0/3.0);
+	return v*r;
+}
+
+vec2 rand_in_unit_disk(inout RNGState rstate)
+{
+	vec2 v = rand_on_unit_circle(rstate);
+	float r = sqrt(rand01(rstate));
+	return v*r;
+}
+*/

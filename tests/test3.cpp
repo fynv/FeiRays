@@ -31,7 +31,7 @@ int main()
 
 	int cubeWidth, cubeHeight, cubeChannels, isCube;
 	void *cube_pixels = dds_load("../data/sky_cube.dds", &cubeWidth, &cubeHeight, &cubeChannels, &isCube);
-	RGBACubemap cubemap(cubeWidth, cubeHeight, cube_pixels);
+	RGBACubemap cubemap(cubeWidth, cubeHeight, cube_pixels, false);
 	dds_free(cube_pixels);
 
 	int id_skybox= pt.add_cubemap(&cubemap);

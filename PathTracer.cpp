@@ -72,9 +72,13 @@ void GradientSky::get_view(void* view_buf) const
 }
 
 
-RGBATexture::RGBATexture(int width, int height, void* data)
+RGBATexture::RGBATexture(int width, int height, void* data, bool srgb)
 {
-	m_data = new Texture(width, height, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+	if (srgb)
+		m_data = new Texture(width, height, 4, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+	else
+		m_data = new Texture(width, height, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+
 	m_data->uploadTexture(data);
 }
 
@@ -84,9 +88,12 @@ RGBATexture::~RGBATexture()
 }
 
 
-RGBACubemap::RGBACubemap(int width, int height, void* data)
+RGBACubemap::RGBACubemap(int width, int height, void* data, bool srgb)
 {
-	m_data = new Cubemap(width, height, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+	if (srgb)
+		m_data = new Cubemap(width, height, 4, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
+	else
+		m_data = new Cubemap(width, height, 4, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_SAMPLED_BIT);
 	m_data->uploadTexture(data);
 }
 
@@ -100,7 +107,6 @@ TexturedSkyBox::TexturedSkyBox(int texId)
 {
 	m_texId = texId;
 	m_transform = glm::identity<glm::mat4x4>();
-	m_gamma = 1.0f;
 }
 
 TexturedSkyBox::~TexturedSkyBox()
@@ -117,7 +123,6 @@ struct View_TexturedSkyBox
 {
 	glm::mat3x4 transform;
 	int texIdx;
-	float gamma;
 };
 
 SkyCls TexturedSkyBox::cls() const
@@ -133,7 +138,6 @@ void TexturedSkyBox::get_view(void* view_buf) const
 	View_TexturedSkyBox& view = *(View_TexturedSkyBox*)view_buf;
 	view.transform = m_transform;
 	view.texIdx = m_texId;
-	view.gamma = m_gamma;
 }
 
 Image::Image(int width, int height, float* hdata)

@@ -109,8 +109,6 @@ void main()
 		c*= texture(textureSamplers[mat.textureId], texCoord).xyz;
 	}
 
-	c = vec3(c.x*c.x, c.y*c.y, c.z*c.z);
-
 	payload.t = gl_HitTNV;
 	payload.material_bits = MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT;
 	payload.color1 = c;

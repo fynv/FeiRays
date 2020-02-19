@@ -35,8 +35,7 @@ void main()
 	vec2 texCoord;
 	texCoord.y = asin(hitpoint.y)/radians(180.0) + 0.5;
 	texCoord.x = atan(hitpoint.x, hitpoint.z)/radians(360.0) + 0.5;
-	vec3 c_tex = texture(textureSamplers[instance.textureId], texCoord).xyz;
-	c*= vec3(c_tex.x*c_tex.x, c_tex.y*c_tex.y, c_tex.z*c_tex.z);
+	c*= texture(textureSamplers[instance.textureId], texCoord).xyz;
 
 	payload.t = gl_HitTNV;
 	payload.material_bits = MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT;
