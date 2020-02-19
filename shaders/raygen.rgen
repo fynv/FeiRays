@@ -69,7 +69,7 @@ void main()
         float t = payload.t;
   
         bool scattering = false;
-        if (in_material && (payload.material_bits & MAT_SCATTER_BIT)!=0)
+        if (in_material && (payload.material_bits & MAT_SCATTER_BIT)!=0 && payload.f2>0.0)
         {
             float t2 = -log(rand01(states[ray_id]))/payload.f2;
             if (t2<t)
