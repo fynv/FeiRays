@@ -115,12 +115,12 @@ void main()
                     if (r<payload.f0)
                     {
                         directional = true;
-                        f_att /= payload.f0;
+                        f_att *= 1.0/payload.f0;
                     }
                     else 
                     {
                         diffusive = true;
-                        f_att /= 1.0 - payload.f0;
+                        f_att *= 1.0/(1.0 - payload.f0);
                     }
                 }
                 break;
