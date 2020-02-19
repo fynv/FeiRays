@@ -12,6 +12,9 @@
 
 #include <vector>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 typedef ColoredIndexedTriangleList TriangleMesh;
 typedef ColoredUnitSphere Sphere;
 
@@ -107,9 +110,7 @@ int main()
 
 	unsigned char* hbuffer = (unsigned char*)malloc(view_width * view_height * 3);
 	target.to_host_srgb(hbuffer);
-	FILE* fp = fopen("rt_weekend.raw", "wb");
-	fwrite(hbuffer, 1, view_width * view_height * 3, fp);
-	fclose(fp);
+	stbi_write_png("rt_weekend.png", view_width, view_height, 3, hbuffer, view_width * 3);
 	free(hbuffer);
 
 	for (size_t i = 0; i < spheres.size(); i++)

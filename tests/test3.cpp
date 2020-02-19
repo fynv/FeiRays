@@ -13,6 +13,9 @@
 
 #include "stb_image.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #include "dds_reader.hpp"
 
 #ifndef PI
@@ -68,11 +71,8 @@ int main()
 
 	unsigned char* hbuffer = (unsigned char*)malloc(view_width * view_height * 3);
 	target.to_host_srgb(hbuffer);
-	FILE* fp = fopen("test3.raw", "wb");
-	fwrite(hbuffer, 1, view_width * view_height * 3, fp);
-	fclose(fp);
+	stbi_write_png("test3.png", view_width, view_height, 3, hbuffer, view_width * 3);
 	free(hbuffer);
-
 
 	system("pause");
 

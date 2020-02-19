@@ -19,7 +19,6 @@ But be sure to have the latest graphics driver installed, one that supports Vulk
 * Use CMake to generate a VS solution at FeiRays/build (Linux build not tested yet).
 * Build and run the tests. 
 * Shaders (spv) are expected at ../shaders relative to the starting folder.
-* Output file are in 24bit R8G8B8 raw format.
 
 ## Progress
 
