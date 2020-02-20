@@ -132,7 +132,7 @@ Sky-box using a cubemap texture.
 	Doing ray-tracing..
 	Done ray-tracing.. 0.217560 secs
 
-Spherial light-sources are handled specially.
+Spherical light-sources are handled specially.
 
 
 ### test5
