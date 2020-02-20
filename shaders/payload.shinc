@@ -5,6 +5,7 @@
 #define MAT_SPECULAR_BIT 0x10
 #define MAT_SCATTER_BIT 0x20
 #define MAT_ABSORB_BIT 0x40
+#define MAT_LIGHT_SOURCE_BIT 0x40
 
 struct Payload
 {
@@ -17,7 +18,7 @@ struct Payload
 	vec3 color0; // emission
 	vec3 color1; // diffuse/scattering
 	vec3 color2; // specular/absorption
-	float f0; // importance of specular against diffuse / refractive index
+	float f0; // importance of specular against diffuse / refractive index / light-source id
 	float f1; // fuzz
 	float f2; // scattering density
 };

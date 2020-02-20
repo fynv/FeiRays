@@ -108,11 +108,11 @@ int main()
 	TexturedUnitSphere sphere1(model1, tex_id, { 0.8f, 0.8f, 0.6f });
 	pt.add_geometry(&sphere1);
 
-	glm::mat4x4 model2 = glm::translate(identity, glm::vec3(4.0f, 2.0f, -2.01f));
-	model2 = glm::scale(model2, glm::vec3(1.0f, 1.0f, 0.01f));
-	ColoredIndexedTriangleList cube2(model2, cube_vertices, cube_indices, { emissive, { 4.0f, 4.0f, 4.0f } });
-	pt.add_geometry(&cube2);
+	SphereLight light1({ 4.0f, 2.0f, -2.0f }, 0.25f, { 20.0f, 12.0f, 12.0f });
+	pt.add_geometry(&light1);
 
+	SphereLight light2({ 4.0f, 2.0f, 2.0f }, 0.25f, { 12.0f, 20.0f, 12.0f });
+	pt.add_geometry(&light2);
 
 	pt.set_camera({ 15.0f, 3.0f, 3.0f }, { 0.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 30.0f, 0.2f, 12.0f);
 

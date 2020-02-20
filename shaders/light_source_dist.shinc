@@ -1,0 +1,11 @@
+layout(buffer_reference, std430, buffer_reference_align = 4) buffer LightSourceDistBuf
+{
+    float d;
+};
+
+layout(std140, binding = 6) uniform LightSourcesDist
+{
+	LightSourceDistBuf buf_lightSourceDist;
+	int number_sphere_lights;
+};
+

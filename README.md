@@ -57,13 +57,13 @@ The class "PathTracer" maintains a list of the geometries and path-traces them.
 	900 x 600 x 100 rays:
 
 	Generating scene..
-	Done generating scene.. 0.946316 secs
+	Done generating scene.. 0.902597 secs
 	Initializing RNG states..
-	Done initializing RNG states.. 1.497764 secs
+	Done initializing RNG states.. 1.529381 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.027223 secs
+	Done preparing ray-tracing.. 0.027864 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.229195 secs
+	Done ray-tracing.. 0.248390 secs
 
 This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material are implemented.
 
@@ -74,11 +74,11 @@ This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material 
 	800 x 400 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 0.565238 secs
+	Done initializing RNG states.. 0.566024 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.028349 secs
+	Done preparing ray-tracing.. 0.030093 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.118001 secs
+	Done ray-tracing.. 0.123516 secs
 
 Besides spheres, triangle-meshes (triangle-lists) are also implemented.
 
@@ -91,13 +91,13 @@ Also possible to simulate materials involving partical scattering.
 	900 x 600 x 100 rays:
 
 	Generating scene..
-	Done generating scene.. 0.920365 secs
+	Done generating scene.. 0.918711 secs
 	Initializing RNG states..
-	Done initializing RNG states.. 1.497170 secs
+	Done initializing RNG states.. 1.527278 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.170722 secs
+	Done preparing ray-tracing.. 0.030000 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.238152 secs
+	Done ray-tracing.. 0.244481 secs
 
 Sphere with checker texture. (Chapter 3, Ray Tracing - The Next Week)
 
@@ -109,11 +109,11 @@ Sphere with checker texture. (Chapter 3, Ray Tracing - The Next Week)
 	900 x 600 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 1.497675 secs
+	Done initializing RNG states.. 1.539325 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.190077 secs
+	Done preparing ray-tracing.. 0.031404 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.184865 secs
+	Done ray-tracing.. 0.193931 secs
 
 Triangle mesh and sphere with diffuse textures.
 Sky-box using a cubemap texture.
@@ -126,13 +126,13 @@ Sky-box using a cubemap texture.
 	900 x 600 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 1.516941 secs
+	Done initializing RNG states.. 1.530377 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.029684 secs
+	Done preparing ray-tracing.. 0.030906 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.129086 secs
+	Done ray-tracing.. 0.217560 secs
 
-Test using emissive material.
+Spherial light-sources are handled specially.
 
 
 ### test5
@@ -142,12 +142,12 @@ Test using emissive material.
 	800 x 800 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 1.964598 secs
+	Done initializing RNG states.. 1.965325 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.026455 secs
+	Done preparing ray-tracing.. 0.027744 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.352227 secs
+	Done ray-tracing.. 0.381966 secs
 
-The Cornell Box.
+The Cornell Box. Not handling square light-sources yet. Treating them as emissive material.
 
 

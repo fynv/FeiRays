@@ -35,13 +35,84 @@ Geometry::~Geometry()
 	delete m_blas;
 }
 
+static glm::mat4x4 s_sphere_model(const glm::vec3& center, float r)
+{
+	glm::mat4x4 ret = glm::identity<glm::mat4x4>();
+	ret = glm::translate(ret, center);
+	ret = glm::scale(ret, glm::vec3(r, r, r));
+	return ret;
+}
+
+void SphereLight::_blas_create()
+{
+	const Context& ctx = Context::get_context();
+
+	VkGeometryNV geometry = {};
+	geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
+	geometry.geometryType = VK_GEOMETRY_TYPE_AABBS_NV;
+	geometry.geometry.triangles = {};
+	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
+	geometry.geometry.aabbs = {};
+	geometry.geometry.aabbs.sType = VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV;
+	geometry.geometry.aabbs.aabbData = m_aabb_buf->buf();
+	geometry.geometry.aabbs.offset = 0;
+	geometry.geometry.aabbs.numAABBs = 1;
+	geometry.geometry.aabbs.stride = 0;
+	geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+
+	m_blas = new BaseLevelAS(1, &geometry);
+}
+
+
+SphereLight::SphereLight(const glm::vec3& center, float r, const glm::vec3& color) : Geometry(s_sphere_model(center, r))
+{
+	m_center = center;
+	m_radius = r;
+	m_color = color;
+	static float s_aabb[6] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
+
+	m_aabb_buf = new DeviceBuffer(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_aabb_buf->upload(s_aabb);
+
+	_blas_create();
+}
+
+SphereLight::~SphereLight()
+{
+	delete m_aabb_buf;
+}
+
+struct View_SphereLight
+{
+	glm::vec4 center_radius;
+	glm::vec4 color;
+};
+
+
+GeoCls SphereLight::cls() const
+{
+	static const char s_name[] = "SphereLight";
+	GeoCls cls = {};
+	cls.name = s_name;
+	cls.size_view = sizeof(View_SphereLight);
+	cls.binding_view = BINDING_SphereLight;
+	cls.fn_intersection = "../shaders/intersection_unit_spheres.spv";
+	cls.fn_closesthit = "../shaders/closesthit_sphere_lights.spv";
+	return cls;
+}
+
+void SphereLight::get_view(void* view_buf) const
+{
+	View_SphereLight& view = *(View_SphereLight*)view_buf;
+	view.center_radius = glm::vec4(m_center, m_radius);
+	view.color = glm::vec4(m_color, 1.0f);
+}
 
 struct View_GradientSky
 {
 	glm::vec4 color0;
 	glm::vec4 color1;
 };
-
 
 
 GradientSky::GradientSky(const glm::vec3& color0, const glm::vec3& color1)
@@ -381,6 +452,12 @@ struct RayGenParams
 	int num_iter;
 };
 
+struct LightSourceDist
+{
+	VkDeviceAddress buf;
+	int number_sphere_lights;
+};
+
 struct RayTrace
 {
 	int num_iter;
@@ -389,6 +466,9 @@ struct RayTrace
 	std::vector<DeviceBuffer*> buf_views;
 	DeviceBuffer* params_raygen;
 	DeviceBuffer* params_sky;
+	
+	DeviceBuffer* buf_light_source_dist;
+	DeviceBuffer* light_source_dist;
 
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkDescriptorPool descriptorPool;
@@ -483,6 +563,18 @@ void PathTracer::_args_create(RayTrace& rt) const
 		rt.params_sky = nullptr;
 	}
 
+	rt.light_source_dist = new DeviceBuffer(sizeof(LightSourceDist), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+
+	iter = m_geo_lists.find("SphereLight");
+	if (iter != m_geo_lists.end())
+	{
+		rt.buf_light_source_dist = new DeviceBuffer(sizeof(float)*iter->second.list.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT);
+	}
+	else
+	{
+		rt.buf_light_source_dist = nullptr;
+	}
+
 	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(BINDING_START + num_hitgroups);
 
 	descriptorSetLayoutBindings[0] = {};
@@ -515,6 +607,11 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorSetLayoutBindings[5].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorSetLayoutBindings[5].descriptorCount = 1;
 	descriptorSetLayoutBindings[5].stageFlags = VK_SHADER_STAGE_MISS_BIT_NV;
+	descriptorSetLayoutBindings[6] = {};
+	descriptorSetLayoutBindings[6].binding = 6;
+	descriptorSetLayoutBindings[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorSetLayoutBindings[6].descriptorCount = 1;
+	descriptorSetLayoutBindings[6].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
 
 	i = 0;
 	iter = m_geo_lists.begin();
@@ -525,6 +622,9 @@ void PathTracer::_args_create(RayTrace& rt) const
 		descriptorSetLayoutBindings[BINDING_START + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		descriptorSetLayoutBindings[BINDING_START + i].descriptorCount = 1;
 		descriptorSetLayoutBindings[BINDING_START + i].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+
+		if (iter->first == "SphereLight")
+			descriptorSetLayoutBindings[BINDING_START + i].stageFlags |= VK_SHADER_STAGE_RAYGEN_BIT_NV;
 
 		iter++;
 		i++;
@@ -541,7 +641,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorPoolSize[0].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
 	descriptorPoolSize[0].descriptorCount = 1;
 	descriptorPoolSize[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorPoolSize[1].descriptorCount = 2;
+	descriptorPoolSize[1].descriptorCount = 3;
 	descriptorPoolSize[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	descriptorPoolSize[2].descriptorCount = (uint32_t)(1 + num_hitgroups);
 	descriptorPoolSize[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -597,6 +697,10 @@ void PathTracer::_args_create(RayTrace& rt) const
 	if (rt.params_sky!=nullptr)
 		descriptorBufferInfo_sky.buffer = rt.params_sky->buf();
 	descriptorBufferInfo_sky.range = VK_WHOLE_SIZE;
+
+	VkDescriptorBufferInfo descriptorBufferInfo_lightsource_dist = {};
+	descriptorBufferInfo_lightsource_dist.buffer = rt.light_source_dist->buf();
+	descriptorBufferInfo_lightsource_dist.range = VK_WHOLE_SIZE;
 
 
 	std::vector<VkDescriptorBufferInfo> descriptorBufferInfo_geo_views(num_hitgroups);
@@ -676,6 +780,17 @@ void PathTracer::_args_create(RayTrace& rt) const
 		wds.descriptorCount = 1;
 		wds.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		wds.pBufferInfo = &descriptorBufferInfo_sky;
+		writeDescriptorSet.push_back(wds);
+	}
+
+	{
+		VkWriteDescriptorSet wds = {};
+		wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		wds.dstSet = rt.descriptorSet;
+		wds.dstBinding = 6;
+		wds.descriptorCount = 1;
+		wds.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		wds.pBufferInfo = &descriptorBufferInfo_lightsource_dist;
 		writeDescriptorSet.push_back(wds);
 	}
 
@@ -922,6 +1037,42 @@ void PathTracer::_calc_raygen(RayTrace& rt) const
 	rt.params_raygen->upload(&raygen_params);
 }
 
+void PathTracer::_calc_light_source_dist(RayTrace& rt) const
+{
+	auto iter = m_geo_lists.find("SphereLight");
+	if (iter != m_geo_lists.end())
+	{
+		size_t count = iter->second.list.size();
+		std::vector<float> h_dist(count);
+		for (size_t i = 0; i < count; i++)
+		{
+			SphereLight* sl = (SphereLight*)iter->second.list[i];
+			glm::vec3 co = sl->color();
+			float r = sl->radius();
+			h_dist[i] = (co[0] + co[1] + co[2])*r*r;
+			if (i > 0)
+				h_dist[i] += h_dist[i - 1];
+		}
+		for (size_t i = 0; i < count; i++)
+		{
+			h_dist[i] /= h_dist[count - 1];
+		}
+		rt.buf_light_source_dist->upload(h_dist.data());
+
+		LightSourceDist lsd;
+		lsd.buf = rt.buf_light_source_dist->get_device_address();
+		lsd.number_sphere_lights = (int)count;
+		rt.light_source_dist->upload(&lsd);
+	}
+	else
+	{
+		LightSourceDist lsd;
+		lsd.buf = 0;
+		lsd.number_sphere_lights = 0;
+		rt.light_source_dist->upload(&lsd);
+	}
+}
+
 
 void PathTracer::_rt_clean(RayTrace& rt) const
 {
@@ -937,6 +1088,8 @@ void PathTracer::_rt_clean(RayTrace& rt) const
 	vkDestroyDescriptorPool(ctx.device(), rt.descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(ctx.device(), rt.descriptorSetLayout, nullptr);
 
+	delete rt.light_source_dist;
+	delete rt.buf_light_source_dist;
 	delete rt.params_sky;
 	delete rt.params_raygen;
 
@@ -966,6 +1119,7 @@ void PathTracer::trace(int num_iter, int interval) const
 	_rt_pipeline_create(rt);
 	_comp_pipeline_create(rt);
 	_calc_raygen(rt);
+	_calc_light_source_dist(rt);
 
 	double time1 = GetTime();
 	printf("Done preparing ray-tracing.. %f secs\n", time1-time0);

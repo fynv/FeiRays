@@ -4,10 +4,12 @@
 #extension GL_EXT_buffer_reference2 : enable
 #extension GL_NV_ray_tracing : enable
 
+#include "bindings.h"
 #include "payload.shinc"
 #include "rand.shinc"
 #include "image.shinc"
 #include "raygen_params.shinc"
+#include "light_source_dist.shinc"
 
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
 
@@ -15,6 +17,19 @@ layout(std430, binding = 2) buffer BufStates
 {
     RNGState states[];
 };
+
+struct SphereLight
+{
+    vec4 center_radius;
+    vec4 color;
+};
+
+
+layout(std430, binding = BINDING_SphereLight) buffer Params
+{
+    SphereLight[] sphereLights; 
+};
+
 
 layout(location = 0) rayPayloadNV Payload payload;
 
@@ -37,7 +52,7 @@ void main()
 	
 	uint cullMask = 0xff;
     float tmin = 0.0001;
-    float tmax = 10000.0;
+    float tmax = 1000000.0;
 
     vec3 ray_origin = origin.xyz;
 
@@ -56,6 +71,7 @@ void main()
     int depth = 0;
 
     bool in_material = false;
+    bool skip_lights = false;
 
     while (f_att.x > 0.0001 || f_att.y > 0.0001 || f_att.z > 0.0001)
     {
@@ -88,7 +104,7 @@ void main()
         if (t>0.0)
             ray_origin += direction*t;
 
-        if ( (payload.material_bits &  MAT_EMIT_BIT) !=0) 
+        if ( (payload.material_bits &  MAT_EMIT_BIT) !=0 && (!skip_lights || (payload.material_bits &  MAT_LIGHT_SOURCE_BIT)==0)) 
             color += payload.color0 * f_att;
 
         bool diffusive = false;
@@ -185,7 +201,60 @@ void main()
         if (!scattering && !diffusive && !directional) break;
 
         // handle light-sources here
+        skip_lights = false;
+        if (number_sphere_lights>0 && !in_material && diffusive)
+        {
+            // choose a light-source
+            float r = rand01(states[ray_id]);
+            int id_light;
+            float weight;
+            for (id_light = 0; id_light< number_sphere_lights; id_light++)
+            {
+                weight = buf_lightSourceDist[id_light].d;
+                if (r<= weight)
+                {
+                    if (id_light>0) weight-= buf_lightSourceDist[id_light-1].d;
+                    weight = 1.0 / weight;
+                    break;
+                }
+            }
 
+            // direction to the center of the sphere
+            vec4 center_radius = sphereLights[id_light].center_radius;
+            vec3 dir = center_radius.xyz - ray_origin;            
+            float distance = length(dir);
+            dir = normalize(dir);
+
+            // random direction within the coverage of the sphere
+            vec2 r_v = rand_in_unit_disk(states[ray_id]);
+            float rr = center_radius.w/sqrt(distance*distance - center_radius.w*center_radius.w);
+            r_v*=rr;
+            float x = length(r_v);
+
+            vec3 a, b;
+            if (abs(dir.x)>0.8)
+                a = vec3(0.0, 1.0, 0.0);
+            else 
+                a = vec3(1.0, 0.0, 0.0);
+
+            a = normalize(cross(a, dir));
+            b = cross(a, dir);
+            dir = normalize(dir + a*r_v.x + b*r_v.y);
+
+            // cosine weight
+            float cosine = dot(dir, direction);
+            if (cosine>0.0)
+            {
+                traceNV(topLevelAS, rayFlags, cullMask, 0, 0, 0, ray_origin, tmin, dir, tmax, 0);
+
+                if ((payload.material_bits & MAT_LIGHT_SOURCE_BIT)!=0 && floatBitsToInt(payload.f0)==id_light)
+                {                
+                    color += payload.color0 * (weight * cosine * rr * rr/sqrt(1 + x*x)) * f_att;
+                }
+            }
+
+            skip_lights = true;
+        }
 
         if (scattering) 
         {

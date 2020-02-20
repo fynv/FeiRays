@@ -41,6 +41,30 @@ protected:
 };
 
 
+class SphereLight : public Geometry
+{
+public:
+	DeviceBuffer* aabb_buffer() const { return m_aabb_buf; }
+	const glm::vec3& center() const { return m_center; }
+	float radius() const { return m_radius; }
+	const glm::vec3& color() const { return m_color;  }
+
+	SphereLight(const glm::vec3& center, float r, const glm::vec3& color);
+	virtual ~SphereLight();
+
+	virtual GeoCls cls() const;
+	virtual void get_view(void* view_buf) const;
+
+private:
+	void _blas_create();
+	DeviceBuffer* m_aabb_buf;
+	
+	glm::vec3 m_center;
+	float m_radius;
+	glm::vec3 m_color;
+};
+
+
 struct SkyCls
 {
 	size_t size_view;
@@ -186,6 +210,7 @@ private:
 	void _rt_pipeline_create(RayTrace& rt) const;
 	void _comp_pipeline_create(RayTrace& rt) const;
 	void _calc_raygen(RayTrace& rt) const;
+	void _calc_light_source_dist(RayTrace& rt) const;
 
 	void _rt_clean(RayTrace& rt) const;
 	

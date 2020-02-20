@@ -1,5 +1,5 @@
 
-layout(std140, binding = 1) uniform Params
+layout(std140, binding = 1) uniform RayGenParams
 {
 	vec4 origin;
 	vec4 upper_left;
