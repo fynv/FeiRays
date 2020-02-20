@@ -1,7 +1,7 @@
 #ifndef _BINDINGS_H
 #define _BINDINGS_H
 
-#define BINDING_START 7
+#define BINDING_START 8
 #define BINDING_SphereLight BINDING_START
 #define BINDING_ColoredIndexedTriangleList (BINDING_START + 1)
 #define BINDING_ColoredUnitSphere (BINDING_START + 2)

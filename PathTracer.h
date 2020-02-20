@@ -183,6 +183,7 @@ public:
 	void set_target(Image* target) { m_target = target;  }
 	void set_sky(Sky* sky) { m_current_sky = sky; }
 	void add_geometry(Geometry* geo);
+	void add_sunlight(glm::vec3 direction, float radian, glm::vec3 color);
 	int add_texture(RGBATexture* tex);
 	int add_cubemap(RGBACubemap* tex);
 	void set_camera(glm::vec3 lookfrom, glm::vec3 lookat, glm::vec3 vup, float vfov, float aperture = 0.0f, float focus_dist = 1.0f);
@@ -213,5 +214,12 @@ private:
 	void _calc_light_source_dist(RayTrace& rt) const;
 
 	void _rt_clean(RayTrace& rt) const;
+
+	struct Sunlight
+	{
+		glm::vec4 dir_radian;
+		glm::vec4 color;
+	};
+	std::vector<Sunlight> m_sunlights;
 	
 };

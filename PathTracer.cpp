@@ -410,6 +410,11 @@ void PathTracer::add_geometry(Geometry* geo)
 	m_geo_lists[cls.name].list.push_back(geo);
 }
 
+void PathTracer::add_sunlight(glm::vec3 direction, float radian, glm::vec3 color)
+{
+	m_sunlights.push_back({ { glm::normalize(direction), radian}, {color, 1.0f} });
+}
+
 int PathTracer::add_texture(RGBATexture* tex)
 {
 	int id = (int)m_textures.size();
@@ -456,6 +461,7 @@ struct LightSourceDist
 {
 	VkDeviceAddress buf;
 	int number_sphere_lights;
+	int number_sun_lights;
 };
 
 struct RayTrace
@@ -469,6 +475,7 @@ struct RayTrace
 	
 	DeviceBuffer* buf_light_source_dist;
 	DeviceBuffer* light_source_dist;
+	DeviceBuffer* sunlights;
 
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkDescriptorPool descriptorPool;
@@ -565,14 +572,32 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 	rt.light_source_dist = new DeviceBuffer(sizeof(LightSourceDist), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
+	int num_sphere_lights = 0;
 	iter = m_geo_lists.find("SphereLight");
 	if (iter != m_geo_lists.end())
 	{
-		rt.buf_light_source_dist = new DeviceBuffer(sizeof(float)*iter->second.list.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT);
+		num_sphere_lights = (int)iter->second.list.size();
+	}
+	int num_sunlights = (int)m_sunlights.size();
+	int total_lights = num_sphere_lights + num_sunlights;
+
+	if (total_lights>0)
+	{
+		rt.buf_light_source_dist = new DeviceBuffer(sizeof(float)*total_lights, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT);
 	}
 	else
 	{
 		rt.buf_light_source_dist = nullptr;
+	}
+
+	if (m_sunlights.size() > 0)
+	{
+		rt.sunlights = new DeviceBuffer(sizeof(Sunlight), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+		rt.sunlights->upload(m_sunlights.data());
+	}
+	else
+	{
+		rt.sunlights = nullptr;
 	}
 
 	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(BINDING_START + num_hitgroups);
@@ -611,7 +636,13 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorSetLayoutBindings[6].binding = 6;
 	descriptorSetLayoutBindings[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorSetLayoutBindings[6].descriptorCount = 1;
-	descriptorSetLayoutBindings[6].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
+	descriptorSetLayoutBindings[6].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_MISS_BIT_NV;
+	descriptorSetLayoutBindings[7] = {};
+	descriptorSetLayoutBindings[7].binding = 7;
+	descriptorSetLayoutBindings[7].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	descriptorSetLayoutBindings[7].descriptorCount = 1;
+	descriptorSetLayoutBindings[7].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_MISS_BIT_NV;
+
 
 	i = 0;
 	iter = m_geo_lists.begin();
@@ -643,7 +674,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorPoolSize[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorPoolSize[1].descriptorCount = 3;
 	descriptorPoolSize[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	descriptorPoolSize[2].descriptorCount = (uint32_t)(1 + num_hitgroups);
+	descriptorPoolSize[2].descriptorCount = (uint32_t)(2 + num_hitgroups);
 	descriptorPoolSize[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorPoolSize[3].descriptorCount = (uint32_t)(m_textures.size()+ m_cubemaps.size());
 
@@ -702,6 +733,10 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorBufferInfo_lightsource_dist.buffer = rt.light_source_dist->buf();
 	descriptorBufferInfo_lightsource_dist.range = VK_WHOLE_SIZE;
 
+	VkDescriptorBufferInfo descriptorBufferInfo_sunlight = {};
+	if (rt.sunlights != nullptr)
+		descriptorBufferInfo_sunlight.buffer = rt.sunlights->buf();
+	descriptorBufferInfo_sunlight.range = VK_WHOLE_SIZE;
 
 	std::vector<VkDescriptorBufferInfo> descriptorBufferInfo_geo_views(num_hitgroups);
 	for (i = 0; i < num_hitgroups; i++)
@@ -791,6 +826,18 @@ void PathTracer::_args_create(RayTrace& rt) const
 		wds.descriptorCount = 1;
 		wds.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		wds.pBufferInfo = &descriptorBufferInfo_lightsource_dist;
+		writeDescriptorSet.push_back(wds);
+	}
+
+	if (rt.sunlights != nullptr)
+	{
+		VkWriteDescriptorSet wds = {};
+		wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		wds.dstSet = rt.descriptorSet;
+		wds.dstBinding = 7;
+		wds.descriptorCount = 1;
+		wds.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		wds.pBufferInfo = &descriptorBufferInfo_sunlight;
 		writeDescriptorSet.push_back(wds);
 	}
 
@@ -1039,38 +1086,63 @@ void PathTracer::_calc_raygen(RayTrace& rt) const
 
 void PathTracer::_calc_light_source_dist(RayTrace& rt) const
 {
+	LightSourceDist lsd;
+	lsd.number_sphere_lights = 0;
+	
 	auto iter = m_geo_lists.find("SphereLight");
 	if (iter != m_geo_lists.end())
 	{
-		size_t count = iter->second.list.size();
-		std::vector<float> h_dist(count);
-		for (size_t i = 0; i < count; i++)
+		lsd.number_sphere_lights = (int)iter->second.list.size();
+	}
+	lsd.number_sun_lights = (int)m_sunlights.size();
+	std::vector<float> h_dist(lsd.number_sphere_lights + lsd.number_sun_lights);
+
+	if (h_dist.size()>0)
+	{
+		float p1 = (float)lsd.number_sphere_lights / (float)h_dist.size();
+		float p2 = (float)lsd.number_sun_lights / (float)h_dist.size();
+
+		float total1 = 0.0f;
+
+		// sphere-lights
+		for (int i = 0; i < lsd.number_sphere_lights; i++)
 		{
 			SphereLight* sl = (SphereLight*)iter->second.list[i];
 			glm::vec3 co = sl->color();
 			float r = sl->radius();
 			h_dist[i] = (co[0] + co[1] + co[2])*r*r;
-			if (i > 0)
-				h_dist[i] += h_dist[i - 1];
+			total1 += h_dist[i];
 		}
-		for (size_t i = 0; i < count; i++)
-		{
-			h_dist[i] /= h_dist[count - 1];
-		}
-		rt.buf_light_source_dist->upload(h_dist.data());
 
-		LightSourceDist lsd;
+		// sun-lights
+		float total2 = 0.0f;
+		for (int i = 0; i < lsd.number_sun_lights; i++)
+		{
+			glm::vec3 co = m_sunlights[i].color;
+			float r = m_sunlights[i].dir_radian[3];
+			int j = i + lsd.number_sphere_lights;
+			h_dist[j] = (co[0] + co[1] + co[2])*r*r;
+			total2 += h_dist[j];
+		}
+
+		for (int i = 0; i < lsd.number_sphere_lights; i++)
+		{
+			h_dist[i] *= p1 / total1;
+			if (i > 0) h_dist[i] += h_dist[i - 1];
+		}
+
+		for (int i = 0; i < lsd.number_sun_lights; i++)
+		{
+			int j = i + lsd.number_sphere_lights;
+			h_dist[j] *= p2 / total2;
+			if (j > 0) h_dist[j] += h_dist[j - 1];
+		}	
+
+		rt.buf_light_source_dist->upload(h_dist.data());
 		lsd.buf = rt.buf_light_source_dist->get_device_address();
-		lsd.number_sphere_lights = (int)count;
-		rt.light_source_dist->upload(&lsd);
 	}
-	else
-	{
-		LightSourceDist lsd;
-		lsd.buf = 0;
-		lsd.number_sphere_lights = 0;
-		rt.light_source_dist->upload(&lsd);
-	}
+	rt.light_source_dist->upload(&lsd);
+	
 }
 
 
@@ -1088,6 +1160,7 @@ void PathTracer::_rt_clean(RayTrace& rt) const
 	vkDestroyDescriptorPool(ctx.device(), rt.descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(ctx.device(), rt.descriptorSetLayout, nullptr);
 
+	delete rt.sunlights;
 	delete rt.light_source_dist;
 	delete rt.buf_light_source_dist;
 	delete rt.params_sky;

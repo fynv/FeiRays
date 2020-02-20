@@ -6,6 +6,7 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 
 #include "payload.shinc"
+#include "sunlight.shinc"
 
 layout(location = 0) rayPayloadInNV Payload payload;
 
@@ -20,11 +21,22 @@ layout(std140, binding = 5) uniform Params
 
 void main()
 {
-	vec3 direction = transform*gl_WorldRayDirectionNV;
-	vec3 color = texture(cubeSamplers[tex_idx], direction).xyz;
-
 	payload.t = -1.0;
 	payload.material_bits = MAT_OPAQUE_BIT | MAT_EMIT_BIT;
+
+	vec3 color;
+	int id;
+	if (test_sunlights(gl_WorldRayDirectionNV, color, id))
+	{
+		payload.material_bits |= MAT_LIGHT_SOURCE_BIT;
+		payload.f0 = intBitsToFloat(id);
+	}
+	else
+	{
+		vec3 direction = transform*gl_WorldRayDirectionNV;
+		color = texture(cubeSamplers[tex_idx], direction).xyz;
+	}
+	
 	payload.color0 = color;
 }
 

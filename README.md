@@ -151,3 +151,17 @@ Spherical light-sources are handled specially.
 The Cornell Box. Not handling square light-sources yet. Treating them as emissive material.
 
 
+### test6
+
+<img src="gallery/test6.png" width="800px">
+
+	800 x 400 x 100 rays:
+
+	Initializing RNG states..
+	Done initializing RNG states.. 0.534028 secs
+	Preparing ray-tracing..
+	Done preparing ray-tracing.. 0.031479 secs
+	Doing ray-tracing..
+	Done ray-tracing.. 0.133024 secs
+
+Sunlight can be simulated, which is similar to a spherical light-source.

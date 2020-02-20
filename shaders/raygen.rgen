@@ -25,9 +25,21 @@ struct SphereLight
 };
 
 
-layout(std430, binding = BINDING_SphereLight) buffer Params
+layout(std430, binding = BINDING_SphereLight) buffer SpheresLights
 {
     SphereLight[] sphereLights; 
+};
+
+
+struct Sunlight
+{
+    vec4 dir_radian;
+    vec4 color;
+};
+
+layout(std430, binding = 7) buffer Sunlights
+{
+    Sunlight[] sun_lights;  
 };
 
 
@@ -202,13 +214,13 @@ void main()
 
         // handle light-sources here
         skip_lights = false;
-        if (number_sphere_lights>0 && !in_material && diffusive)
+        if (number_sphere_lights + number_sun_lights>0 && !in_material && diffusive)
         {
             // choose a light-source
             float r = rand01(states[ray_id]);
             int id_light;
             float weight;
-            for (id_light = 0; id_light< number_sphere_lights; id_light++)
+            for (id_light = 0; id_light< number_sphere_lights + number_sun_lights; id_light++)
             {
                 weight = buf_lightSourceDist[id_light].d;
                 if (r<= weight)
@@ -219,15 +231,29 @@ void main()
                 }
             }
 
-            // direction to the center of the sphere
-            vec4 center_radius = sphereLights[id_light].center_radius;
-            vec3 dir = center_radius.xyz - ray_origin;            
-            float distance = length(dir);
-            dir = normalize(dir);
+            vec3 dir;
+            float rr;
 
-            // random direction within the coverage of the sphere
+            if (id_light<number_sphere_lights)
+            {
+                // direction to the center of the sphere
+                vec4 center_radius = sphereLights[id_light].center_radius;
+                dir = center_radius.xyz - ray_origin;            
+                float distance = length(dir);
+                dir = normalize(dir);
+                rr = center_radius.w/sqrt(distance*distance - center_radius.w*center_radius.w);
+            }
+            else
+            {
+                int j = id_light-number_sphere_lights;
+                vec4 dir_radian = sun_lights[j].dir_radian;
+                dir = dir_radian.xyz;
+                rr = tan(dir_radian.w);
+            }
+
+            // random direction within the coverage
             vec2 r_v = rand_in_unit_disk(states[ray_id]);
-            float rr = center_radius.w/sqrt(distance*distance - center_radius.w*center_radius.w);
+            
             r_v*=rr;
             float x = length(r_v);
 

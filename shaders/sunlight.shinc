@@ -1,0 +1,32 @@
+#include "light_source_dist.shinc"
+
+struct Sunlight
+{
+	vec4 dir_radian;
+	vec4 color;
+};
+
+layout(std430, binding = 7) buffer Sunlights
+{
+	Sunlight[] sun_lights;	
+};
+
+bool test_sunlights(in vec3 dir, out vec3 color, out int id)
+{
+	for (int i=0; i<number_sun_lights; i++)
+	{
+		vec4 dir_radian = sun_lights[i].dir_radian;
+		float theta = acos(dot(dir, dir_radian.xyz));
+		if (theta<dir_radian.w)
+		{
+			color = sun_lights[i].color.xyz;
+			id = number_sphere_lights + i;
+			return true;
+		}
+	}
+	return false;	
+}
+
+
+
+

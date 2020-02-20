@@ -80,4 +80,6 @@ target_link_libraries(test4 FeiRays volk)
 add_executable(test5 tests/test5.cpp)
 target_link_libraries(test5 FeiRays volk)
 
+add_executable(test6 tests/test6.cpp)
+target_link_libraries(test6 FeiRays volk)
 

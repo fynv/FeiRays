@@ -18,7 +18,7 @@ struct SphereLight
 };
 
 
-layout(std430, binding = BINDING_SphereLight) buffer Params
+layout(std430, binding = BINDING_SphereLight) buffer SpheresLights
 {
 	SphereLight[] sphereLights;	
 };
