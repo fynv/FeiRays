@@ -17,8 +17,6 @@ layout(std430, binding = 2) buffer BufStates
 };
 
 layout(location = 0) rayPayloadNV Payload payload;
-layout(location = 1) rayPayloadNV bool isShadowed;
-
 
 float schlick(float cosine, float ref_idx)
 {
@@ -186,15 +184,7 @@ void main()
 
         if (!scattering && !diffusive && !directional) break;
 
-        /*vec3 lightVector = normalize(vec3(5, 4, 3));
-        float dot_product = dot(lightVector, payload.normal);
-
-        rayFlags =  gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV;
-        isShadowed = true;
-        if (dot_product>0.0)
-            traceNV(topLevelAS, rayFlags, cullMask, 0, 0, 1, ray_origin, tmin, lightVector, tmax, 1);
-        if (!isShadowed)
-            color += vec3(0.7,0.7,0.7)*dot_product*f_att;*/
+        // handle light-sources here
 
 
         if (scattering) 

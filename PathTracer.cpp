@@ -719,7 +719,6 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 
 	VkShaderModule rayGenModule = _createShaderModule_from_spv("../shaders/raygen.spv");
 	VkShaderModule missModule = _createShaderModule_from_spv(sky_cls.fn_missing);
-	VkShaderModule missShadowModule = _createShaderModule_from_spv("../shaders/miss_shadow.spv");
 
 	std::vector<VkShaderModule> intersection_modules(num_hitgroups);
 	std::vector<VkShaderModule> closesthit_modules(num_hitgroups);
@@ -744,8 +743,8 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 		i++;
 	}
 
-	size_t stage_count = 3 + count_intersection + num_hitgroups;
-	size_t group_count = 3 + num_hitgroups;
+	size_t stage_count = 2 + count_intersection + num_hitgroups;
+	size_t group_count = 2 + num_hitgroups;
 
 	std::vector<VkPipelineShaderStageCreateInfo> stages(stage_count);
 
@@ -759,12 +758,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	stages[1].module = missModule;
 	stages[1].pName = "main";
 
-	stages[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[2].stage = VK_SHADER_STAGE_MISS_BIT_NV;
-	stages[2].module = missShadowModule;
-	stages[2].pName = "main";
-
-	int i_stages = 3;
+	int i_stages = 2;
 	for (size_t i = 0; i < num_hitgroups; i++)
 	{
 		if (intersection_modules[i] != nullptr)
@@ -798,33 +792,26 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	groups[1].anyHitShader = VK_SHADER_UNUSED_NV;
 	groups[1].intersectionShader = VK_SHADER_UNUSED_NV;
 
-	groups[2].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
-	groups[2].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
-	groups[2].generalShader = 2;
-	groups[2].closestHitShader = VK_SHADER_UNUSED_NV;
-	groups[2].anyHitShader = VK_SHADER_UNUSED_NV;
-	groups[2].intersectionShader = VK_SHADER_UNUSED_NV;
-
-	i_stages = 3;
+	i_stages = 2;
 	for (size_t i = 0; i < num_hitgroups; i++)
 	{
 		if (intersection_modules[i] == nullptr)
 		{
-			groups[3 + i].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
-			groups[3 + i].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV;
-			groups[3 + i].generalShader = VK_SHADER_UNUSED_NV;
-			groups[3 + i].closestHitShader = i_stages++;
-			groups[3 + i].anyHitShader = VK_SHADER_UNUSED_NV;
-			groups[3 + i].intersectionShader = VK_SHADER_UNUSED_NV;
+			groups[2 + i].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
+			groups[2 + i].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV;
+			groups[2 + i].generalShader = VK_SHADER_UNUSED_NV;
+			groups[2 + i].closestHitShader = i_stages++;
+			groups[2 + i].anyHitShader = VK_SHADER_UNUSED_NV;
+			groups[2 + i].intersectionShader = VK_SHADER_UNUSED_NV;
 		}
 		else
 		{
-			groups[3 + i].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
-			groups[3 + i].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_NV;
-			groups[3 + i].generalShader = VK_SHADER_UNUSED_NV;
-			groups[3 + i].intersectionShader = i_stages++;
-			groups[3 + i].closestHitShader = i_stages++;
-			groups[3 + i].anyHitShader = VK_SHADER_UNUSED_NV;			
+			groups[2 + i].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
+			groups[2 + i].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_NV;
+			groups[2 + i].generalShader = VK_SHADER_UNUSED_NV;
+			groups[2 + i].intersectionShader = i_stages++;
+			groups[2 + i].closestHitShader = i_stages++;
+			groups[2 + i].anyHitShader = VK_SHADER_UNUSED_NV;			
 		}
 	}
 
@@ -853,7 +840,6 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 			vkDestroyShaderModule(ctx.device(), intersection_modules[i], nullptr);
 	}
 
-	vkDestroyShaderModule(ctx.device(), missShadowModule, nullptr);
 	vkDestroyShaderModule(ctx.device(), missModule, nullptr);
 	vkDestroyShaderModule(ctx.device(), rayGenModule, nullptr);
 
@@ -1007,7 +993,7 @@ void PathTracer::trace(int num_iter, int interval) const
 			vkCmdTraceRaysNV(cmdBuf.buf(),
 				rt.shaderBindingTableBuffer->buf(), 0,
 				rt.shaderBindingTableBuffer->buf(), progIdSize, progIdSize,
-				rt.shaderBindingTableBuffer->buf(), progIdSize * 3, progIdSize,
+				rt.shaderBindingTableBuffer->buf(), progIdSize * 2, progIdSize,
 				VK_NULL_HANDLE, 0, 0, m_target->width(), m_target->height(), 1);
 
 			VkMemoryBarrier memoryBarrier = {};
