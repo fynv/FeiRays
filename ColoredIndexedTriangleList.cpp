@@ -71,7 +71,7 @@ GeoCls ColoredIndexedTriangleList::cls() const
 	cls.size_view = sizeof(TriangleMeshView);
 	cls.binding_view = BINDING_ColoredIndexedTriangleList;
 	cls.fn_intersection = nullptr;
-	cls.fn_closesthit = "../shaders/closesthit_colored_indexed_triangle_lists.spv";
+	cls.fn_closesthit = "closesthit_colored_indexed_triangle_lists";
 	return cls;
 }
 

@@ -96,8 +96,8 @@ GeoCls SphereLight::cls() const
 	cls.name = s_name;
 	cls.size_view = sizeof(View_SphereLight);
 	cls.binding_view = BINDING_SphereLight;
-	cls.fn_intersection = "../shaders/intersection_unit_spheres.spv";
-	cls.fn_closesthit = "../shaders/closesthit_sphere_lights.spv";
+	cls.fn_intersection = "intersection_unit_spheres";
+	cls.fn_closesthit = "closesthit_sphere_lights";
 	return cls;
 }
 
@@ -130,7 +130,7 @@ GradientSky::~GradientSky()
 SkyCls GradientSky::cls() const
 {
 	SkyCls cls;
-	cls.fn_missing = "../shaders/miss.spv";
+	cls.fn_missing = "miss";
 	cls.size_view = sizeof(View_GradientSky);
 	return cls;
 }
@@ -199,7 +199,7 @@ struct View_TexturedSkyBox
 SkyCls TexturedSkyBox::cls() const
 {
 	SkyCls cls;
-	cls.fn_missing = "../shaders/miss_tex_skys.spv";
+	cls.fn_missing = "miss_tex_skys";
 	cls.size_view = sizeof(View_TexturedSkyBox);
 	return cls;
 }
@@ -845,12 +845,35 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 }
 
+class ShaderCache : public std::unordered_map<std::string, VkShaderModule>
+{
+public:
+	ShaderCache() {}
+	virtual ~ShaderCache() 
+	{
+		const Context& ctx = Context::get_context();
+		auto iter = begin();
+		while (iter != end())
+		{
+			vkDestroyShaderModule(ctx.device(), iter->second, nullptr);
+			iter++;
+		}
+	}
+};
 
 VkShaderModule _createShaderModule_from_spv(const char* fn)
 {
+	static ShaderCache s_shader_cache;
+	auto iter = s_shader_cache.find(fn);
+	if (iter != s_shader_cache.end()) return iter->second;
+
+	std::string fullname = "../shaders/";
+	fullname += fn;
+	fullname += ".spv";
+
 	const Context& ctx = Context::get_context();
 
-	FILE* fp = fopen(fn, "rb");
+	FILE* fp = fopen(fullname.data(), "rb");
 	fseek(fp, 0, SEEK_END);
 	size_t bytes = (size_t)ftell(fp);
 	fseek(fp, 0, SEEK_SET);
@@ -869,6 +892,8 @@ VkShaderModule _createShaderModule_from_spv(const char* fn)
 
 	fclose(fp);
 
+	s_shader_cache[fn] = shaderModule;
+
 	return shaderModule;
 }
 
@@ -879,7 +904,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	size_t num_hitgroups = m_geo_lists.size();
 	SkyCls sky_cls = m_current_sky->cls();
 
-	VkShaderModule rayGenModule = _createShaderModule_from_spv("../shaders/raygen.spv");
+	VkShaderModule rayGenModule = _createShaderModule_from_spv("raygen");
 	VkShaderModule missModule = _createShaderModule_from_spv(sky_cls.fn_missing);
 
 	std::vector<VkShaderModule> intersection_modules(num_hitgroups);
@@ -995,16 +1020,6 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 
 	vkCreateRayTracingPipelinesNV(ctx.device(), nullptr, 1, &rayPipelineInfo, nullptr, &rt.rt_pipeline);
 
-	for (size_t i = 0; i < num_hitgroups; i++)
-	{
-		vkDestroyShaderModule(ctx.device(), closesthit_modules[i], nullptr);
-		if (intersection_modules[i] != nullptr)
-			vkDestroyShaderModule(ctx.device(), intersection_modules[i], nullptr);
-	}
-
-	vkDestroyShaderModule(ctx.device(), missModule, nullptr);
-	vkDestroyShaderModule(ctx.device(), rayGenModule, nullptr);
-
 	// shader binding table
 	unsigned progIdSize = ctx.raytracing_properties().shaderGroupHandleSize;
 	unsigned sbtSize = progIdSize * (unsigned)group_count;
@@ -1021,7 +1036,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 void PathTracer::_comp_pipeline_create(RayTrace& rt) const
 {
 	const Context& ctx = Context::get_context();
-	VkShaderModule finalModule = _createShaderModule_from_spv("../shaders/final.spv");
+	VkShaderModule finalModule = _createShaderModule_from_spv("final");
 
 	VkPipelineShaderStageCreateInfo computeShaderStageInfo = {};
 	computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -1042,11 +1057,7 @@ void PathTracer::_comp_pipeline_create(RayTrace& rt) const
 	pipelineInfo.layout = rt.comp_pipelineLayout;
 
 	vkCreateComputePipelines(ctx.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &rt.comp_pipeline);
-
-	vkDestroyShaderModule(ctx.device(), finalModule, nullptr);
 }
-
-
 
 void PathTracer::_calc_raygen(RayTrace& rt) const
 {

@@ -67,7 +67,7 @@ GeoCls TexturedTriangleList::cls() const
 	cls.size_view = sizeof(TriangleMeshView);
 	cls.binding_view = BINDING_TexturedTriangleList;
 	cls.fn_intersection = nullptr;
-	cls.fn_closesthit = "../shaders/closesthit_textured_triangle_lists.spv";
+	cls.fn_closesthit = "closesthit_textured_triangle_lists";
 	return cls;
 }
 

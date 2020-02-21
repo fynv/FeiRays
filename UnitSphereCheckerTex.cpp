@@ -59,8 +59,8 @@ GeoCls UnitSphereCheckerTex::cls() const
 	cls.name = s_name;
 	cls.size_view = sizeof(SphereView);
 	cls.binding_view = BINDING_UnitSphereCheckerTex;
-	cls.fn_intersection = "../shaders/intersection_unit_spheres.spv";
-	cls.fn_closesthit = "../shaders/closesthit_unit_spheres_checker_tex.spv";
+	cls.fn_intersection = "intersection_unit_spheres";
+	cls.fn_closesthit = "closesthit_unit_spheres_checker_tex";
 	return cls;
 }
 
