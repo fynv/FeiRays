@@ -109,5 +109,5 @@ WavefrontObject::WavefrontObject(PathTracer& pt, const char* path, const char* f
 
 WavefrontObject::~WavefrontObject()
 {
-
+	delete m_witl;
 }

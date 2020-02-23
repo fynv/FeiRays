@@ -60,7 +60,7 @@ int main()
 	pt.add_geometry(obj.get_geo());
 	pt.set_camera({ -12.0f, 6.0f, 12.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 30.0f, 0.2f, 16.0f);
 
-	pt.trace(1000, 100);
+	pt.trace(100);
 
 	unsigned char* hbuffer = (unsigned char*)malloc(view_width * view_height * 3);
 	target.to_host_srgb(hbuffer);
