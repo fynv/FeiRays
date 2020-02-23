@@ -10,3 +10,4 @@ glslangValidator -V closesthit_textured_triangle_lists.rchit -o closesthit_textu
 glslangValidator -V closesthit_textured_unit_spheres.rchit -o closesthit_textured_unit_spheres.spv
 glslangValidator -V miss_tex_sky.rmiss -o miss_tex_skys.spv
 glslangValidator -V closesthit_sphere_lights.rchit -o closesthit_sphere_lights.spv
+glslangValidator -V closesthit_wavefront_indexed_triangle_lists.rchit -o closesthit_wavefront_indexed_triangle_lists.spv

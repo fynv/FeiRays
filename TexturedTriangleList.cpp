@@ -31,14 +31,11 @@ void TexturedTriangleList::_blas_create()
 
 TexturedTriangleList::TexturedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<Material>& materials, const int* materialIdx) : Geometry(model)
 {
-	m_vertexCount = (unsigned)vertices.size();
-	m_materialCount = (unsigned)materials.size();
-
-	m_vertexBuffer = new DeviceBuffer(sizeof(Vertex)* m_vertexCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_vertexBuffer = new DeviceBuffer(sizeof(Vertex)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
 	m_vertexBuffer->upload(vertices.data());
-	m_materialBuffer = new DeviceBuffer(sizeof(Material)* m_materialCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_materialBuffer = new DeviceBuffer(sizeof(Material)* materials.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
 	m_materialBuffer->upload(materials.data());
-	m_materialIdxBuffer = new DeviceBuffer(sizeof(int)* m_vertexCount/3, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_materialIdxBuffer = new DeviceBuffer(sizeof(int)* vertices.size() /3, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
 	m_materialIdxBuffer->upload(materialIdx);
 
 	_blas_create();

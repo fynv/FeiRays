@@ -6,8 +6,6 @@
 class ColoredUnitSphere : public Geometry
 {
 public:
-	DeviceBuffer* aabb_buffer() const { return m_aabb_buf; }
-
 	ColoredUnitSphere(const glm::mat4x4& model, const Material& material);
 	virtual ~ColoredUnitSphere();
 
@@ -16,8 +14,6 @@ public:
 
 
 private:
-	void _blas_create();
-	DeviceBuffer* m_aabb_buf;
 	Material m_material;
 
 };

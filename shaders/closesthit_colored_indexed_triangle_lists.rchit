@@ -10,30 +10,19 @@
 layout(location = 0) rayPayloadInNV Payload payload;
 hitAttributeNV vec2 attribs;
 
-struct Vertex
+struct CompVec3
 {
-	vec3 Position;
-	vec3 Normal;
-	vec2 TexCoord;
+	float a, b, c;
 };
 
-struct CompVertex
+vec3 UnpackVec3(in CompVec3 compv)
 {
-	float a, b, c, d, e, f, g, h;
-};
-
-Vertex UnpackVertex(in CompVertex compVert)
-{
-	Vertex v;
-	v.Position = vec3(compVert.a, compVert.b, compVert.c);
-	v.Normal = vec3(compVert.d, compVert.e, compVert.f);
-	v.TexCoord = vec2(compVert.g, compVert.h);
-	return v;
+	return vec3(compv.a, compv.b, compv.c);
 }
 
 layout(buffer_reference, std430, buffer_reference_align = 4) buffer VextexBuf
 {
-	CompVertex v;
+	CompVec3 v;
 };
 
 layout(buffer_reference, std430, buffer_reference_align = 4) buffer IndexBuf
@@ -70,17 +59,17 @@ void main()
 {
 	ColoredIndexedTriangleList instance = coloredIndexedTriangleLists[gl_InstanceCustomIndexNV];
 
-	IndexBuf indBuf = instance.indexBuf;
-	VextexBuf vertexBuf = instance.vertexBuf;
-	uvec3 ind = uvec3(indBuf[3 * gl_PrimitiveID].i,indBuf[3 * gl_PrimitiveID + 1].i, indBuf[3 * gl_PrimitiveID + 2].i);
+	uint i0 = instance.indexBuf[3 * gl_PrimitiveID].i;
+	uint i1 = instance.indexBuf[3 * gl_PrimitiveID + 1].i;
+	uint i2 = instance.indexBuf[3 * gl_PrimitiveID + 2].i;
 
-	Vertex v0 = UnpackVertex(vertexBuf[ind.x].v);
-	Vertex v1 = UnpackVertex(vertexBuf[ind.y].v);
-	Vertex v2 = UnpackVertex(vertexBuf[ind.z].v);
+	vec3 norm0 = UnpackVec3(instance.vertexBuf[i0].v);
+	vec3 norm1 = UnpackVec3(instance.vertexBuf[i1].v);
+	vec3 norm2 = UnpackVec3(instance.vertexBuf[i2].v);
 
 	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 
-	vec3 normal = v0.Normal * barycentrics.x + v1.Normal * barycentrics.y + v2.Normal * barycentrics.z;
+	vec3 normal = norm0 * barycentrics.x + norm1 * barycentrics.y + norm2 * barycentrics.z;
 	normal = normalize(instance.normalMat * normal);
 
 	payload.material_bits = cPresets[instance.type];

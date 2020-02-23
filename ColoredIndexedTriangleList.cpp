@@ -2,46 +2,27 @@
 #include "ColoredIndexedTriangleList.h"
 #include "shaders/bindings.h"
 
-void ColoredIndexedTriangleList::_blas_create()
-{
-	const Context& ctx = Context::get_context();
-
-	VkGeometryNV geometry = {};
-	geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
-	geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
-	geometry.geometry.triangles = {};
-	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
-	geometry.geometry.triangles.vertexData = m_vertexBuffer->buf();
-	geometry.geometry.triangles.vertexOffset = 0;
-	geometry.geometry.triangles.vertexCount = (unsigned)(m_vertexBuffer->size() / sizeof(Vertex));
-	geometry.geometry.triangles.vertexStride = sizeof(Vertex);
-	geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-	geometry.geometry.triangles.indexData = m_indexBuffer->buf();
-	geometry.geometry.triangles.indexOffset = 0;
-	geometry.geometry.triangles.indexCount = (unsigned)(m_indexBuffer->size() / sizeof(unsigned));
-	geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
-	geometry.geometry.triangles.transformData = VK_NULL_HANDLE;
-	geometry.geometry.triangles.transformOffset = 0;
-	geometry.geometry.aabbs = { VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV };
-	geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
-
-	m_blas = new BaseLevelAS(1, &geometry);
-}
-
-
 ColoredIndexedTriangleList::ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, const Material& material) : Geometry(model)
 {
-	m_material = material;
+	m_material = material; 
 
-	m_vertexCount = (unsigned)vertices.size();
-	m_indexCount = (unsigned)indices.size();
+	std::vector<glm::vec3> positions(vertices.size());
+	std::vector<glm::vec3> norms(vertices.size());
+	for (size_t i = 0; i < vertices.size(); i++)
+	{
+		positions[i] = vertices[i].Position;
+		norms[i] = vertices[i].Normal;
+	}
 
-	m_vertexBuffer = new DeviceBuffer(sizeof(Vertex)* m_vertexCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
-	m_vertexBuffer->upload(vertices.data());
-	m_indexBuffer = new DeviceBuffer(sizeof(unsigned)*m_indexCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_vertexBuffer = new DeviceBuffer(sizeof(glm::vec3)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_vertexBuffer->upload(norms.data());
+	m_indexBuffer = new DeviceBuffer(sizeof(unsigned)*indices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
 	m_indexBuffer->upload(indices.data());
 
-	_blas_create();
+	DeviceBuffer posBuf(sizeof(glm::vec3)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	posBuf.upload(positions.data());
+
+	_blas_create_indexed_triangles(&posBuf, m_indexBuffer);
 }
 
 ColoredIndexedTriangleList::~ColoredIndexedTriangleList()

@@ -16,6 +16,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd RooftilesWood0005_2_S.jpg
+map_Ks RooftilesWood0005_2_Sspec.jpg
 
 newmtl _material_535-effect
 illum 2
@@ -32,6 +33,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodRough0106_2_S.jpg
+map_Ks WoodRough0106_2_Spec.jpg
 
 newmtl _material_583-effect
 illum 2
@@ -48,6 +50,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodRough0106_2_S.jpg
+map_Ks WoodRough0106_2_Spec.jpg
 
 newmtl _material_547-effect
 illum 2
@@ -56,6 +59,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodPlanksBare0002_1_S.jpg
+map_Ks WoodPlanksBare0002_1_Sspec.jpg
 
 newmtl _Material #45
 illum 2
@@ -341,6 +345,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodPlanksBare0002_1_S.jpg
+map_Ks WoodPlanksBare0002_1_Sspec.jpg
 
 newmtl _Material #235
 illum 2
@@ -371,6 +376,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodRough0106_2_S.jpg
+map_Ks WoodRough0106_2_Spec.jpg
 
 newmtl _Material #255
 illum 2
@@ -386,6 +392,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd RooftilesWood0005_2_S.jpg
+map_Ks RooftilesWood0005_2_Sspec.jpg
 
 newmtl _Material #265
 illum 2
@@ -401,6 +408,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd RooftilesWood0005_2_S.jpg
+map_Ks RooftilesWood0005_2_Sspec.jpg
 
 newmtl _Material #275
 illum 2
@@ -416,6 +424,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodRough0106_2_S.jpg
+map_Ks WoodRough0106_2_Spec.jpg
 
 newmtl _Material #285
 illum 2
@@ -431,6 +440,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodPlanksBare0002_1_S.jpg
+map_Ks WoodPlanksBare0002_1_Sspec.jpg
 
 newmtl _Material #295
 illum 2
@@ -446,6 +456,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodPlanksBare0002_1_S.jpg
+map_Ks WoodPlanksBare0002_1_Sspec.jpg
 
 newmtl _Material #305
 illum 2
@@ -461,6 +472,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodRough0106_2_S.jpg
+map_Ks WoodRough0106_2_Spec.jpg
 
 newmtl _Material #315
 illum 2
@@ -476,6 +488,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodRough0106_2_S.jpg
+map_Ks WoodRough0106_2_Spec.jpg
 
 newmtl _Material #325
 illum 2
@@ -491,6 +504,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd RooftilesWood0005_2_S.jpg
+map_Ks RooftilesWood0005_2_Sspec.jpg
 
 newmtl _Material #335
 illum 2
@@ -506,6 +520,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodRough0106_2_S.jpg
+map_Ks WoodRough0106_2_Spec.jpg
 
 newmtl _Material #345
 illum 2
@@ -521,6 +536,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd RooftilesWood0005_2_S.jpg
+map_Ks RooftilesWood0005_2_Sspec.jpg
 
 newmtl _Material #355
 illum 2
@@ -566,6 +582,7 @@ Kd 0.588000 0.588000 0.588000
 Ks 0.450000 0.450000 0.450000
 Ns 32.000000
 map_Kd WoodRough0106_2_S.jpg
+map_Ks WoodRough0106_2_Spec.jpg
 
 newmtl _Material #385
 illum 2

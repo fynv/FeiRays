@@ -1,18 +1,13 @@
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <time.h>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 #include "PathTracer.h"
 #include "TexturedTriangleList.h"
@@ -20,6 +15,7 @@
 #include "lambertian_obj.h"
 
 LambertianObject::LambertianObject(PathTracer& pt, const char* path, const char* fn, const glm::mat4x4& model)
+	: m_tex_map(&pt, path)
 {
 	std::string fn_obj = path;
 	fn_obj += "/";
@@ -32,8 +28,6 @@ LambertianObject::LambertianObject(PathTracer& pt, const char* path, const char*
 
 	tinyobj::LoadObj(&attrib, &shapes, &materials, &err, fn_obj.c_str(), path);
 
-	std::unordered_map<std::string, int> tex_map;
-
 	std::vector<TexturedTriangleList::Material> materials_in(materials.size());
 
 	for (size_t i = 0; i < materials.size(); i++)
@@ -41,29 +35,7 @@ LambertianObject::LambertianObject(PathTracer& pt, const char* path, const char*
 		materials_in[i].diffuse = glm::vec3(materials[i].diffuse[0], materials[i].diffuse[1], materials[i].diffuse[2]);
 		if (!materials[i].diffuse_texname.empty())
 		{
-			auto iter = tex_map.find(materials[i].diffuse_texname);
-			if (iter == tex_map.end())
-			{
-				std::string fn_tex = path;
-				fn_tex += "/";
-				fn_tex += materials[i].diffuse_texname;
-
-				int texWidth, texHeight, texChannels;
-
-				stbi_uc* pixels = stbi_load(fn_tex.c_str(), &texWidth, &texHeight, &texChannels, 4);
-
-				RGBATexture* tex = new RGBATexture(texWidth, texHeight, pixels);
-				materials_in[i].textureId = pt.add_texture(tex);
-				m_textures.push_back(tex);
-
-				tex_map[materials[i].diffuse_texname] = materials_in[i].textureId;
-
-				stbi_image_free(pixels);
-			}
-			else
-			{
-				materials_in[i].textureId = iter->second;
-			}
+			materials_in[i].textureId = m_tex_map.findTex(materials[i].diffuse_texname.c_str());
 		}
 		else
 		{
@@ -87,7 +59,7 @@ LambertianObject::LambertianObject(PathTracer& pt, const char* path, const char*
 			vertex.Position = glm::vec3(vp[0], vp[1], vp[2]);
 			float* np = &attrib.normals[3 * index.normal_index];
 			vertex.Normal = glm::vec3(np[0], np[1], np[2]);
-			float* tp = &attrib.texcoords[2 * index.texcoord_index + 0];
+			float* tp = &attrib.texcoords[2 * index.texcoord_index];
 			vertex.TexCoord = glm::vec2(tp[0], tp[1]);
 			vertices.push_back(vertex);
 		}
@@ -102,6 +74,4 @@ LambertianObject::LambertianObject(PathTracer& pt, const char* path, const char*
 LambertianObject::~LambertianObject()
 {
 	delete m_ttl;
-	for (size_t i = 0; i < m_textures.size(); i++)
-		delete m_textures[i];
 }

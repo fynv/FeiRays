@@ -30,6 +30,7 @@ ColoredUnitSphere.cpp
 UnitSphereCheckerTex.cpp
 TexturedTriangleList.cpp
 TexturedUnitSphere.cpp
+WavefrontIndexedTriangleList.cpp
 )
 
 set (HEADER
@@ -45,6 +46,7 @@ ColoredUnitSphere.h
 UnitSphereCheckerTex.h
 TexturedTriangleList.h
 TexturedUnitSphere.h
+WavefrontIndexedTriangleList.h
 )
 
 if (WIN32) 
@@ -71,7 +73,7 @@ target_link_libraries(test1 FeiRays volk)
 add_executable(test2 tests/test2.cpp)
 target_link_libraries(test2 FeiRays volk)
 
-add_executable(test3 tests/test3.cpp tests/dds_reader.hpp tests/lambertian_obj.cpp tests/lambertian_obj.h)
+add_executable(test3 tests/test3.cpp tests/dds_reader.hpp tests/texture_map.cpp tests/texture_map.h tests/lambertian_obj.cpp tests/lambertian_obj.h)
 target_link_libraries(test3 FeiRays volk)
 
 add_executable(test4 tests/test4.cpp)
@@ -83,3 +85,5 @@ target_link_libraries(test5 FeiRays volk)
 add_executable(test6 tests/test6.cpp)
 target_link_libraries(test6 FeiRays volk)
 
+add_executable(test7 tests/test7.cpp tests/dds_reader.hpp tests/texture_map.cpp tests/texture_map.h tests/wavefront_obj.cpp tests/wavefront_obj.h)
+target_link_libraries(test7 FeiRays volk)

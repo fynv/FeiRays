@@ -2,43 +2,20 @@
 #include "ColoredUnitSphere.h"
 #include "shaders/bindings.h"
 
-
-void ColoredUnitSphere::_blas_create()
-{
-	const Context& ctx = Context::get_context();
-
-	VkGeometryNV geometry = {};
-	geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
-	geometry.geometryType = VK_GEOMETRY_TYPE_AABBS_NV;
-	geometry.geometry.triangles = {};
-	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
-	geometry.geometry.aabbs = {};
-	geometry.geometry.aabbs.sType = VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV;
-	geometry.geometry.aabbs.aabbData = m_aabb_buf->buf();
-	geometry.geometry.aabbs.offset = 0;
-	geometry.geometry.aabbs.numAABBs = 1;
-	geometry.geometry.aabbs.stride = 0;
-	geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
-
-	m_blas = new BaseLevelAS(1, &geometry);
-}
-
-
 ColoredUnitSphere::ColoredUnitSphere(const glm::mat4x4& model, const Material& material) : Geometry(model)
 {
 	m_material = material;
 
 	static float s_aabb[6] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
 
-	m_aabb_buf = new DeviceBuffer(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
-	m_aabb_buf->upload(s_aabb);
-
-	_blas_create();
+	DeviceBuffer aabb_buf(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	aabb_buf.upload(s_aabb);
+	_blas_create_procedure(&aabb_buf);
 }
 
 ColoredUnitSphere::~ColoredUnitSphere()
 {
-	delete m_aabb_buf;
+	
 }
 
 struct SphereView

@@ -43,7 +43,7 @@ static glm::mat4x4 s_sphere_model(const glm::vec3& center, float r)
 	return ret;
 }
 
-void SphereLight::_blas_create()
+void Geometry::_blas_create_procedure(DeviceBuffer* aabb_buf)
 {
 	const Context& ctx = Context::get_context();
 
@@ -54,7 +54,7 @@ void SphereLight::_blas_create()
 	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
 	geometry.geometry.aabbs = {};
 	geometry.geometry.aabbs.sType = VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV;
-	geometry.geometry.aabbs.aabbData = m_aabb_buf->buf();
+	geometry.geometry.aabbs.aabbData = aabb_buf->buf();
 	geometry.geometry.aabbs.offset = 0;
 	geometry.geometry.aabbs.numAABBs = 1;
 	geometry.geometry.aabbs.stride = 0;
@@ -63,6 +63,31 @@ void SphereLight::_blas_create()
 	m_blas = new BaseLevelAS(1, &geometry);
 }
 
+void Geometry::_blas_create_indexed_triangles(DeviceBuffer* positionBuffer, DeviceBuffer* indexBuffer)
+{
+	const Context& ctx = Context::get_context();
+
+	VkGeometryNV geometry = {};
+	geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
+	geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
+	geometry.geometry.triangles = {};
+	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
+	geometry.geometry.triangles.vertexData = positionBuffer->buf();
+	geometry.geometry.triangles.vertexOffset = 0;
+	geometry.geometry.triangles.vertexCount = (unsigned)(positionBuffer->size() / sizeof(glm::vec3));
+	geometry.geometry.triangles.vertexStride = sizeof(glm::vec3);
+	geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+	geometry.geometry.triangles.indexData = indexBuffer->buf();
+	geometry.geometry.triangles.indexOffset = 0;
+	geometry.geometry.triangles.indexCount = (unsigned)(indexBuffer->size() / sizeof(unsigned));
+	geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+	geometry.geometry.triangles.transformData = VK_NULL_HANDLE;
+	geometry.geometry.triangles.transformOffset = 0;
+	geometry.geometry.aabbs = { VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV };
+	geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+
+	m_blas = new BaseLevelAS(1, &geometry);
+}
 
 SphereLight::SphereLight(const glm::vec3& center, float r, const glm::vec3& color) : Geometry(s_sphere_model(center, r))
 {
@@ -71,15 +96,14 @@ SphereLight::SphereLight(const glm::vec3& center, float r, const glm::vec3& colo
 	m_color = color;
 	static float s_aabb[6] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
 
-	m_aabb_buf = new DeviceBuffer(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
-	m_aabb_buf->upload(s_aabb);
-
-	_blas_create();
+	DeviceBuffer aabb_buf(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	aabb_buf.upload(s_aabb);
+	_blas_create_procedure(&aabb_buf);
 }
 
 SphereLight::~SphereLight()
 {
-	delete m_aabb_buf;
+	
 }
 
 struct View_SphereLight

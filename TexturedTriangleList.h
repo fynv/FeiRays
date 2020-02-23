@@ -18,10 +18,6 @@ public:
 		int textureId;
 	};
 
-	DeviceBuffer* vertex_buffer() const { return m_vertexBuffer; }
-	DeviceBuffer* material_buffer() const { return m_materialBuffer; }
-	DeviceBuffer* material_index_buffer() const { return m_materialIdxBuffer; }
-
 	TexturedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<Material>& materials, const int* materialIdx);
 	virtual ~TexturedTriangleList();
 
@@ -30,9 +26,6 @@ public:
 
 private:
 	void _blas_create();
-
-	unsigned m_vertexCount;
-	unsigned m_materialCount;
 
 	DeviceBuffer* m_vertexBuffer;
 	DeviceBuffer* m_materialBuffer;

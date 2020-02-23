@@ -35,6 +35,9 @@ public:
 	virtual void get_view(void* view_buf) const = 0;
 
 protected:
+	void _blas_create_procedure(DeviceBuffer* aabb_buf);
+	void _blas_create_indexed_triangles(DeviceBuffer* positionBuffer, DeviceBuffer* indexBuffer);
+
 	glm::mat4x4 m_model;
 	glm::mat4x4 m_norm_mat;
 	BaseLevelAS* m_blas;
@@ -44,7 +47,6 @@ protected:
 class SphereLight : public Geometry
 {
 public:
-	DeviceBuffer* aabb_buffer() const { return m_aabb_buf; }
 	const glm::vec3& center() const { return m_center; }
 	float radius() const { return m_radius; }
 	const glm::vec3& color() const { return m_color;  }
@@ -56,9 +58,6 @@ public:
 	virtual void get_view(void* view_buf) const;
 
 private:
-	void _blas_create();
-	DeviceBuffer* m_aabb_buf;
-	
 	glm::vec3 m_center;
 	float m_radius;
 	glm::vec3 m_color;

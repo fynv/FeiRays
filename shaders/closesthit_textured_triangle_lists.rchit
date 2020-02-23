@@ -87,15 +87,11 @@ void main()
 {
 	TexturedTriangleList instance = texturedTriangleList[gl_InstanceCustomIndexNV];
 
-	VextexBuf vertexBuf = instance.vertexBuf;
-	MaterialBuf materialBuf = instance.materialBuf;
-	MaterialIndexBuf materialIdxBuf = instance.materialIdxBuf;
+	Vertex v0 = UnpackVertex(instance.vertexBuf[3 * gl_PrimitiveID].v);
+	Vertex v1 = UnpackVertex(instance.vertexBuf[3 * gl_PrimitiveID + 1].v);
+	Vertex v2 = UnpackVertex(instance.vertexBuf[3 * gl_PrimitiveID + 2].v);
 
-	Vertex v0 = UnpackVertex(vertexBuf[3 * gl_PrimitiveID].v);
-	Vertex v1 = UnpackVertex(vertexBuf[3 * gl_PrimitiveID + 1].v);
-	Vertex v2 = UnpackVertex(vertexBuf[3 * gl_PrimitiveID + 2].v);
-
-	Material mat = UnpackMaterial(materialBuf[materialIdxBuf[gl_PrimitiveID].i].m);
+	Material mat = UnpackMaterial(instance.materialBuf[instance.materialIdxBuf[gl_PrimitiveID].i].m);
 
 	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 

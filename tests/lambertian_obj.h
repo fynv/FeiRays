@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PathTracer.h"
+#include "texture_map.h"
 
 class TexturedTriangleList;
 
@@ -13,7 +14,7 @@ public:
 	TexturedTriangleList* get_geo() const { return m_ttl; }
 
 private:
-	std::vector<RGBATexture*> m_textures;
+	TextureMap m_tex_map;
 	TexturedTriangleList* m_ttl;
 
 };
