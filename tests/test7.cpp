@@ -33,37 +33,28 @@ int main()
 
 	int cubeWidth, cubeHeight, cubeChannels, isCube;
 	void *cube_pixels = dds_load("../data/sky_cube.dds", &cubeWidth, &cubeHeight, &cubeChannels, &isCube);
-	RGBACubemap cubemap(cubeWidth, cubeHeight, cube_pixels);
+	RGBACubemap cubemap(cubeWidth, cubeHeight, cube_pixels, false);
 	dds_free(cube_pixels);
 
 	int id_skybox = pt.add_cubemap(&cubemap);
 	TexturedSkyBox skybox(id_skybox);
 	pt.set_sky(&skybox);
-	pt.add_sunlight({ 1.0f, 1.0f, 1.0f }, 0.05, { 100.0f, 100.0f, 100.0f });
+	pt.add_sunlight({ 1.0f, 1.0f, 1.0f }, 0.05, { 5000.0f, 5000.0f, 5000.0f });
 
 	glm::mat4x4 identity = glm::identity<glm::mat4x4>();
 
-	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("../data/moon_map.jpg", &texWidth, &texHeight, &texChannels, 4);
-	RGBATexture tex(texWidth, texHeight, pixels);
-	stbi_image_free(pixels);
-	int tex_id = pt.add_texture(&tex);
+	//SphereLight light1({ 0.0f, 200.0f, 0.0f }, 10.0f, { 10.0f, 10.0f, 10.0f });
+	//pt.add_geometry(&light1);
 
-	glm::mat4x4 model0 = glm::translate(identity, glm::vec3(0.0f, -100.0f, 0.0f));
-	model0 = glm::scale(model0, glm::vec3(100.0f, 100.0f, 100.0f));
-	model0 = glm::rotate(model0, PI / 6.0f, glm::vec3(1.0f, 0.0f, 1.0f));
-	TexturedUnitSphere sphere0(model0, tex_id);
-	pt.add_geometry(&sphere0);
-
-	WavefrontObject obj(pt, "../data/Medieval_building", "Medieval_building.obj", identity);
+	WavefrontObject obj(pt, "../data/sponza", "SponzaNoFlag.obj", identity);
 
 	pt.add_geometry(obj.get_geo());
-	pt.set_camera({ -12.0f, 6.0f, 12.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 30.0f, 0.2f, 16.0f);
+	pt.set_camera({ -1000.0f, 1000.0f, 0.0f }, { 0.0f, 350.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f, 10.0f, 1400.0f);
 
-	pt.trace(100);
+	pt.trace(1000, 50);
 
 	unsigned char* hbuffer = (unsigned char*)malloc(view_width * view_height * 3);
-	target.to_host_srgb(hbuffer);
+	target.to_host_srgb(hbuffer, 5.0f);
 	stbi_write_png("test7.png", view_width, view_height, 3, hbuffer, view_width * 3);
 	free(hbuffer);
 

@@ -56,7 +56,7 @@ WavefrontObject::WavefrontObject(PathTracer& pt, const char* path, const char* f
 			materials_in[i].texId_emission = -1;
 
 		if (!materials[i].bump_texname.empty())
-			materials_in[i].texId_bumpmap = m_tex_map.findTex(materials[i].bump_texname.c_str());
+			materials_in[i].texId_bumpmap = m_tex_map.findTex(materials[i].bump_texname.c_str(), false);
 		else
 			materials_in[i].texId_bumpmap = -1;
 

@@ -11,7 +11,7 @@ public:
 	TextureMap(PathTracer* pt, const char* path);
 	virtual ~TextureMap();
 
-	int findTex(const char* texname);
+	int findTex(const char* texname, bool srgb = true);
 	
 
 private:

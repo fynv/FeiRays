@@ -16,7 +16,7 @@ TextureMap::~TextureMap()
 		delete m_textures[i];
 }
 
-int TextureMap::findTex(const char* texname)
+int TextureMap::findTex(const char* texname, bool srgb)
 {
 	int ret;
 	auto iter = find(texname);
@@ -27,7 +27,7 @@ int TextureMap::findTex(const char* texname)
 
 		stbi_uc* pixels = stbi_load(fn_tex.c_str(), &texWidth, &texHeight, &texChannels, 4);
 
-		RGBATexture* tex = new RGBATexture(texWidth, texHeight, pixels);
+		RGBATexture* tex = new RGBATexture(texWidth, texHeight, pixels, srgb);
 		ret = m_pt->add_texture(tex);
 		m_textures.push_back(tex);
 
