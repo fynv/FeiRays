@@ -42,13 +42,14 @@ struct Material
 	int texId_diffuse;
 	int texId_specular;
 	int texId_emission;
+	int texId_bumpmap;
 	int mask;
 };
 
 struct CompMaterial
 {
 	float a, b, c, d, e, f, g, h, i, j;
-	int k, l, m, n;
+	int k, l, m, n, o;
 };
 
 Material UnpackMaterial(in CompMaterial compMat)
@@ -61,7 +62,8 @@ Material UnpackMaterial(in CompMaterial compMat)
 	m.texId_diffuse = compMat.k;
 	m.texId_specular = compMat.l;
 	m.texId_emission = compMat.m;
-	m.mask = compMat.n;	
+	m.texId_bumpmap = compMat.n;
+	m.mask = compMat.o;	
 	return m;
 }
 
@@ -100,6 +102,7 @@ layout(buffer_reference, std430, buffer_reference_align = 4) buffer MaterialInde
 struct WavefrontIndexedTriangleList
 {
 	mat3 normalMat;
+	Vec3Buf posBuf;
 	Vec3Buf normalBuf;
 	Vec2Buf texcoordBuf;
 	IndexBuf indexBuf;
@@ -125,16 +128,8 @@ void main()
 
 	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 
-	vec3 normal;
-	{
-		vec3 norm0 = UnpackVec3(instance.normalBuf[i0.normal_index].v);
-		vec3 norm1 = UnpackVec3(instance.normalBuf[i1.normal_index].v);
-		vec3 norm2 = UnpackVec3(instance.normalBuf[i2.normal_index].v);
-		normal = norm0 * barycentrics.x + norm1 * barycentrics.y + norm2 * barycentrics.z;
-		normal = normalize(instance.normalMat * normal);
-	}
-
 	vec2 texCoord;
+	vec3 T, B;
 
 	if (i0.texcoord_index>=0)
 	{
@@ -142,6 +137,39 @@ void main()
 		vec2 texCoord1 = UnpackVec2(instance.texcoordBuf[i1.texcoord_index].v);
 		vec2 texCoord2 = UnpackVec2(instance.texcoordBuf[i2.texcoord_index].v);
 		texCoord = texCoord0 * barycentrics.x + texCoord1 * barycentrics.y + texCoord2 * barycentrics.z;
+
+		if (mat.texId_bumpmap >= 0)
+		{
+			vec3 v0 = UnpackVec3(instance.posBuf[i0.vertex_index].v);
+			vec3 v1 = UnpackVec3(instance.posBuf[i1.vertex_index].v);
+			vec3 v2 = UnpackVec3(instance.posBuf[i2.vertex_index].v);
+
+			vec3 edge1 = v1-v0;
+			vec3 edge2 = v2-v0;
+			vec2 delta1 = texCoord1 - texCoord0;
+			vec2 delta2 = texCoord2 - texCoord0;
+
+			float f =  1.0f / (delta1.x * delta2.y - delta2.x * delta1.y);
+			T = normalize((f*delta2.y) * edge1 -  (f*delta1.y) * edge2);
+			B = normalize((-f*delta2.x) * edge1 + (f*delta1.x) * edge2);
+		}
+	}
+
+	vec3 normal;
+	{
+		vec3 norm0 = UnpackVec3(instance.normalBuf[i0.normal_index].v);
+		vec3 norm1 = UnpackVec3(instance.normalBuf[i1.normal_index].v);
+		vec3 norm2 = UnpackVec3(instance.normalBuf[i2.normal_index].v);
+		normal = norm0 * barycentrics.x + norm1 * barycentrics.y + norm2 * barycentrics.z;
+
+		if (mat.texId_bumpmap >= 0)
+		{
+			normal = normalize(normal);
+			vec3 bump = texture(textureSamplers[mat.texId_bumpmap], texCoord).xyz;
+			normal = bump.x*T + bump.y*B + bump.z*normal;
+		}
+
+		normal = normalize(instance.normalMat * normal);
 	}
 
 	uint bits = MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT;

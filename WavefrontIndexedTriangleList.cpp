@@ -9,6 +9,8 @@ WavefrontIndexedTriangleList::WavefrontIndexedTriangleList(const glm::mat4x4& mo
 	const std::vector<Index>& indices,
 	std::vector<Material>& materials, const int* materialIdx) : Geometry(model)
 {
+	m_positionBuffer = new DeviceBuffer(sizeof(glm::vec3)* positions.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_positionBuffer->upload(positions.data());
 	m_normalBuffer = new DeviceBuffer(sizeof(glm::vec3)* normals.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
 	m_normalBuffer->upload(normals.data());
 	m_texcoordBuffer = new DeviceBuffer(sizeof(glm::vec2)* texcoords.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
@@ -24,13 +26,10 @@ WavefrontIndexedTriangleList::WavefrontIndexedTriangleList(const glm::mat4x4& mo
 	for (size_t i = 0; i < indices.size(); i++)
 		pos_indices[i] = indices[i].vertex_index;
 
-	DeviceBuffer positionBuffer(sizeof(glm::vec3)* positions.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
-	positionBuffer.upload(positions.data());
-
 	DeviceBuffer pos_index_buffer(sizeof(unsigned)* indices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
 	pos_index_buffer.upload(pos_indices.data());
 
-	_blas_create_indexed_triangles(&positionBuffer, &pos_index_buffer);
+	_blas_create_indexed_triangles(m_positionBuffer, &pos_index_buffer);
 }
 
 WavefrontIndexedTriangleList::~WavefrontIndexedTriangleList()
@@ -40,12 +39,14 @@ WavefrontIndexedTriangleList::~WavefrontIndexedTriangleList()
 	delete m_indexBuffer;
 	delete m_texcoordBuffer;
 	delete m_normalBuffer;
+	delete m_positionBuffer;
 }
 
 
 struct TriangleMeshView
 {
 	glm::mat3x4 normalMat;
+	VkDeviceAddress posBuf;
 	VkDeviceAddress normalBuf;
 	VkDeviceAddress texcoordBuf;
 	VkDeviceAddress indexBuf;
@@ -70,6 +71,7 @@ void WavefrontIndexedTriangleList::get_view(void* view_buf) const
 {
 	TriangleMeshView& view = *(TriangleMeshView*)view_buf;
 	view.normalMat = m_norm_mat;
+	view.posBuf = m_positionBuffer->get_device_address();
 	view.normalBuf = m_normalBuffer->get_device_address();
 	view.texcoordBuf = m_texcoordBuffer->get_device_address();
 	view.indexBuf = m_indexBuffer->get_device_address();

@@ -55,6 +55,11 @@ WavefrontObject::WavefrontObject(PathTracer& pt, const char* path, const char* f
 		else
 			materials_in[i].texId_emission = -1;
 
+		if (!materials[i].bump_texname.empty())
+			materials_in[i].texId_bumpmap = m_tex_map.findTex(materials[i].bump_texname.c_str());
+		else
+			materials_in[i].texId_bumpmap = -1;
+
 		int mask = 0;
 		if (materials[i].diffuse[0] > 0.0f || materials[i].diffuse[1] > 0.0f || materials[i].diffuse[2] > 0.0f) mask |= 1;
 		if (materials[i].specular[0] > 0.0f || materials[i].specular[1] > 0.0f || materials[i].specular[2] > 0.0f) mask |= 2;

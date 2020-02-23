@@ -14,6 +14,7 @@ public:
 		int texId_diffuse;
 		int texId_specular;
 		int texId_emission;
+		int texId_bumpmap;
 		int mask; // bit 0 : has diffuse, bit 1: has specular, bit 2: has emission
 	};
 
@@ -37,6 +38,7 @@ public:
 	virtual void get_view(void* view_buf) const;
 
 private:
+	DeviceBuffer* m_positionBuffer;
 	DeviceBuffer* m_normalBuffer;
 	DeviceBuffer* m_texcoordBuffer;
 	DeviceBuffer* m_indexBuffer;
