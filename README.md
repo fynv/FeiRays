@@ -5,6 +5,10 @@ The code is evolved from [VkRayTraceWeekend](https://github.com/fynv/VkRayTraceW
 
 Here, I'm trying to make it more extendable and reusable, so I can have more fun with it.
 
+<img src="gallery/sponza.png" width="900px">
+
+The "sponza" model, 900x600x1000 rays, rendered in 15.6 seconds using RTX 2060 super.
+
 ## Building and Running
 
 Building the project is simple. 
@@ -23,8 +27,6 @@ But be sure to have the latest graphics driver installed, one that supports Vulk
 ## Progress
 
 In case someone is interested in the progress of the project, here is a list of what have been implemented so far.
-
-All performance numbers are grabbed using a RTX 2060 super.
 
 
 ### Random Number Generator for Shaders
