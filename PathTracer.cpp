@@ -372,9 +372,9 @@ void Image::to_host_raw(void *hdata) const
 	m_data->download(hdata);
 }
 
-void h_raw_to_srgb(const float* raw, unsigned char* srgb, size_t num_pixels);
+void h_raw_to_srgb(const float* raw, unsigned char* srgb, size_t num_pixels, float boost);
 
-void Image::to_host_srgb(void* hdata) const
+void Image::to_host_srgb(void* hdata, float boost) const
 {
 	unsigned char* d_srgb;
 	unsigned count = unsigned(m_width*m_height);
@@ -401,7 +401,7 @@ void Image::to_host_srgb(void* hdata) const
 
 		float* d_raw;
 		cudaExternalMemoryGetMappedBuffer((void**)&d_raw, cudaExtMemVertexBuffer, &cudaExtBufferDesc);
-		h_raw_to_srgb(d_raw, d_srgb, count);
+		h_raw_to_srgb(d_raw, d_srgb, count, boost);
 		cudaDestroyExternalMemory(cudaExtMemVertexBuffer);
 	}
 

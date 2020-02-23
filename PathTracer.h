@@ -151,7 +151,7 @@ public:
 	void to_host_raw(void *hdata) const;
 
 	// u8_vec3 - srgb
-	void to_host_srgb(void* hdata) const;
+	void to_host_srgb(void* hdata, float boost = 1.0f) const;
 
 
 

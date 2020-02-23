@@ -166,6 +166,7 @@ void main()
 		{
 			normal = normalize(normal);
 			vec3 bump = texture(textureSamplers[mat.texId_bumpmap], texCoord).xyz;
+			bump = 2.0 * bump - 1.0;
 			normal = bump.x*T + bump.y*B + bump.z*normal;
 		}
 
