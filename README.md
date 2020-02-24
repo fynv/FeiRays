@@ -5,9 +5,15 @@ The code is evolved from [VkRayTraceWeekend](https://github.com/fynv/VkRayTraceW
 
 Here, I'm trying to make it more extendable and reusable, so I can have more fun with it.
 
+Now playing with [McGuire Computer Graphics Archive](https://casual-effects.com/data/)
+
 <img src="gallery/sponza.png" width="900px">
 
 The "sponza" model, 900x600x1000 rays, rendered in 19.7 seconds using RTX 2060 super.
+
+<img src="gallery/breakfast_room.png" width="900px">
+
+The "breakfast_room" model, 900x600x1000 rays, rendered in 20.2 seconds using RTX 2060 super.
 
 ## Building and Running
 
