@@ -7,7 +7,7 @@ Here, I'm trying to make it more extendable and reusable, so I can have more fun
 
 <img src="gallery/sponza.png" width="900px">
 
-The "sponza" model, 900x600x1000 rays, rendered in 13.5 seconds using RTX 2060 super.
+The "sponza" model, 900x600x1000 rays, rendered in 19.7 seconds using RTX 2060 super.
 
 ## Building and Running
 

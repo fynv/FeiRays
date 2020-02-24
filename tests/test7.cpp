@@ -39,6 +39,7 @@ int main()
 	int id_skybox = pt.add_cubemap(&cubemap);
 	TexturedSkyBox skybox(id_skybox);
 	pt.set_sky(&skybox);
+
 	pt.add_sunlight({ 0.3f, 1.0f, 0.2f }, 0.05, { 2000.0f, 2000.0f, 2000.0f });
 
 	glm::mat4x4 identity = glm::identity<glm::mat4x4>();
@@ -51,7 +52,7 @@ int main()
 	glm::vec3 light_pos = cam_pos - cam_dir * 50.0f;
 
 	pt.add_geometry(obj.get_geo());
-	pt.set_camera(cam_pos, cam_look_pos, { 0.0f, 1.0f, 0.0f }, 45.0f, 10.0f, 1500.0f);
+	pt.set_camera(cam_pos, cam_look_pos, { 0.0f, 1.0f, 0.0f }, 45.0f, 3.0f, 1500.0f);
 
 	//SphereLight light1(light_pos, 10.0f, { 100.0f, 100.0f, 100.0f });
 	//pt.add_geometry(&light1);

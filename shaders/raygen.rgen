@@ -213,7 +213,8 @@ void main()
         if (!scattering && !diffusive && !directional) break;
 
         // handle light-sources here
-        skip_lights = false;
+        // skip_lights = false; // cause high-noise because of reflective materials
+
         if (number_sphere_lights + number_sun_lights>0 && !in_material && diffusive)
         {
             // choose a light-source
@@ -288,6 +289,10 @@ void main()
 
             skip_lights = true;
         }
+
+        // hack
+        if (depth>0)
+            skip_lights = true;
 
         if (scattering) 
         {
