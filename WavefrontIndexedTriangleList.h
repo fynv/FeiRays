@@ -38,10 +38,9 @@ public:
 	virtual void get_view(void* view_buf) const;
 
 private:
-	DeviceBuffer* m_positionBuffer;
 	DeviceBuffer* m_normalBuffer;
 	DeviceBuffer* m_texcoordBuffer;
 	DeviceBuffer* m_indexBuffer;
 	DeviceBuffer* m_materialBuffer;
-	DeviceBuffer* m_materialIdxBuffer;
+	DeviceBuffer* m_faceBuffer;
 };

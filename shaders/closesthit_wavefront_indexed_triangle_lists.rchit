@@ -33,6 +33,12 @@ vec2 UnpackVec2(in CompVec2 compv)
 	return vec2(compv.a, compv.b);
 }
 
+struct Index
+{
+	int normal_index;
+	int texcoord_index;
+};
+
 struct Material
 {
 	vec3 diffuse;
@@ -67,12 +73,27 @@ Material UnpackMaterial(in CompMaterial compMat)
 	return m;
 }
 
-struct Index
+struct Face
 {
-	int vertex_index;
-	int normal_index;
-	int texcoord_index;
+	vec3 T;
+	vec3 B;
+	int materialIdx;
 };
+
+struct CompFace
+{
+	float a, b, c, d, e, f;
+	int g;
+};
+
+Face UnpackFace(in CompFace compFace)
+{
+	Face f;
+	f.T = vec3(compFace.a, compFace.b, compFace.c);
+	f.B = vec3(compFace.d, compFace.e, compFace.f);
+	f.materialIdx = compFace.g;
+	return f;
+}
 
 layout(buffer_reference, std430, buffer_reference_align = 4) buffer Vec3Buf
 {
@@ -94,20 +115,19 @@ layout(buffer_reference, std430, buffer_reference_align = 4) buffer MaterialBuf
 	CompMaterial m;
 };
 
-layout(buffer_reference, std430, buffer_reference_align = 4) buffer MaterialIndexBuf
+layout(buffer_reference, std430, buffer_reference_align = 4) buffer FaceBuf
 {
-	int i;
+	CompFace f;
 };
 
 struct WavefrontIndexedTriangleList
 {
 	mat3 normalMat;
-	Vec3Buf posBuf;
 	Vec3Buf normalBuf;
 	Vec2Buf texcoordBuf;
 	IndexBuf indexBuf;
 	MaterialBuf materialBuf;
-	MaterialIndexBuf materialIdxBuf;
+	FaceBuf faceBuf;
 };
 
 layout(std430, binding = BINDING_WavefrontIndexedTriangleList) buffer Params
@@ -124,12 +144,12 @@ void main()
 	Index i1 = instance.indexBuf[3 * gl_PrimitiveID + 1].i;
 	Index i2 = instance.indexBuf[3 * gl_PrimitiveID + 2].i;
 
-	Material mat = UnpackMaterial(instance.materialBuf[instance.materialIdxBuf[gl_PrimitiveID].i].m);
+	Face face = UnpackFace(instance.faceBuf[gl_PrimitiveID].f);
+	Material mat = UnpackMaterial(instance.materialBuf[face.materialIdx].m);
 
 	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 
 	vec2 texCoord;
-	vec3 T, B;
 
 	if (i0.texcoord_index>=0)
 	{
@@ -137,22 +157,6 @@ void main()
 		vec2 texCoord1 = UnpackVec2(instance.texcoordBuf[i1.texcoord_index].v);
 		vec2 texCoord2 = UnpackVec2(instance.texcoordBuf[i2.texcoord_index].v);
 		texCoord = texCoord0 * barycentrics.x + texCoord1 * barycentrics.y + texCoord2 * barycentrics.z;
-
-		if (mat.texId_bumpmap >= 0)
-		{
-			vec3 v0 = UnpackVec3(instance.posBuf[i0.vertex_index].v);
-			vec3 v1 = UnpackVec3(instance.posBuf[i1.vertex_index].v);
-			vec3 v2 = UnpackVec3(instance.posBuf[i2.vertex_index].v);
-
-			vec3 edge1 = v1-v0;
-			vec3 edge2 = v2-v0;
-			vec2 delta1 = texCoord1 - texCoord0;
-			vec2 delta2 = texCoord2 - texCoord0;
-
-			float f =  1.0f / (delta1.x * delta2.y - delta2.x * delta1.y);
-			T = normalize((f*delta2.y) * edge1 -  (f*delta1.y) * edge2);
-			B = normalize((-f*delta2.x) * edge1 + (f*delta1.x) * edge2);
-		}
 	}
 
 	vec3 normal;
@@ -167,7 +171,7 @@ void main()
 			normal = normalize(normal);
 			vec3 bump = texture(textureSamplers[mat.texId_bumpmap], texCoord).xyz;
 			bump = 2.0 * bump - 1.0;
-			normal = bump.x*T + bump.y*B + bump.z*normal;
+			normal = bump.x*face.T + bump.y*face.B + bump.z*normal;
 		}
 
 		normal = normalize(instance.normalMat * normal);
