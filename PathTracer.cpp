@@ -153,8 +153,9 @@ GradientSky::~GradientSky()
 
 SkyCls GradientSky::cls() const
 {
+	static const char s_name[] = "miss";
 	SkyCls cls;
-	cls.fn_missing = "miss";
+	cls.fn_missing = s_name;
 	cls.size_view = sizeof(View_GradientSky);
 	return cls;
 }
@@ -222,8 +223,9 @@ struct View_TexturedSkyBox
 
 SkyCls TexturedSkyBox::cls() const
 {
+	static const char s_name[] = "miss_tex_skys";
 	SkyCls cls;
-	cls.fn_missing = "miss_tex_skys";
+	cls.fn_missing = s_name;
 	cls.size_view = sizeof(View_TexturedSkyBox);
 	return cls;
 }
@@ -584,7 +586,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 	if (sky_cls.size_view > 0)
 	{
-		rt.params_sky = new DeviceBuffer(sky_cls.size_view, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+		rt.params_sky = new DeviceBuffer(sky_cls.size_view, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 		std::vector<char> buf(sky_cls.size_view);
 		m_current_sky->get_view(buf.data());
 		rt.params_sky->upload(buf.data());
@@ -957,17 +959,19 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	size_t stage_count = 2 + count_intersection + num_hitgroups;
 	size_t group_count = 2 + num_hitgroups;
 
+	static const char s_main[] = "main";
+
 	std::vector<VkPipelineShaderStageCreateInfo> stages(stage_count);
 
 	stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	stages[0].stage = VK_SHADER_STAGE_RAYGEN_BIT_NV;
 	stages[0].module = rayGenModule;
-	stages[0].pName = "main";
+	stages[0].pName = s_main;
 
 	stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	stages[1].stage = VK_SHADER_STAGE_MISS_BIT_NV;
 	stages[1].module = missModule;
-	stages[1].pName = "main";
+	stages[1].pName = s_main;
 
 	int i_stages = 2;
 	for (size_t i = 0; i < num_hitgroups; i++)
@@ -977,13 +981,13 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 			stages[i_stages].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			stages[i_stages].stage = VK_SHADER_STAGE_INTERSECTION_BIT_NV;
 			stages[i_stages].module = intersection_modules[i];
-			stages[i_stages].pName = "main";
+			stages[i_stages].pName = s_main;
 			i_stages++;
 		}
 		stages[i_stages].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		stages[i_stages].stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 		stages[i_stages].module = closesthit_modules[i];
-		stages[i_stages].pName = "main";
+		stages[i_stages].pName = s_main;
 		i_stages++;
 	}
 
@@ -1059,6 +1063,8 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 
 void PathTracer::_comp_pipeline_create(RayTrace& rt) const
 {
+	static const char s_main[] = "main";
+
 	const Context& ctx = Context::get_context();
 	VkShaderModule finalModule = _createShaderModule_from_spv("final");
 
@@ -1066,7 +1072,7 @@ void PathTracer::_comp_pipeline_create(RayTrace& rt) const
 	computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 	computeShaderStageInfo.module = finalModule;
-	computeShaderStageInfo.pName = "main";
+	computeShaderStageInfo.pName = s_main;
 
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

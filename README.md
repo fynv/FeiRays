@@ -7,7 +7,7 @@ Here, I'm trying to make it more extendable and reusable, so I can have more fun
 
 <img src="gallery/sponza.png" width="900px">
 
-The "sponza" model, 900x600x1000 rays, rendered in 15.6 seconds using RTX 2060 super.
+The "sponza" model, 900x600x1000 rays, rendered in 13.5 seconds using RTX 2060 super.
 
 ## Building and Running
 
@@ -59,13 +59,13 @@ The class "PathTracer" maintains a list of the geometries and path-traces them.
 	900 x 600 x 100 rays:
 
 	Generating scene..
-	Done generating scene.. 0.902597 secs
+	Done generating scene.. 1.001552 secs
 	Initializing RNG states..
-	Done initializing RNG states.. 1.529381 secs
+	Done initializing RNG states.. 1.418905 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.027864 secs
+	Done preparing ray-tracing.. 0.249976 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.248390 secs
+	Done ray-tracing.. 0.166751 secs
 
 This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material are implemented.
 
@@ -76,11 +76,11 @@ This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material 
 	800 x 400 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 0.566024 secs
+	Done initializing RNG states.. 0.432341 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.030093 secs
+	Done preparing ray-tracing.. 0.278233 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.123516 secs
+	Done ray-tracing.. 0.078370 secs
 
 Besides spheres, triangle-meshes (triangle-lists) are also implemented.
 
@@ -93,13 +93,13 @@ Also possible to simulate materials involving partical scattering.
 	900 x 600 x 100 rays:
 
 	Generating scene..
-	Done generating scene.. 0.918711 secs
+	Done generating scene.. 1.042199 secs
 	Initializing RNG states..
-	Done initializing RNG states.. 1.527278 secs
+	Done initializing RNG states.. 1.398536 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.030000 secs
+	Done preparing ray-tracing.. 0.268473 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.244481 secs
+	Done ray-tracing.. 0.171742 secs
 
 Sphere with checker texture. (Chapter 3, Ray Tracing - The Next Week)
 
@@ -111,11 +111,11 @@ Sphere with checker texture. (Chapter 3, Ray Tracing - The Next Week)
 	900 x 600 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 1.539325 secs
+	Done initializing RNG states.. 1.391237 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.031404 secs
+	Done preparing ray-tracing.. 0.034232 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.193931 secs
+	Done ray-tracing.. 0.116921 secs
 
 Triangle mesh and sphere with diffuse textures.
 Sky-box using a cubemap texture.
@@ -128,11 +128,11 @@ Sky-box using a cubemap texture.
 	900 x 600 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 1.499786 secs
+	Done initializing RNG states.. 1.398239 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.031135 secs
+	Done preparing ray-tracing.. 0.283550 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.212865 secs
+	Done ray-tracing.. 0.143519 secs
 
 Spherical light-sources are handled specially.
 
@@ -144,11 +144,11 @@ Spherical light-sources are handled specially.
 	800 x 800 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 1.965325 secs
+	Done initializing RNG states.. 1.838176 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.027744 secs
+	Done preparing ray-tracing.. 0.239165 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.381966 secs
+	Done ray-tracing.. 0.227542 secs
 
 The Cornell Box. Not handling square light-sources yet. Treating them as emissive material.
 
@@ -160,10 +160,10 @@ The Cornell Box. Not handling square light-sources yet. Treating them as emissiv
 	800 x 400 x 100 rays:
 
 	Initializing RNG states..
-	Done initializing RNG states.. 0.524051 secs
+	Done initializing RNG states.. 0.417545 secs
 	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.031571 secs
+	Done preparing ray-tracing.. 0.277587 secs
 	Doing ray-tracing..
-	Done ray-tracing.. 0.128748 secs
+	Done ray-tracing.. 0.085338 secs
 
 Sunlight can be simulated, which is similar to a spherical light-source.

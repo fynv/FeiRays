@@ -65,7 +65,7 @@ WavefrontIndexedTriangleList::WavefrontIndexedTriangleList(const glm::mat4x4& mo
 
 			float f = 1.0f / (delta1[0] * delta2[1] - delta2[0] * delta1[1]);
 			faces[i].T = glm::normalize((f*delta2[1]) * edge1 - (f*delta1[1])*edge2);
-			faces[i].B = glm::normalize((-f * delta2[0])*edge1 + (f*delta1[0])*edge2);
+			faces[i].B = glm::normalize((-f * delta2[0]) * edge1 + (f*delta1[0])*edge2);
 		}
 	}
 
