@@ -22,7 +22,8 @@ private:
 	VkDebugUtilsMessengerEXT m_debugMessenger;
 	VkInstance m_instance;
 	VkPhysicalDevice m_physicalDevice;
-	VkPhysicalDeviceBufferDeviceAddressFeaturesEXT m_bufferDeviceAddressFeatures;
+	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures;
+	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures;
 	VkPhysicalDeviceFeatures2 m_features2;
 	VkPhysicalDeviceRayTracingPropertiesNV m_raytracingProperties;
 	uint32_t m_graphicsQueueFamily;

@@ -72,13 +72,18 @@ bool Context::_init_vulkan()
 	}
 
 	m_bufferDeviceAddressFeatures = {};
+	m_descriptorIndexingFeatures = {};
 	{
-		m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_ADDRESS_FEATURES_EXT;
+		m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
+		m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+		m_bufferDeviceAddressFeatures.pNext = &m_descriptorIndexingFeatures;
 		m_features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 		m_features2.pNext = &m_bufferDeviceAddressFeatures;
 		m_features2.features = {};
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &m_features2);
 	}
+
+	m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 
 	m_raytracingProperties = {};
 	{
@@ -155,6 +160,9 @@ Context::Context()
 
 Context::~Context()
 {
+#ifdef _DEBUG
+	vkDestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
+#endif
 	vkDestroyCommandPool(m_device, m_commandPool_graphics, nullptr);
 	vkDestroyDevice(m_device, nullptr);
 	vkDestroyInstance(m_instance, nullptr);
@@ -247,6 +255,14 @@ Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlag
 	memoryAllocateInfo.allocationSize = memRequirements.size;
 	memoryAllocateInfo.memoryTypeIndex = memoryTypeIndex;
 
+	VkMemoryAllocateFlagsInfo memoryAllocateFlagsInfo = {};
+	memoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+
+	if ((usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT)!=0)
+		memoryAllocateFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
+	memoryAllocateInfo.pNext = &memoryAllocateFlagsInfo;
+
 	VkExportMemoryAllocateInfoKHR vulkanExportMemoryAllocateInfoKHR = {};
 	vulkanExportMemoryAllocateInfoKHR.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
 #ifdef _WIN64
@@ -258,7 +274,7 @@ Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlag
 #endif
 
 	if (ext_mem)
-		memoryAllocateInfo.pNext = &vulkanExportMemoryAllocateInfoKHR;
+		memoryAllocateFlagsInfo.pNext = &vulkanExportMemoryAllocateInfoKHR;
 
 	vkAllocateMemory(ctx.device(), &memoryAllocateInfo, nullptr, &m_mem);
 	vkBindBufferMemory(ctx.device(), m_buf, m_mem, 0);
@@ -888,8 +904,6 @@ Sampler::Sampler()
 	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = 16;
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
