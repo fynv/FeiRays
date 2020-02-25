@@ -31,14 +31,14 @@ int main()
 	Image target(view_width, view_height);
 	pt.set_target(&target);
 
-	int cubeWidth, cubeHeight, cubeChannels, isCube;
+	/*int cubeWidth, cubeHeight, cubeChannels, isCube;
 	void *cube_pixels = dds_load("../data/sky_cube.dds", &cubeWidth, &cubeHeight, &cubeChannels, &isCube);
 	RGBACubemap cubemap(cubeWidth, cubeHeight, cube_pixels);
 	dds_free(cube_pixels);
 
 	int id_skybox = pt.add_cubemap(&cubemap);
 	TexturedSkyBox skybox(id_skybox);
-	pt.set_sky(&skybox);
+	pt.set_sky(&skybox);*/
 
 	pt.add_sunlight({ 0.3f, 1.0f, 0.2f }, 0.05, { 2000.0f, 2000.0f, 2000.0f });
 
