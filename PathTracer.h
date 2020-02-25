@@ -148,10 +148,10 @@ public:
 	void clear();
 
 	// f32_vec4 - linear
-	void to_host_raw(void *hdata) const;
+	void to_host_raw(float *hdata) const;
 
 	// u8_vec3 - srgb
-	void to_host_srgb(void* hdata, float boost = 1.0f) const;
+	void to_host_srgb(unsigned char* hdata, float boost = 1.0f) const;
 
 
 

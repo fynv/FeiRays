@@ -369,14 +369,14 @@ void Image::clear()
 	m_data->zero();
 }
 
-void Image::to_host_raw(void *hdata) const
+void Image::to_host_raw(float *hdata) const
 {
 	m_data->download(hdata);
 }
 
 void h_raw_to_srgb(const float* raw, unsigned char* srgb, size_t num_pixels, float boost);
 
-void Image::to_host_srgb(void* hdata, float boost) const
+void Image::to_host_srgb(unsigned char* hdata, float boost) const
 {
 	unsigned char* d_srgb;
 	unsigned count = unsigned(m_width*m_height);
