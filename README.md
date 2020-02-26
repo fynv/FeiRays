@@ -31,7 +31,7 @@ scene.trace(1000, 50)
 img = scene.get_image()
 img.save("breakfast_room.png")
 ```
-The model file "breakfast_room.obj" is located in the folder "breakfast_room".
+(It is assumed that the model file "breakfast_room.obj" is located in the folder "breakfast_room".)
 
 ## Building and Running
 
