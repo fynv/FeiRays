@@ -418,13 +418,24 @@ PathTracer::PathTracer()
 
 	m_Sampler = new Sampler;
 
-	static GradientSky _sky;
-	m_current_sky = &_sky;
+	m_default_sky = new GradientSky;
+	m_current_sky = m_default_sky;
 }
 
 PathTracer::~PathTracer()
 {
+	delete m_default_sky;
 	delete m_Sampler;
+}
+
+void PathTracer::set_sky(Sky* sky)
+{
+	if (m_current_sky == m_default_sky)
+	{
+		delete m_default_sky;
+		m_default_sky = nullptr;
+	}
+	m_current_sky = sky;
 }
 
 void PathTracer::add_geometry(Geometry* geo)
@@ -877,13 +888,13 @@ public:
 	ShaderCache() {}
 	virtual ~ShaderCache() 
 	{
-		const Context& ctx = Context::get_context();
+		/*const Context& ctx = Context::get_context();
 		auto iter = begin();
 		while (iter != end())
 		{
 			vkDestroyShaderModule(ctx.device(), iter->second, nullptr);
 			iter++;
-		}
+		}*/
 	}
 };
 

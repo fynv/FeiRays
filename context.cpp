@@ -160,12 +160,13 @@ Context::Context()
 
 Context::~Context()
 {
+	/*
 #ifdef _DEBUG
 	vkDestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
 #endif
 	vkDestroyCommandPool(m_device, m_commandPool_graphics, nullptr);
 	vkDestroyDevice(m_device, nullptr);
-	vkDestroyInstance(m_instance, nullptr);
+	vkDestroyInstance(m_instance, nullptr);*/
 }
 
 NTimeCommandBuffer::NTimeCommandBuffer(size_t n) : m_n(n)

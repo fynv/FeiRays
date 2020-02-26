@@ -5,11 +5,12 @@
 
 class PathTracer;
 class RGBATexture;
+class RGBACubemap;
 
 class TextureMap : private std::unordered_map<std::string, int>
 {
 public:
-	TextureMap(PathTracer* pt, const char* path);
+	TextureMap(PathTracer* pt);
 	virtual ~TextureMap();
 
 	int findTex(const char* texname, bool srgb = true);
@@ -17,7 +18,7 @@ public:
 
 private:
 	PathTracer* m_pt;
-	std::string m_path;
-	std::vector<RGBATexture*> m_textures;	
+	std::vector<RGBATexture*> m_textures;
+	std::vector<RGBACubemap*> m_cubemaps;
 };
 

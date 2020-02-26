@@ -180,7 +180,7 @@ public:
 	~PathTracer();
 	
 	void set_target(Image* target) { m_target = target;  }
-	void set_sky(Sky* sky) { m_current_sky = sky; }
+	void set_sky(Sky* sky);
 	void add_geometry(Geometry* geo);
 	void add_sunlight(glm::vec3 direction, float radian, glm::vec3 color);
 	int add_texture(RGBATexture* tex);
@@ -195,6 +195,7 @@ private:
 	std::vector<RGBATexture*> m_textures;
 	std::vector<RGBACubemap*> m_cubemaps;
 	Sampler* m_Sampler;
+	GradientSky* m_default_sky;
 	Sky* m_current_sky;
 
 	// camera

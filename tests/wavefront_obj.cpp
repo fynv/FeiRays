@@ -28,9 +28,7 @@ WavefrontObject::WavefrontObject(PathTracer& pt, const char* path, const char* f
 	std::string                      err;
 
 	tinyobj::LoadObj(&attrib, &shapes, &materials, &err, fn_obj.c_str(), path);
-
-	std::unordered_map<std::string, int> tex_map;
-
+	
 	std::vector<WavefrontIndexedTriangleList::Material> materials_in(materials.size());
 
 	for (size_t i = 0; i < materials.size(); i++)
@@ -61,7 +59,15 @@ WavefrontObject::WavefrontObject(PathTracer& pt, const char* path, const char* f
 			materials_in[i].texId_bumpmap = -1;
 
 		int mask = 0;
-		if (materials[i].diffuse[0] > 0.0f || materials[i].diffuse[1] > 0.0f || materials[i].diffuse[2] > 0.0f) mask |= 1;
+		if (materials[i].diffuse[0] > 0.0f || materials[i].diffuse[1] > 0.0f || materials[i].diffuse[2] > 0.0f)
+		{
+			mask |= 1;
+		}
+		else if (materials_in[i].texId_diffuse >= 0)
+		{
+			materials_in[i].diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+			mask |= 1;
+		}
 		if (materials[i].specular[0] > 0.0f || materials[i].specular[1] > 0.0f || materials[i].specular[2] > 0.0f) mask |= 2;
 		if (materials[i].emission[0] > 0.0f || materials[i].emission[1] > 0.0f || materials[i].emission[2] > 0.0f) mask |= 4;
 		materials_in[i].mask = mask;

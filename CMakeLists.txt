@@ -87,3 +87,9 @@ target_link_libraries(test6 FeiRays volk)
 
 add_executable(test7 tests/test7.cpp tests/dds_reader.hpp tests/texture_map.cpp tests/texture_map.h tests/wavefront_obj.cpp tests/wavefront_obj.h)
 target_link_libraries(test7 FeiRays volk)
+
+set(BUILD_PYTHON_EXTENSION false CACHE BOOL "Build Python Extension")
+
+if (BUILD_PYTHON_EXTENSION)
+add_subdirectory(pyFeiRays)
+endif()
