@@ -15,6 +15,7 @@ public:
 		int texId_specular;
 		int texId_emission;
 		int texId_bumpmap;
+		int texId_mask;
 		int mask; // bit 0 : has diffuse, bit 1: has specular, bit 2: has emission
 	};
 

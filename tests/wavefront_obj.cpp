@@ -58,6 +58,11 @@ WavefrontObject::WavefrontObject(PathTracer& pt, const char* path, const char* f
 		else
 			materials_in[i].texId_bumpmap = -1;
 
+		if (!materials[i].alpha_texname.empty())
+			materials_in[i].texId_mask = m_tex_map.findTex(materials[i].alpha_texname.c_str(), false);
+		else
+			materials_in[i].texId_mask = -1;
+
 		int mask = 0;
 		if (materials[i].diffuse[0] > 0.0f || materials[i].diffuse[1] > 0.0f || materials[i].diffuse[2] > 0.0f)
 		{

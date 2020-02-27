@@ -49,13 +49,14 @@ struct Material
 	int texId_specular;
 	int texId_emission;
 	int texId_bumpmap;
+	int texId_mask;
 	int mask;
 };
 
 struct CompMaterial
 {
 	float a, b, c, d, e, f, g, h, i, j;
-	int k, l, m, n, o;
+	int k, l, m, n, o, p;
 };
 
 Material UnpackMaterial(in CompMaterial compMat)
@@ -69,7 +70,8 @@ Material UnpackMaterial(in CompMaterial compMat)
 	m.texId_specular = compMat.l;
 	m.texId_emission = compMat.m;
 	m.texId_bumpmap = compMat.n;
-	m.mask = compMat.o;	
+	m.texId_mask = compMat.o;
+	m.mask = compMat.p;	
 	return m;
 }
 
@@ -138,6 +140,8 @@ layout(std430, binding = BINDING_WavefrontIndexedTriangleList) buffer Params
 
 void main()
 {
+	payload.t = gl_HitTNV;
+
 	WavefrontIndexedTriangleList instance = wavefrontIndexedTriangleList[gl_InstanceCustomIndexNV];
 
 	Index i0 = instance.indexBuf[3 * gl_PrimitiveID].i;
@@ -159,6 +163,16 @@ void main()
 		texCoord = texCoord0 * barycentrics.x + texCoord1 * barycentrics.y + texCoord2 * barycentrics.z;
 	}
 
+	if (mat.texId_mask >= 0)
+	{
+		float mask = texture(textureSamplers[mat.texId_mask], texCoord).x;
+		if (mask<0.5)
+		{
+			payload.material_bits = 0;
+			return;
+		}
+	}
+
 	vec3 normal;
 	{
 		vec3 norm0 = UnpackVec3(instance.normalBuf[i0.normal_index].v);
@@ -177,6 +191,8 @@ void main()
 
 		normal = normalize(instance.normalMat * normal);
 	}
+
+	payload.normal = normal;
 
 	uint bits = MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT;
 
@@ -211,8 +227,6 @@ void main()
 		}
 	}
 
-	payload.t = gl_HitTNV;
-	payload.normal = normal;
 	payload.material_bits = bits;
 
 	payload.color0 = emission;

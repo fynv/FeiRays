@@ -9,7 +9,7 @@ Now playing with [McGuire Computer Graphics Archive](https://casual-effects.com/
 
 <img src="gallery/sponza.png" width="900px">
 
-The "sponza" model, 900x600x1000 rays, rendered in 20.0 seconds using RTX 2060 super.
+The "sponza" model, 900x600x1000 rays, rendered in 20.3 seconds using RTX 2060 super.
 
 <img src="gallery/breakfast_room.png" width="900px">
 
@@ -95,7 +95,7 @@ There is abstract class called "Geometry". Each sub-class can have its own close
 * UnitSphereCheckerTex: procedure texture. diffuse only
 * TexturedUnitSphere: 1 texture attached to 1 sphere. diffuse only
 * TexturedTriangleList: support multiple textures. diffuse only
-* WavefrontIndexedTriangleList: support multiple textures. support diffuse, specular, emissive material types. support bump-map.
+* WavefrontIndexedTriangleList: support multiple textures. support diffuse, specular, emissive material types. support alpha-map and bump-map.
 
 ### Light sources
 
