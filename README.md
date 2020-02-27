@@ -9,7 +9,7 @@ Now playing with [McGuire Computer Graphics Archive](https://casual-effects.com/
 
 <img src="gallery/sponza.png" width="900px">
 
-The "sponza" model, 900x600x1000 rays, rendered in 20.3 seconds using RTX 2060 super.
+The "sponza" model, 900x600x1000 rays, rendered in 24.5 seconds using RTX 2060 super.
 
 <img src="gallery/breakfast_room.png" width="900px">
 

@@ -199,7 +199,7 @@ void Scene::add_wavefront_object(const glm::mat4x4& model, const char* path, con
 	for (size_t i = 0; i < tex_coords.size(); i++)
 	{
 		float* tp = &attrib.texcoords[2 * i];
-		tex_coords[i] = glm::vec2(tp[0], tp[1]);
+		tex_coords[i] = glm::vec2(tp[0], 1.0f - tp[1]);
 	}
 
 	std::vector<WavefrontIndexedTriangleList::Index> indices;

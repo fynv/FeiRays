@@ -60,7 +60,7 @@ LambertianObject::LambertianObject(PathTracer& pt, const char* path, const char*
 			float* np = &attrib.normals[3 * index.normal_index];
 			vertex.Normal = glm::vec3(np[0], np[1], np[2]);
 			float* tp = &attrib.texcoords[2 * index.texcoord_index];
-			vertex.TexCoord = glm::vec2(tp[0], tp[1]);
+			vertex.TexCoord = glm::vec2(tp[0], 1.0f - tp[1]);
 			vertices.push_back(vertex);
 		}
 
