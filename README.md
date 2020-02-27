@@ -61,7 +61,6 @@ Basically, you can use the code any way you like unless you are working for a 99
 
 In case someone is interested in the progress of the project, here is a list of what have been implemented so far.
 
-
 ### Random Number Generator for Shaders
 
 RNGState.h, rand_state_init.cu, shaders/rand.shinc
@@ -77,126 +76,40 @@ While the quality of the random number generated from XORWOW is good, the method
 
 This module can be replaced relatively easily, once we know there is a better method for this purpose.
 
-### Vulkan Based Path-Tracing framework
+### Vulkan Resource Management
 
-context.cpp, PathTracer.cpp
+Basic Vulkan resource classes are implemented in context.cpp.
+
+* The Context
+* Command Buffers
+* Linear Buffers
+* Textures and Cubemaps
+* Acceleration Structures
+
+### Geometries
 
 There is abstract class called "Geometry". Each sub-class can have its own closest-hit shader and intersection shader (optional).
 
+* ColoredUnitSphere: support a uniform color and different material types
+* ColoredIndexedTriangleList: support a uniform color and different material types
+* UnitSphereCheckerTex: procedure texture. diffuse only
+* TexturedUnitSphere: 1 texture attached to 1 sphere. diffuse only
+* TexturedTriangleList: support multiple textures. diffuse only
+* WavefrontIndexedTriangleList: support multiple textures. support diffuse, specular, emissive material types. support bump-map.
+
+### Light sources
+
+There are 3 Kinds of light-sources
+
+* Emissive material: including the sky-box
+* Sphere light sources
+* Sunlight: round lights at infinite distance 
+
+### PathTracer
+
 The class "PathTracer" maintains a list of the geometries and path-traces them.
 
-### rt_weekend
 
-<img src="gallery/rt_weekend.png" width="900px">
+### Next
 
-	900 x 600 x 100 rays:
-
-	Generating scene..
-	Done generating scene.. 1.001552 secs
-	Initializing RNG states..
-	Done initializing RNG states.. 1.418905 secs
-	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.249976 secs
-	Doing ray-tracing..
-	Done ray-tracing.. 0.166751 secs
-
-This is the classic "Ray Tracing in One Weekend" scene. All 3 kinds of material are implemented.
-
-### test1
-
-<img src="gallery/test1.png" width="800px">
-
-	800 x 400 x 100 rays:
-
-	Initializing RNG states..
-	Done initializing RNG states.. 0.432341 secs
-	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.278233 secs
-	Doing ray-tracing..
-	Done ray-tracing.. 0.078370 secs
-
-Besides spheres, triangle-meshes (triangle-lists) are also implemented.
-
-Also possible to simulate materials involving partical scattering.
-
-### test2
-
-<img src="gallery/test2.png" width="900px">
-
-	900 x 600 x 100 rays:
-
-	Generating scene..
-	Done generating scene.. 1.042199 secs
-	Initializing RNG states..
-	Done initializing RNG states.. 1.398536 secs
-	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.268473 secs
-	Doing ray-tracing..
-	Done ray-tracing.. 0.171742 secs
-
-Sphere with checker texture. (Chapter 3, Ray Tracing - The Next Week)
-
-
-### test3
-
-<img src="gallery/test3.png" width="900px">
-
-	900 x 600 x 100 rays:
-
-	Initializing RNG states..
-	Done initializing RNG states.. 1.391237 secs
-	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.034232 secs
-	Doing ray-tracing..
-	Done ray-tracing.. 0.116921 secs
-
-Triangle mesh and sphere with diffuse textures.
-Sky-box using a cubemap texture.
-
-
-### test4
-
-<img src="gallery/test4.png" width="900px">
-
-	900 x 600 x 100 rays:
-
-	Initializing RNG states..
-	Done initializing RNG states.. 1.398239 secs
-	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.283550 secs
-	Doing ray-tracing..
-	Done ray-tracing.. 0.143519 secs
-
-Spherical light-sources are handled specially.
-
-
-### test5
-
-<img src="gallery/test5.png" width="800px">
-
-	800 x 800 x 100 rays:
-
-	Initializing RNG states..
-	Done initializing RNG states.. 1.838176 secs
-	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.239165 secs
-	Doing ray-tracing..
-	Done ray-tracing.. 0.227542 secs
-
-The Cornell Box. Not handling square light-sources yet. Treating them as emissive material.
-
-
-### test6
-
-<img src="gallery/test6.png" width="800px">
-
-	800 x 400 x 100 rays:
-
-	Initializing RNG states..
-	Done initializing RNG states.. 0.417545 secs
-	Preparing ray-tracing..
-	Done preparing ray-tracing.. 0.277587 secs
-	Doing ray-tracing..
-	Done ray-tracing.. 0.085338 secs
-
-Sunlight can be simulated, which is similar to a spherical light-source.
+Implement a bidirectional path-tracer.
