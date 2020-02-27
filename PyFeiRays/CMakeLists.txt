@@ -5,7 +5,7 @@ find_package(PythonLibs 3 REQUIRED)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 
-add_library(PyFeiRays SHARED dds_reader.hpp Scene.cpp Scene.h texture_map.cpp texture_map.h pyFeiRays.cpp)
+add_library(PyFeiRays SHARED dds_reader.hpp Scene.cpp Scene.h texture_map.cpp texture_map.h PyFeiRays.cpp)
 target_link_libraries(PyFeiRays ${PYTHON_LIBRARIES} FeiRays volk)
 
 if (WIN32) 

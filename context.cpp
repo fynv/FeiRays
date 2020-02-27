@@ -1,4 +1,7 @@
 #include "context.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
 
 const Context& Context::get_context()
 {

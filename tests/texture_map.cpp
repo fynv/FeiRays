@@ -16,6 +16,17 @@ TextureMap::~TextureMap()
 		delete m_textures[i];
 }
 
+inline std::string fix_path(const std::string& in)
+{
+	std::string ret = "";
+	for (size_t i=0; i<in.size(); i++)
+	{
+		if (in[i]=='\\') ret+="/";
+		else ret += in[i];
+	}
+	return ret;
+}
+
 int TextureMap::findTex(const char* texname, bool srgb)
 {
 	int ret;
@@ -23,6 +34,7 @@ int TextureMap::findTex(const char* texname, bool srgb)
 	if (iter == end())
 	{
 		std::string fn_tex = m_path + "/" + texname;
+		fn_tex = fix_path(fn_tex);
 		int texWidth, texHeight, texChannels;
 
 		stbi_uc* pixels = stbi_load(fn_tex.c_str(), &texWidth, &texHeight, &texChannels, 4);

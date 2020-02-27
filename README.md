@@ -44,7 +44,7 @@ so it should be fine to build without Vulkan SDK, and the resulted executables s
 But be sure to have the latest graphics driver installed, one that supports Vulkan. 
 
 * Clone the repo and update the submodules
-* Use CMake to generate a VS solution at FeiRays/build (Linux build not tested yet).
+* Use CMake to generate a VS solution at FeiRays/build.
 * Build and run the tests. 
 * Shaders (spv) are expected at ../shaders relative to the starting folder.
 

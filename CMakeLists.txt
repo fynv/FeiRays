@@ -62,6 +62,8 @@ endif()
 
 add_definitions(${DEFINES})
 
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++14 -Xcompiler -fPIC)
+
 cuda_add_library(FeiRays ${SOURCE} ${HEADER})
 
 add_executable(rt_weekend tests/rt_weekend.cpp)
@@ -91,5 +93,5 @@ target_link_libraries(test7 FeiRays volk)
 set(BUILD_PYTHON_EXTENSION false CACHE BOOL "Build Python Extension")
 
 if (BUILD_PYTHON_EXTENSION)
-add_subdirectory(pyFeiRays)
+add_subdirectory(PyFeiRays)
 endif()
