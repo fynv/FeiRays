@@ -6,7 +6,7 @@
 
 #include "bindings.h"
 #include "payload.shinc"
-#include "rand.shinc"
+#include "rand_xorwow.shinc"
 #include "image.shinc"
 #include "raygen_params.shinc"
 #include "light_source_dist.shinc"

@@ -1,0 +1,71 @@
+#define RNGState uint
+
+/*uint InitRandomSeed(uint val0, uint val1)
+{
+	uint v0 = val0, v1 = val1, s0 = 0;
+
+	[[unroll]] 
+	for (uint n = 0; n < 16; n++)
+	{
+		s0 += 0x9e3779b9;
+		v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + s0) ^ ((v1 >> 5) + 0xc8013ea4);
+		v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + s0) ^ ((v0 >> 5) + 0x7e95761e);
+	}
+
+	return v0;
+}*/
+
+uint RandomInt(inout RNGState state)
+{
+	// LCG values from Numerical Recipes
+    return (state = 1664525 * state + 1013904223);
+}
+
+float rand01(inout RNGState state)
+{
+	// Float version using bitmask from Numerical Recipes
+	const uint one = 0x3f800000;
+	const uint msk = 0x007fffff;
+	return uintBitsToFloat(one | (msk & (RandomInt(state) >> 9))) - 1;
+}
+
+vec3 rand_in_unit_sphere(inout RNGState rstate)
+{
+	vec3 ret;
+	do{
+		ret = vec3(rand01(rstate)*2.0 - 1.0, rand01(rstate)*2.0 - 1.0, rand01(rstate)*2.0 - 1.0);
+	} while (length(ret) > 1.0);
+	return ret;
+}
+
+vec2 rand_in_unit_disk(inout RNGState rstate)
+{
+	vec2 ret;
+	do {
+		ret = vec2(rand01(rstate)*2.0 - 1.0, rand01(rstate)*2.0 - 1.0);
+	} while (length(ret) > 1.0);
+	return ret;
+}
+
+vec3 rand_on_unit_sphere(inout RNGState rstate)
+{
+	float theta = rand01(rstate) * radians(360.0);
+	float z = rand01(rstate)*2.0 - 1.0;
+	float r = 1.0 - z*z;
+	if (r<0.0) r = 0.0;
+	r = sqrt(r);
+	vec3 ret;
+	ret.z = z;
+	ret.x = r*cos(theta);
+	ret.y = r*sin(theta);
+	return ret;
+}
+
+vec2 rand_on_unit_circle(inout RNGState rstate)
+{
+	float theta = rand01(rstate) * radians(360.0);
+	vec2 ret;
+	ret.x = cos(theta);
+	ret.y = sin(theta);
+	return ret;
+}

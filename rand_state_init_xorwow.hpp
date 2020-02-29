@@ -1,5 +1,5 @@
 #include "xor_wow_data.hpp"
-#include "RNGState.h"
+#include "RNGState_xorwow.h"
 
 struct RNG
 {

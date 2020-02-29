@@ -22,7 +22,7 @@ add_subdirectory(thirdparty/volk)
 
 set (SOURCE
 context.cpp
-rand_state_init.cu
+rand_state_init_xorwow.cu
 dump_srgb.cu
 PathTracer.cpp
 ColoredIndexedTriangleList.cpp
@@ -36,9 +36,9 @@ WavefrontIndexedTriangleList.cpp
 set (HEADER
 Timing.h
 context.h
-RNGState.h
+RNGState_xorwow.h
 xor_wow_data.hpp
-rand_state_init.hpp
+rand_state_init_xorwow.hpp
 Material.h
 PathTracer.h
 ColoredIndexedTriangleList.h

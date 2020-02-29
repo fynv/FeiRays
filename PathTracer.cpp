@@ -12,7 +12,7 @@
 #include "context.h"
 #include "PathTracer.h"
 #include "shaders/bindings.h"
-#include "rand_state_init.hpp"
+#include "rand_state_init_xorwow.hpp"
 #include "Timing.h"
 
 #ifndef PI
