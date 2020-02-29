@@ -85,9 +85,18 @@ void main()
     bool in_material = false;
     bool skip_lights = false;
 
-    while (f_att.x > 0.0001 || f_att.y > 0.0001 || f_att.z > 0.0001)
+    const float russian_roulette_factor = 0.1;
+
+    while (depth < 10)
     {
-        if (depth >= 10) break;
+        //  Russian Roulette
+        float max_att = max(max(f_att.x, f_att.y), f_att.z);
+        if (max_att<russian_roulette_factor)
+        {
+            max_att /= russian_roulette_factor;
+            if (rand01(states[ray_id])>max_att) break;
+            f_att*=1.0/max_att;
+        }       
 
         uint rayFlags = gl_RayFlagsOpaqueNV;
         traceNV(topLevelAS, rayFlags, cullMask, 0, 0, 0, ray_origin, tmin, direction, tmax, 0);
@@ -139,7 +148,7 @@ void main()
                 case MAT_DIFFUSE_BIT | MAT_SPECULAR_BIT:
                     {
                         float r = rand01(states[ray_id]);
-                        if (r<payload.f0)
+                        if (r<=payload.f0)
                         {
                             directional = true;
                             f_att *= 1.0/payload.f0;
@@ -307,6 +316,7 @@ void main()
         
         depth++;
     }
+
     vec4 col_old = read_pixel(target, int(gl_LaunchIDNV.x), int(gl_LaunchIDNV.y));
 	vec4 col = vec4(col_old.xyz+color, 1.0);
     write_pixel(target, int(gl_LaunchIDNV.x), int(gl_LaunchIDNV.y), col);

@@ -60,7 +60,7 @@ int main()
 	pt.trace(1000, 50);
 
 	unsigned char* hbuffer = (unsigned char*)malloc(view_width * view_height * 3);
-	target.to_host_srgb(hbuffer, 2.5f);
+	target.to_host_srgb(hbuffer);
 	stbi_write_png("test7.png", view_width, view_height, 3, hbuffer, view_width * 3);
 	free(hbuffer);
 
