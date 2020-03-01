@@ -45,6 +45,30 @@ layout(std430, binding = 7) buffer Sunlights
 
 layout(location = 0) rayPayloadNV Payload payload;
 
+
+vec3 directional_scatter(inout RNGState state, in vec3 base, in vec3 ref, in float order)
+{
+    vec3 a, b;
+    if (abs(base.x)>0.8)
+        a = vec3(0.0, 1.0, 0.0);
+    else 
+        a = vec3(1.0, 0.0, 0.0);
+
+    a = normalize(cross(a, base));
+    b = cross(a, base);
+
+    float z = pow(rand01(state), 1.0/(order+1.0));
+    float xy = sqrt(1.0 - z*z);
+    float alpha = rand01(state)*radians(360.0);
+    float x = xy * cos(alpha);
+    float y = xy * sin(alpha);
+
+    vec3 ret = x*a + y*b + z * base;
+    if (dot(ret, ref)<=0.0) ret = base;
+    return ret; 
+}
+
+
 float schlick(float cosine, float ref_idx)
 {
     float r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
@@ -266,7 +290,7 @@ void main()
             // random direction within the coverage
             {
                 float r1 = rand01(states[ray_id]);
-                float r2 = rand01(states[ray_id]) * radians(360.0);;
+                float r2 = rand01(states[ray_id]) * radians(360.0);
 
                 vec3 a, b;
                 if (abs(dir.x)>0.8)
@@ -301,17 +325,16 @@ void main()
         }
 
         // hack
-        if (depth>0)
-            skip_lights = true;
+        skip_lights = true;
 
         if (scattering) 
         {
             direction = rand_on_unit_sphere(states[ray_id]);
         }
-        else if ( (diffusive || directional) &&  fuzz>0.0)
+        else if ( (diffusive || directional) && fuzz>0.0)
         {
-            direction = normalize(direction + fuzz * rand_in_unit_sphere(states[ray_id]));
-            if (dot(direction, fuzz_dir) <= 0.0) break;
+            direction = directional_scatter(states[ray_id], direction, fuzz_dir, 1.0/fuzz);
+            
         }
         
         depth++;

@@ -233,7 +233,7 @@ void main()
 	payload.color1 = diffuse;
 	payload.color2 = specular;
 	payload.f0 = k;
-	payload.f1 = exp(1.0-mat.shininess);
+	payload.f1 = 1.0 / mat.shininess;
 
 }
 

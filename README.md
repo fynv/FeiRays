@@ -13,7 +13,7 @@ The "sponza" model, 900x600x1000 rays, rendered in 11.2 seconds using RTX 2060 s
 
 <img src="gallery/breakfast_room.png" width="900px">
 
-The "breakfast_room" model, 900x600x1000 rays, rendered in 17.9 seconds using RTX 2060 super.
+The "breakfast_room" model, 900x600x1000 rays, rendered in 18.4 seconds using RTX 2060 super.
 
 Using the newly added Python frontend, the above case can be rendered using the following Python script:
 
