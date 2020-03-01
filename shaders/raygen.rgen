@@ -46,7 +46,7 @@ layout(std430, binding = 7) buffer Sunlights
 layout(location = 0) rayPayloadNV Payload payload;
 
 
-vec3 directional_scatter(inout RNGState state, in vec3 base, in vec3 ref, in float order)
+vec3 directional_scatter(inout RNGState state, in vec3 base, in float order)
 {
     vec3 a, b;
     if (abs(base.x)>0.8)
@@ -63,9 +63,7 @@ vec3 directional_scatter(inout RNGState state, in vec3 base, in vec3 ref, in flo
     float x = xy * cos(alpha);
     float y = xy * sin(alpha);
 
-    vec3 ret = x*a + y*b + z * base;
-    if (dot(ret, ref)<=0.0) ret = base;
-    return ret; 
+    return x*a + y*b + z * base;
 }
 
 
@@ -333,8 +331,8 @@ void main()
         }
         else if ( (diffusive || directional) && fuzz>0.0)
         {
-            direction = directional_scatter(states[ray_id], direction, fuzz_dir, 1.0/fuzz);
-            
+            direction = directional_scatter(states[ray_id], direction, 1.0/fuzz);
+            if (dot(direction, fuzz_dir)<=0.0) break;            
         }
         
         depth++;
