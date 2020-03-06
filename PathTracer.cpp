@@ -11,7 +11,7 @@
 #include <memory.h>
 #include "context.h"
 #include "PathTracer.h"
-#include "shaders/bindings.h"
+#include "shaders/common/bindings.h"
 #include "rand_state_init_xorwow.hpp"
 #include "Timing.h"
 
@@ -116,12 +116,14 @@ struct View_SphereLight
 GeoCls SphereLight::cls() const
 {
 	static const char s_name[] = "SphereLight";
+	static const char s_fn_rint[] = "geometry/intersection_unit_spheres.spv";
+	static const char s_fn_rchit[] = "geometry/closesthit_sphere_lights.spv";
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(View_SphereLight);
 	cls.binding_view = BINDING_SphereLight;
-	cls.fn_intersection = "intersection_unit_spheres";
-	cls.fn_closesthit = "closesthit_sphere_lights";
+	cls.fn_intersection = s_fn_rint;
+	cls.fn_closesthit = s_fn_rchit;
 	return cls;
 }
 
@@ -153,7 +155,7 @@ GradientSky::~GradientSky()
 
 SkyCls GradientSky::cls() const
 {
-	static const char s_name[] = "miss";
+	static const char s_name[] = "common/miss.spv";
 	SkyCls cls;
 	cls.fn_missing = s_name;
 	cls.size_view = sizeof(View_GradientSky);
@@ -223,7 +225,7 @@ struct View_TexturedSkyBox
 
 SkyCls TexturedSkyBox::cls() const
 {
-	static const char s_name[] = "miss_tex_skys";
+	static const char s_name[] = "common/miss_tex_sky.spv";
 	SkyCls cls;
 	cls.fn_missing = s_name;
 	cls.size_view = sizeof(View_TexturedSkyBox);
@@ -906,7 +908,6 @@ VkShaderModule _createShaderModule_from_spv(const char* fn)
 
 	std::string fullname = "../shaders/";
 	fullname += fn;
-	fullname += ".spv";
 
 	const Context& ctx = Context::get_context();
 
@@ -941,7 +942,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	size_t num_hitgroups = m_geo_lists.size();
 	SkyCls sky_cls = m_current_sky->cls();
 
-	VkShaderModule rayGenModule = _createShaderModule_from_spv("raygen");
+	VkShaderModule rayGenModule = _createShaderModule_from_spv("path_tracer/raygen.spv");
 	VkShaderModule missModule = _createShaderModule_from_spv(sky_cls.fn_missing);
 
 	std::vector<VkShaderModule> intersection_modules(num_hitgroups);
@@ -1077,7 +1078,7 @@ void PathTracer::_comp_pipeline_create(RayTrace& rt) const
 	static const char s_main[] = "main";
 
 	const Context& ctx = Context::get_context();
-	VkShaderModule finalModule = _createShaderModule_from_spv("final");
+	VkShaderModule finalModule = _createShaderModule_from_spv("path_tracer/final.spv");
 
 	VkPipelineShaderStageCreateInfo computeShaderStageInfo = {};
 	computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

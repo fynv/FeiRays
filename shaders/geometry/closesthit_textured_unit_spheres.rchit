@@ -5,8 +5,8 @@
 #extension GL_NV_ray_tracing : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
-#include "payload.shinc"
-#include "bindings.h"
+#include "../common/payload.shinc"
+#include "../common/bindings.h"
 
 layout(location = 0) rayPayloadInNV Payload payload;
 hitAttributeNV vec3 hitpoint;

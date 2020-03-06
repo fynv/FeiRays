@@ -1,6 +1,6 @@
 #include "context.h"
 #include "ColoredIndexedTriangleList.h"
-#include "shaders/bindings.h"
+#include "shaders/common/bindings.h"
 
 ColoredIndexedTriangleList::ColoredIndexedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<unsigned>& indices, const Material& material) : Geometry(model)
 {
@@ -47,12 +47,13 @@ struct TriangleMeshView
 GeoCls ColoredIndexedTriangleList::cls() const
 {
 	static const char s_name[] = "ColoredIndexedTriangleList";
+	static const char s_fn_rchit[] = "geometry/closesthit_colored_indexed_triangle_lists.spv";
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(TriangleMeshView);
 	cls.binding_view = BINDING_ColoredIndexedTriangleList;
 	cls.fn_intersection = nullptr;
-	cls.fn_closesthit = "closesthit_colored_indexed_triangle_lists";
+	cls.fn_closesthit = s_fn_rchit;
 	return cls;
 }
 

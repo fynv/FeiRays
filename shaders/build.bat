@@ -1,13 +1,19 @@
-glslangValidator -V final.comp -o final.spv
+glslangValidator -V common/miss.rmiss -o common/miss.spv
+glslangValidator -V common/miss_tex_sky.rmiss -o common/miss_tex_sky.spv
 
-glslangValidator -V raygen.rgen -o raygen.spv
-glslangValidator -V miss.rmiss -o miss.spv
-glslangValidator -V closesthit_colored_indexed_triangle_lists.rchit -o closesthit_colored_indexed_triangle_lists.spv
-glslangValidator -V intersection_unit_spheres.rint -o intersection_unit_spheres.spv
-glslangValidator -V closesthit_colored_unit_spheres.rchit -o closesthit_colored_unit_spheres.spv
-glslangValidator -V closesthit_unit_spheres_checker_tex.rchit -o closesthit_unit_spheres_checker_tex.spv
-glslangValidator -V closesthit_textured_triangle_lists.rchit -o closesthit_textured_triangle_lists.spv
-glslangValidator -V closesthit_textured_unit_spheres.rchit -o closesthit_textured_unit_spheres.spv
-glslangValidator -V miss_tex_sky.rmiss -o miss_tex_skys.spv
-glslangValidator -V closesthit_sphere_lights.rchit -o closesthit_sphere_lights.spv
-glslangValidator -V closesthit_wavefront_indexed_triangle_lists.rchit -o closesthit_wavefront_indexed_triangle_lists.spv
+
+glslangValidator -V geometry/closesthit_colored_indexed_triangle_lists.rchit -o geometry/closesthit_colored_indexed_triangle_lists.spv
+glslangValidator -V geometry/intersection_unit_spheres.rint -o geometry/intersection_unit_spheres.spv
+glslangValidator -V geometry/closesthit_colored_unit_spheres.rchit -o geometry/closesthit_colored_unit_spheres.spv
+glslangValidator -V geometry/closesthit_unit_spheres_checker_tex.rchit -o geometry/closesthit_unit_spheres_checker_tex.spv
+glslangValidator -V geometry/closesthit_textured_triangle_lists.rchit -o geometry/closesthit_textured_triangle_lists.spv
+glslangValidator -V geometry/closesthit_textured_unit_spheres.rchit -o geometry/closesthit_textured_unit_spheres.spv
+glslangValidator -V geometry/closesthit_sphere_lights.rchit -o geometry/closesthit_sphere_lights.spv
+glslangValidator -V geometry/closesthit_wavefront_indexed_triangle_lists.rchit -o geometry/closesthit_wavefront_indexed_triangle_lists.spv
+
+
+glslangValidator -V path_tracer/raygen.rgen -o path_tracer/raygen.spv
+glslangValidator -V path_tracer/final.comp -o path_tracer/final.spv
+
+
+

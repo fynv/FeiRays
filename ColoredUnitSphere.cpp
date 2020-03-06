@@ -1,6 +1,6 @@
 #include "context.h"
 #include "ColoredUnitSphere.h"
-#include "shaders/bindings.h"
+#include "shaders/common/bindings.h"
 
 ColoredUnitSphere::ColoredUnitSphere(const glm::mat4x4& model, const Material& material) : Geometry(model)
 {
@@ -31,12 +31,15 @@ struct SphereView
 GeoCls ColoredUnitSphere::cls() const
 {
 	static const char s_name[] = "ColoredUnitSphere";
+	static const char s_fn_rint[] = "geometry/intersection_unit_spheres.spv";
+	static const char s_fn_rchit[] = "geometry/closesthit_colored_unit_spheres.spv";
+	
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(SphereView);
 	cls.binding_view = BINDING_ColoredUnitSphere;
-	cls.fn_intersection = "intersection_unit_spheres";
-	cls.fn_closesthit = "closesthit_colored_unit_spheres";
+	cls.fn_intersection = s_fn_rint;
+	cls.fn_closesthit = s_fn_rchit;
 	return cls;
 }
 

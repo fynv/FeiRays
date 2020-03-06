@@ -1,6 +1,6 @@
 #include "context.h"
 #include "TexturedTriangleList.h"
-#include "shaders/bindings.h"
+#include "shaders/common/bindings.h"
 
 void TexturedTriangleList::_blas_create()
 {
@@ -59,12 +59,13 @@ struct TriangleMeshView
 GeoCls TexturedTriangleList::cls() const
 {
 	static const char s_name[] = "TexturedTriangleList";
+	static const char s_fn_rchit[] = "geometry/closesthit_textured_triangle_lists.spv";
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(TriangleMeshView);
 	cls.binding_view = BINDING_TexturedTriangleList;
 	cls.fn_intersection = nullptr;
-	cls.fn_closesthit = "closesthit_textured_triangle_lists";
+	cls.fn_closesthit = s_fn_rchit;
 	return cls;
 }
 

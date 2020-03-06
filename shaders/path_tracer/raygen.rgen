@@ -4,12 +4,12 @@
 #extension GL_EXT_buffer_reference2 : enable
 #extension GL_NV_ray_tracing : enable
 
-#include "bindings.h"
-#include "payload.shinc"
-#include "rand_xorwow.shinc"
-#include "image.shinc"
+#include "../common/bindings.h"
+#include "../common/payload.shinc"
+#include "../common/rand_xorwow.shinc"
+#include "../common/image.shinc"
+#include "../common/light_source_dist.shinc"
 #include "raygen_params.shinc"
-#include "light_source_dist.shinc"
 
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
 
@@ -323,7 +323,8 @@ void main()
         }
 
         // hack
-        skip_lights = true;
+        if (depth>0)
+            skip_lights = true;
 
         if (scattering) 
         {

@@ -1,6 +1,6 @@
 #include "context.h"
 #include "UnitSphereCheckerTex.h"
-#include "shaders/bindings.h"
+#include "shaders/common/bindings.h"
 
 UnitSphereCheckerTex::UnitSphereCheckerTex(const glm::mat4x4& model, float interval, const glm::vec3& color1, const glm::vec3& color2) : Geometry(model)
 {
@@ -32,12 +32,14 @@ struct SphereView
 GeoCls UnitSphereCheckerTex::cls() const
 {
 	static const char s_name[] = "UnitSphereCheckerTex";
+	static const char s_fn_rint[] = "geometry/intersection_unit_spheres.spv";
+	static const char s_fn_rchit[] = "geometry/closesthit_unit_spheres_checker_tex.spv";
 	GeoCls cls = {};
 	cls.name = s_name;
 	cls.size_view = sizeof(SphereView);
 	cls.binding_view = BINDING_UnitSphereCheckerTex;
-	cls.fn_intersection = "intersection_unit_spheres";
-	cls.fn_closesthit = "closesthit_unit_spheres_checker_tex";
+	cls.fn_intersection = s_fn_rint;
+	cls.fn_closesthit = s_fn_rchit;
 	return cls;
 }
 
