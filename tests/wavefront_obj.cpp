@@ -85,11 +85,23 @@ WavefrontObject::WavefrontObject(PathTracer& pt, const char* path, const char* f
 		positions[i] = glm::vec3(vp[0], vp[1], vp[2]);
 	}
 
-	std::vector<glm::vec3> normals(attrib.normals.size() / 3);
-	for (size_t i = 0; i < normals.size(); i++)
+	std::vector<glm::vec3> normals;
+	bool need_calc_normals = false;
+	
+	if (attrib.normals.size() > 0)
 	{
-		float* np = &attrib.normals[3 * i];
-		normals[i] = glm::vec3(np[0], np[1], np[2]);
+		normals.resize(attrib.normals.size() / 3);
+		for (size_t i = 0; i < normals.size(); i++)
+		{
+			float* np = &attrib.normals[3 * i];
+			normals[i] = glm::vec3(np[0], np[1], np[2]);
+		}
+	}
+	else
+	{
+		normals.resize(positions.size());
+		memset(normals.data(), 0, sizeof(glm::vec3)*positions.size());
+		need_calc_normals = true;
 	}
 
 	std::vector<glm::vec2> tex_coords(attrib.texcoords.size() / 2);
@@ -111,13 +123,41 @@ WavefrontObject::WavefrontObject(PathTracer& pt, const char* path, const char* f
 			tinyobj::index_t& t_index = shape.mesh.indices[j]; 
 			WavefrontIndexedTriangleList::Index index;
 			index.vertex_index = t_index.vertex_index;
-			index.normal_index = t_index.normal_index;
+			index.normal_index = need_calc_normals? t_index.vertex_index : t_index.normal_index;
 			index.texcoord_index = t_index.texcoord_index;
 			indices.push_back(index);
 		}
 
+		if (need_calc_normals)
+		{
+			for (size_t j = 0; j < shape.mesh.indices.size() / 3; j++)
+			{
+				unsigned i0 = shape.mesh.indices[j * 3].vertex_index;
+				unsigned i1 = shape.mesh.indices[j * 3 + 1].vertex_index;
+				unsigned i2 = shape.mesh.indices[j * 3 + 2].vertex_index;
+
+				glm::vec3 v0 = positions[i0];
+				glm::vec3 v1 = positions[i1];
+				glm::vec3 v2 = positions[i2];
+
+				glm::vec3 face_normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+
+				normals[i0] += face_normal;
+				normals[i1] += face_normal;
+				normals[i2] += face_normal;
+			}
+		}
+
 		for (size_t j = 0; j < shape.mesh.material_ids.size(); j++)
 			materials_ids.push_back(shape.mesh.material_ids[j]);
+	}
+
+	if (need_calc_normals)
+	{
+		for (size_t i = 0; i < normals.size(); i++)
+		{
+			normals[i] = glm::normalize(normals[i]);
+		}
 	}
 
 	m_witl = new WavefrontIndexedTriangleList(model, positions, normals, tex_coords, indices, materials_in, materials_ids.data());
