@@ -114,4 +114,5 @@ The class "PathTracer" maintains a list of the geometries and path-traces them.
 
 ### Next
 
-Implement a bidirectional path-tracer.
+* Make it neutral to GPU vendors: CUDA->OpenCL, VK_NV_ray_tracing -> VK_KHR_ray_tracing 
+* Implement a bidirectional path-tracer.
