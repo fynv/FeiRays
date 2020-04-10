@@ -104,7 +104,7 @@ int main()
 	glm::mat4x4 model6 = glm::translate(identity, glm::vec3(-4.0, 1.0, 2.0));
 	Sphere sphere6(model6, { lambertian, { 0.1f, 0.5f, 0.2f } });
 
-	Image target(view_width, view_height, nullptr, 1 << 17);
+	Image target(view_width, view_height, nullptr, 1 << 18);
 
 	PathTracer pt;
 	

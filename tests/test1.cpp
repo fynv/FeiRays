@@ -110,7 +110,7 @@ int main()
 	glm::mat4x4 model8 = glm::translate(identity, glm::vec3(-2.0, 1.0, 4.0));
 	Sphere sphere8(model8, { foggy, { 0.8f, 0.6f, 0.2f }, 0.0f, 1.0f, 1.0f });
 
-	Image target(view_width, view_height, nullptr, 1 << 17);
+	Image target(view_width, view_height, nullptr, 1 << 18);
 
 	PathTracer pt;
 	pt.set_target(&target);

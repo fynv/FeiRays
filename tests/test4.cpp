@@ -81,7 +81,7 @@ int main()
 	const int view_width = 900;
 	const int view_height = 600;
 
-	Image target(view_width, view_height, nullptr, 1 << 17);
+	Image target(view_width, view_height, nullptr, 1 << 18);
 
 	PathTracer pt;
 	pt.set_target(&target);
