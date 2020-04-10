@@ -131,7 +131,7 @@ bool Context::_init_vulkan()
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		createInfo.pQueueCreateInfos = &queueCreateInfo;
 		createInfo.queueCreateInfoCount = 1;
-		createInfo.enabledExtensionCount = 5;
+		createInfo.enabledExtensionCount = 4;
 		createInfo.ppEnabledExtensionNames = name_extensions;
 		createInfo.pNext = &m_features2;
 
