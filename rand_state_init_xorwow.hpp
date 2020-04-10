@@ -4,11 +4,9 @@
 struct RNG
 {
 	const unsigned* p_sequence_matrix;
-	const unsigned* p_offset_matrix;
 
 	inline void state_init(unsigned long long seed,
 		unsigned long long subsequence,
-		unsigned long long offset,
 		RNGState& state)
 	{
 		unsigned int s0 = ((unsigned int)seed) ^ 0xaad26b49UL;
@@ -63,45 +61,6 @@ struct RNG
 			}
 		}
 
-		// apply offset matrix
-		p = offset;
-		i_mat = 0;
-		while (p && i_mat < 7)
-		{
-			for (unsigned int t = 0; t < (p & 3); t++)
-			{
-				matvec(state.v, p_offset_matrix + i_mat * 800, result);
-				state.v = result;
-			}
-			p >>= 2;
-			i_mat++;
-		}
-
-		if (p)
-		{
-			memcpy(matrix, p_offset_matrix + i_mat * 800, sizeof(unsigned) * 800);
-			memcpy(matrixA, p_offset_matrix + i_mat * 800, sizeof(unsigned) * 800);
-		}
-
-		while (p)
-		{
-
-			for (unsigned int t = 0; t < (p & 0xF); t++)
-			{
-				matvec(state.v, matrixA, result);
-				state.v = result;
-			}
-			p >>= 4;
-			if (p)
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					matmat(matrix, matrixA);
-					memcpy(matrixA, matrix, sizeof(unsigned) * 800);
-				}
-			}
-		}
-		state.d += 362437 * (unsigned int)offset;
 	}
 
 private:

@@ -66,6 +66,9 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++14 -Xcompiler -fPIC)
 
 cuda_add_library(FeiRays ${SOURCE} ${HEADER})
 
+add_executable(test_rng tests/test_rng.cpp)
+target_link_libraries(test_rng FeiRays volk)
+
 add_executable(rt_weekend tests/rt_weekend.cpp)
 target_link_libraries(rt_weekend FeiRays volk)
 

@@ -8,11 +8,9 @@
 struct RNG
 {
 	unsigned* d_sequence_matrix;
-	unsigned* d_offset_matrix;
 
 	__device__ inline void state_init(unsigned long long seed,
 		unsigned long long subsequence,
-		unsigned long long offset,
 		RNGState& state)
 	{
 		unsigned int s0 = ((unsigned int)seed) ^ 0xaad26b49UL;
@@ -66,46 +64,6 @@ struct RNG
 				}
 			}
 		}
-
-		// apply offset matrix
-		p = offset;
-		i_mat = 0;
-		while (p && i_mat < 7)
-		{
-			for (unsigned int t = 0; t < (p & 3); t++)
-			{
-				matvec(state.v, d_offset_matrix + i_mat * 800, result);
-				state.v = result;
-			}
-			p >>= 2;
-			i_mat++;
-		}
-
-		if (p)
-		{
-			memcpy(matrix, d_offset_matrix + i_mat * 800, sizeof(unsigned) * 800);
-			memcpy(matrixA, d_offset_matrix + i_mat * 800, sizeof(unsigned) * 800);
-		}
-
-		while (p)
-		{
-
-			for (unsigned int t = 0; t < (p & 0xF); t++)
-			{
-				matvec(state.v, matrixA, result);
-				state.v = result;
-			}
-			p >>= 4;
-			if (p)
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					matmat(matrix, matrixA);
-					memcpy(matrixA, matrix, sizeof(unsigned) * 800);
-				}
-			}
-		}
-		state.d += 362437 * (unsigned int)offset;
 	}
 
 private:
@@ -149,21 +107,18 @@ void g_rand_init(RNG rng, RNGState* d_states, unsigned count)
 {
 	unsigned id = threadIdx.x + blockIdx.x*blockDim.x;
 	if (id >= count) return;
-	rng.state_init(1234, id, 0, d_states[id]);
+	rng.state_init(1234, id, d_states[id]);
 }
 
 void cu_rand_init(unsigned count, RNGState* d_states)
 {
 	RNG rng;
 	cudaMalloc(&rng.d_sequence_matrix, sizeof(unsigned) * 800 * 8);
-	cudaMalloc(&rng.d_offset_matrix, sizeof(unsigned) * 800 * 8);
 	cudaMemcpy(rng.d_sequence_matrix, xorwow_sequence_matrix, sizeof(unsigned) * 800 * 8, cudaMemcpyHostToDevice);
-	cudaMemcpy(rng.d_offset_matrix, xorwow_offset_matrix, sizeof(unsigned) * 800 * 8, cudaMemcpyHostToDevice);
-
+	
 	unsigned blocks = (count + 127) / 128;
 	g_rand_init << < blocks, 128 >> > (rng, d_states, count);
 
-	cudaFree(rng.d_offset_matrix);
 	cudaFree(rng.d_sequence_matrix);
 
 }

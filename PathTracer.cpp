@@ -280,10 +280,9 @@ void Image::_rand_init_cpu() const
 
 	RNG rng;
 	rng.p_sequence_matrix = xorwow_sequence_matrix;
-	rng.p_offset_matrix = xorwow_offset_matrix;
 
 	for (int i = 0; i < m_batch_size; i++)
-		rng.state_init(1234, i, 0, states[i]);
+		rng.state_init(1234, i, states[i]);
 
 	m_rng_states->upload(states);
 
@@ -367,12 +366,24 @@ DeviceBuffer* Image::rng_states()
 	{
 		m_rng_states = new DeviceBuffer(sizeof(RNGState) * m_batch_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
 
-		printf("Initializing RNG states..\n");
-		double time0 = GetTime();
-		_rand_init_cuda();
-		//_rand_init_cpu();
-		double time1 = GetTime();
-		printf("Done initializing RNG states.. %f secs\n", time1 - time0);
+		static bool cuda_initialized = false;
+		if (!cuda_initialized)
+		{
+			double time0 = GetTime();
+			cudaFree(nullptr);
+			double time1 = GetTime();
+			printf("CUDA initialization: %f secs\n", time1 - time0);
+			cuda_initialized = true;
+		}
+
+		{
+			printf("Initializing RNG states..\n");
+			double time0 = GetTime();
+			_rand_init_cuda();
+			//_rand_init_cpu();
+			double time1 = GetTime();
+			printf("Done initializing RNG states.. %f secs\n", time1 - time0);
+		}
 
 	}
 	
