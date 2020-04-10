@@ -261,7 +261,7 @@ Image::Image(int width, int height, float* hdata, int batch_size)
 
 	m_batch_size = (m_batch_size + 63) / 64 * 64; // 8x8 blocks
 
-	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT, true);
+	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT);
 
 	if (hdata != nullptr)
 		m_data->upload(hdata);
@@ -368,7 +368,7 @@ DeviceBuffer* Image::rng_states()
 {
 	if (m_rng_states == nullptr)
 	{
-		m_rng_states = new DeviceBuffer(sizeof(RNGState) * m_batch_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
+		m_rng_states = new DeviceBuffer(sizeof(RNGState) * m_batch_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
 		{
 			printf("Initializing RNG states..\n");
@@ -420,9 +420,9 @@ void Image::to_host_srgb(unsigned char* hdata, float boost) const
 		float g = clamp01(powf(pIn[1] * boost, power));
 		float b = clamp01(powf(pIn[2] * boost, power));
 
-		pOut[0] = r *255.0f + 0.5f;
-		pOut[1] = g *255.0f + 0.5f;
-		pOut[2] = b *255.0f + 0.5f;
+		pOut[0] = (unsigned char)(r *255.0f + 0.5f);
+		pOut[1] = (unsigned char)(g *255.0f + 0.5f);
+		pOut[2] = (unsigned char)(b *255.0f + 0.5f);
 	}
 }
 

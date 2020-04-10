@@ -12,10 +12,6 @@ thirdparty/glm/glm
 
 include_directories(${INCLUDE_DIR})
 
-if (WIN32) 
-add_definitions(-D"VK_USE_PLATFORM_WIN32_KHR")
-endif()
-
 add_subdirectory(thirdparty/volk)
 
 set (SOURCE

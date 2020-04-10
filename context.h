@@ -66,7 +66,7 @@ protected:
 	VkDeviceMemory m_mem;
 
 
-	Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags, bool ext_mem);
+	Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags);
 	virtual ~Buffer();
 
 };
@@ -94,7 +94,7 @@ public:
 class DeviceBuffer : public Buffer
 {
 public:
-	DeviceBuffer(VkDeviceSize size, VkBufferUsageFlags usage, bool ext_mem = false);
+	DeviceBuffer(VkDeviceSize size, VkBufferUsageFlags usage);
 	virtual ~DeviceBuffer();
 
 	void upload(const void* hdata);

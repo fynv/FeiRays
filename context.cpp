@@ -122,11 +122,6 @@ bool Context::_init_vulkan()
 		const char* name_extensions[] = {
 			VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
 			VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
-		#ifdef _WIN64
-			VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME,
-		#else
-			VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME,
-		#endif
 			VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,			
 			VK_NV_RAY_TRACING_EXTENSION_NAME,
 			
@@ -222,7 +217,7 @@ uint64_t Buffer::get_device_address() const
 	return vkGetBufferDeviceAddressEXT(ctx.device(), &bufAdrInfo);
 }
 
-Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags, bool ext_mem)
+Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags)
 {
 	if (size == 0) return;
 	m_size = size;
@@ -267,19 +262,6 @@ Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlag
 
 	memoryAllocateInfo.pNext = &memoryAllocateFlagsInfo;
 
-	VkExportMemoryAllocateInfoKHR vulkanExportMemoryAllocateInfoKHR = {};
-	vulkanExportMemoryAllocateInfoKHR.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
-#ifdef _WIN64
-	vulkanExportMemoryAllocateInfoKHR.pNext = NULL;
-	vulkanExportMemoryAllocateInfoKHR.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
-#else
-	vulkanExportMemoryAllocateInfoKHR.pNext = NULL;
-	vulkanExportMemoryAllocateInfoKHR.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-#endif
-
-	if (ext_mem)
-		memoryAllocateFlagsInfo.pNext = &vulkanExportMemoryAllocateInfoKHR;
-
 	vkAllocateMemory(ctx.device(), &memoryAllocateInfo, nullptr, &m_mem);
 	vkBindBufferMemory(ctx.device(), m_buf, m_mem, 0);
 }
@@ -292,7 +274,7 @@ Buffer::~Buffer()
 }
 
 UploadBuffer::UploadBuffer(VkDeviceSize size) :
-	Buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, false) {	}
+	Buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {	}
 
 UploadBuffer::~UploadBuffer() {}
 
@@ -321,7 +303,7 @@ void UploadBuffer::zero()
 }
 
 DownloadBuffer::DownloadBuffer(VkDeviceSize size) :
-	Buffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, false) { }
+	Buffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) { }
 
 DownloadBuffer::~DownloadBuffer() {}
 
@@ -337,8 +319,8 @@ void DownloadBuffer::download(void* hdata) const
 	vkUnmapMemory(ctx.device(), m_mem);
 }
 
-DeviceBuffer::DeviceBuffer(VkDeviceSize size, VkBufferUsageFlags usage, bool ext_mem) :
-	Buffer(size, usage | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ext_mem) {}
+DeviceBuffer::DeviceBuffer(VkDeviceSize size, VkBufferUsageFlags usage) :
+	Buffer(size, usage | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {}
 
 DeviceBuffer::~DeviceBuffer() {}
 
