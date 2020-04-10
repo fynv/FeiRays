@@ -239,10 +239,22 @@ void TexturedSkyBox::get_view(void* view_buf) const
 	view.texIdx = m_texId;
 }
 
-Image::Image(int width, int height, float* hdata)
+Image::Image(int width, int height, float* hdata, int batch_size)
 {
 	m_width = width;
 	m_height = height;
+	if (batch_size>m_width*m_height)
+	{
+		m_batch_size = m_width * m_height;
+	}
+	else if (batch_size<1024)
+	{
+		m_batch_size = 1024;
+	}
+	else
+	{
+		m_batch_size = batch_size;
+	}
 
 	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT, true);
 
@@ -261,14 +273,14 @@ Image::~Image()
 
 void Image::_rand_init_cpu() const
 {
-	unsigned count = unsigned(m_width*m_height);
+	unsigned count = unsigned(m_batch_size);
 	RNGState* states = new RNGState[count];
 
 	RNG rng;
 	rng.p_sequence_matrix = xorwow_sequence_matrix;
 	rng.p_offset_matrix = xorwow_offset_matrix;
 
-	for (int i = 0; i < m_width*m_height; i++)
+	for (int i = 0; i < m_batch_size; i++)
 		rng.state_init(1234, i, 0, states[i]);
 
 	m_rng_states->upload(states);
@@ -321,7 +333,7 @@ void h_rand_init(unsigned count, RNGState* h_states);
 
 void Image::_rand_init_cuda() const
 {
-	unsigned count = unsigned(m_width*m_height);
+	unsigned count = unsigned(m_batch_size);
 
 	cudaExternalMemoryHandleDesc cudaExtMemHandleDesc = {};
 #ifdef _WIN64
@@ -351,7 +363,7 @@ DeviceBuffer* Image::rng_states()
 {
 	if (m_rng_states == nullptr)
 	{
-		m_rng_states = new DeviceBuffer(sizeof(RNGState) * m_width*m_height, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
+		m_rng_states = new DeviceBuffer(sizeof(RNGState) * m_batch_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
 
 		printf("Initializing RNG states..\n");
 		double time0 = GetTime();
@@ -1274,7 +1286,7 @@ void PathTracer::trace(int num_iter, int interval) const
 				rt.shaderBindingTableBuffer->buf(), 0,
 				rt.shaderBindingTableBuffer->buf(), progIdSize, progIdSize,
 				rt.shaderBindingTableBuffer->buf(), progIdSize * 2, progIdSize,
-				VK_NULL_HANDLE, 0, 0, m_target->width(), m_target->height(), 1);
+				VK_NULL_HANDLE, 0, 0, m_target->batch_size(), 1, 1);
 
 			VkMemoryBarrier memoryBarrier = {};
 			memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;

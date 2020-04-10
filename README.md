@@ -74,6 +74,8 @@ While the quality of the random number generated from XORWOW is good, the method
 * Initialization is expensive: if the scene is simple, the initialization can cost most of the time
 * The size of each RNG state is 6x32bit, which is quite big.
 
+As a workaround, FeiRays allows user specifying a "batch_size" when creating a target image, so that we don't need a RNG state for every pixel.
+
 This module can be replaced relatively easily, once we know there is a better method for this purpose.
 
 ### Vulkan Resource Management

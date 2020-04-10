@@ -141,8 +141,9 @@ public:
 	DeviceBuffer* rng_states(); 
 	int width() const { return m_width; }
 	int height() const { return m_height; }
+	int batch_size() const { return m_batch_size; }
 
-	Image(int width, int height, float* hdata = nullptr);
+	Image(int width, int height, float* hdata = nullptr, int batch_size = 0x7FFFFFFF);
 	~Image();
 
 	void clear();
@@ -160,6 +161,7 @@ private:
 	DeviceBuffer* m_rng_states;
 	int m_width;
 	int m_height;
+	int m_batch_size;
 
 	void _rand_init_cpu() const;
 	void _rand_init_cuda() const;
