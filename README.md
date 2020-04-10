@@ -37,8 +37,6 @@ img.save("breakfast_room.png")
 
 Building the project is simple. 
 
-The only dependency you need is CUDA SDK, which is used for initializing the random number generator(RNG) states for each pixel.
-
 [Volk](https://github.com/zeux/volk.git) and [Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers.git) are included as submodules,
 so it should be fine to build without Vulkan SDK, and the resulted executables should be adaptive to different Vulkan versions. 
 But be sure to have the latest graphics driver installed, one that supports Vulkan. 
@@ -63,20 +61,8 @@ In case someone is interested in the progress of the project, here is a list of 
 
 ### Random Number Generator for Shaders
 
-RNGState.h, rand_state_init.cu, shaders/rand.shinc
-
 For monte carlo path-tracing, it is quite essential to have a pseudo-random number generator ready everywhere.
 For this purpose, we have a minimal set of XORWOW implementation of CURAND ported here. 
-While the initialization of the RNG states are done by CUDA, the recursive random number generation can happen in shaders. 
-
-While the quality of the random number generated from XORWOW is good, the method has the following downsides:
-
-* Initialization is expensive: if the scene is simple, the initialization can cost most of the time
-* The size of each RNG state is 6x32bit, which is quite big.
-
-As a workaround, FeiRays allows user specifying a "batch_size" when creating a target image, so that we don't need a RNG state for every pixel.
-
-This module can be replaced relatively easily, once we know there is a better method for this purpose.
 
 ### Vulkan Resource Management
 
@@ -114,5 +100,5 @@ The class "PathTracer" maintains a list of the geometries and path-traces them.
 
 ### Next
 
-* Make it neutral to GPU vendors: CUDA->OpenCL, VK_NV_ray_tracing -> VK_KHR_ray_tracing 
+* VK_NV_ray_tracing -> VK_KHR_ray_tracing 
 * Implement a bidirectional path-tracer.

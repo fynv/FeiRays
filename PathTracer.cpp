@@ -5,14 +5,15 @@
 
 #include "volk.h"
 
-#include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 #include "context.h"
 #include "PathTracer.h"
 #include "shaders/common/bindings.h"
-#include "rand_state_init_xorwow.hpp"
+#include "RNGState_xorwow.h"
+//#include "rand_state_init_xorwow.hpp"
+#include "RNGInitializer.h"
 #include "Timing.h"
 
 #ifndef PI
@@ -256,6 +257,8 @@ Image::Image(int width, int height, float* hdata, int batch_size)
 		m_batch_size = batch_size;
 	}
 
+	if (m_batch_size > (1 << 18)) m_batch_size = 1 << 18;
+
 	m_batch_size = (m_batch_size + 63) / 64 * 64; // 8x8 blocks
 
 	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT, true);
@@ -272,7 +275,7 @@ Image::~Image()
 	delete m_data;
 }
 
-
+#if 0
 void Image::_rand_init_cpu() const
 {
 	unsigned count = unsigned(m_batch_size);
@@ -359,6 +362,7 @@ void Image::_rand_init_cuda() const
 	cu_rand_init(count, d_states);
 	cudaDestroyExternalMemory(cudaExtMemVertexBuffer);
 }
+#endif
 
 DeviceBuffer* Image::rng_states()
 {
@@ -366,21 +370,13 @@ DeviceBuffer* Image::rng_states()
 	{
 		m_rng_states = new DeviceBuffer(sizeof(RNGState) * m_batch_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
 
-		static bool cuda_initialized = false;
-		if (!cuda_initialized)
-		{
-			double time0 = GetTime();
-			cudaFree(nullptr);
-			double time1 = GetTime();
-			printf("CUDA initialization: %f secs\n", time1 - time0);
-			cuda_initialized = true;
-		}
-
 		{
 			printf("Initializing RNG states..\n");
 			double time0 = GetTime();
-			_rand_init_cuda();
+			//_rand_init_cuda();
 			//_rand_init_cpu();
+			const RNGInitializer& initializer = RNGInitializer::get_initializer();
+			initializer.InitRNGs(m_rng_states);
 			double time1 = GetTime();
 			printf("Done initializing RNG states.. %f secs\n", time1 - time0);
 		}
@@ -401,41 +397,33 @@ void Image::to_host_raw(float *hdata) const
 	m_data->download(hdata);
 }
 
-void h_raw_to_srgb(const float* raw, unsigned char* srgb, size_t num_pixels, float boost);
+
+inline float clamp01(float f)
+{
+	float v = f;
+	if (v < 0.0f) v = 0.0f;
+	else if (v > 1.0f) v = 1.0f;
+	return v;
+}
 
 void Image::to_host_srgb(unsigned char* hdata, float boost) const
 {
-	unsigned char* d_srgb;
 	unsigned count = unsigned(m_width*m_height);
-	cudaMalloc(&d_srgb, count * 3);
-
+	std::vector<float> raw(count * 4);
+	to_host_raw(raw.data());
+	for (unsigned i = 0; i < count; i++)
 	{
-		cudaExternalMemoryHandleDesc cudaExtMemHandleDesc = {};
-#ifdef _WIN64
-		cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueWin32Kmt;
-		cudaExtMemHandleDesc.handle.win32.handle = getVkMemHandle(*m_data, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT);
-#else
-		cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueFd;
-		cudaExtMemHandleDesc.handle.fd = getVkMemHandle(*m_data, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT);
-#endif
-		cudaExtMemHandleDesc.size = sizeof(float) * count * 4;
+		const float* pIn = &raw[i * 4];
+		unsigned char* pOut = hdata + i * 3;
+		float power = 1.0f / 2.2f;
+		float r = clamp01(powf(pIn[0] * boost, power));
+		float g = clamp01(powf(pIn[1] * boost, power));
+		float b = clamp01(powf(pIn[2] * boost, power));
 
-		cudaExternalMemory_t cudaExtMemVertexBuffer;
-		cudaImportExternalMemory(&cudaExtMemVertexBuffer, &cudaExtMemHandleDesc);
-
-		cudaExternalMemoryBufferDesc cudaExtBufferDesc;
-		cudaExtBufferDesc.offset = 0;
-		cudaExtBufferDesc.size = sizeof(float) * count * 4;
-		cudaExtBufferDesc.flags = 0;
-
-		float* d_raw;
-		cudaExternalMemoryGetMappedBuffer((void**)&d_raw, cudaExtMemVertexBuffer, &cudaExtBufferDesc);
-		h_raw_to_srgb(d_raw, d_srgb, count, boost);
-		cudaDestroyExternalMemory(cudaExtMemVertexBuffer);
+		pOut[0] = r *255.0f + 0.5f;
+		pOut[1] = g *255.0f + 0.5f;
+		pOut[2] = b *255.0f + 0.5f;
 	}
-
-	cudaMemcpy(hdata, d_srgb, m_width*m_height * 3, cudaMemcpyDeviceToHost);
-	cudaFree(d_srgb);
 }
 
 PathTracer::PathTracer()
@@ -909,11 +897,13 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 }
 
+
+
 class ShaderCache : public std::unordered_map<std::string, VkShaderModule>
 {
 public:
 	ShaderCache() {}
-	virtual ~ShaderCache() 
+	virtual ~ShaderCache()
 	{
 		/*const Context& ctx = Context::get_context();
 		auto iter = begin();
@@ -925,7 +915,8 @@ public:
 	}
 };
 
-VkShaderModule _createShaderModule_from_spv(const char* fn)
+
+static VkShaderModule _createShaderModule_from_spv(const char* fn)
 {
 	static ShaderCache s_shader_cache;
 	auto iter = s_shader_cache.find(fn);

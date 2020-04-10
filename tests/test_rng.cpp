@@ -1,17 +1,19 @@
 #include <vector>
 #include "RNGState_xorwow.h"
+#include "RNGInitializer.h"
 #include "Timing.h"
-#include <cuda_runtime.h>s
-
-void h_rand_init(unsigned count, RNGState* h_states);
 
 int main()
 {
-	cudaFree(nullptr);
 	size_t count = 1 << 18;
 	std::vector<RNGState> states(count);
 	double time0 = GetTime();
-	h_rand_init(count, states.data());
+
+	DeviceBuffer d_states(sizeof(RNGState)*count, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	const RNGInitializer& initializer = RNGInitializer::get_initializer();
+	initializer.InitRNGs(&d_states);
+	d_states.download(states.data());
+
 	double time1 = GetTime();
 	printf("time: %f\n", time1 - time0);
 	FILE* fp = fopen("dump_rnd", "w");

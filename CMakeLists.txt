@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 3.0)
 
 project(FeiRays)
 
-find_package(CUDA REQUIRED)
-
 set (INCLUDE_DIR
 thirdparty
 thirdparty/volk
@@ -22,8 +20,7 @@ add_subdirectory(thirdparty/volk)
 
 set (SOURCE
 context.cpp
-rand_state_init_xorwow.cu
-dump_srgb.cu
+RNGInitializer.cpp
 PathTracer.cpp
 ColoredIndexedTriangleList.cpp
 ColoredUnitSphere.cpp
@@ -38,8 +35,8 @@ Timing.h
 context.h
 RNGState_xorwow.h
 xor_wow_data.hpp
-rand_state_init_xorwow.hpp
 Material.h
+RNGInitializer.h
 PathTracer.h
 ColoredIndexedTriangleList.h
 ColoredUnitSphere.h
@@ -62,9 +59,7 @@ endif()
 
 add_definitions(${DEFINES})
 
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -std=c++14 -Xcompiler -fPIC)
-
-cuda_add_library(FeiRays ${SOURCE} ${HEADER})
+add_library(FeiRays ${SOURCE} ${HEADER})
 
 add_executable(test_rng tests/test_rng.cpp)
 target_link_libraries(test_rng FeiRays volk)

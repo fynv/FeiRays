@@ -143,7 +143,7 @@ public:
 	int height() const { return m_height; }
 	int batch_size() const { return m_batch_size; }
 
-	Image(int width, int height, float* hdata = nullptr, int batch_size = 0x7FFFFFFF);
+	Image(int width, int height, float* hdata = nullptr, int batch_size = 1<<18);
 	~Image();
 
 	void clear();
@@ -163,8 +163,10 @@ private:
 	int m_height;
 	int m_batch_size;
 
+#if 0
 	void _rand_init_cpu() const;
 	void _rand_init_cuda() const;
+#endif
 };
 
 struct GeoList

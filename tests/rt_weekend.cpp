@@ -97,7 +97,7 @@ int main()
 	printf("Done generating scene.. %f secs\n", time1-time0);
 
 
-	Image target(view_width, view_height, nullptr, 1 << 18);
+	Image target(view_width, view_height, nullptr);
 
 	PathTracer pt;
 	pt.set_target(&target);

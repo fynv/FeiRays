@@ -1,3 +1,4 @@
+#!/bin/sh
 glslangValidator -V common/rand_init.comp -o common/rand_init.spv
 
 glslangValidator -V common/miss.rmiss -o common/miss.spv
@@ -12,6 +13,8 @@ glslangValidator -V geometry/closesthit_textured_triangle_lists.rchit -o geometr
 glslangValidator -V geometry/closesthit_textured_unit_spheres.rchit -o geometry/closesthit_textured_unit_spheres.spv
 glslangValidator -V geometry/closesthit_sphere_lights.rchit -o geometry/closesthit_sphere_lights.spv
 glslangValidator -V geometry/closesthit_wavefront_indexed_triangle_lists.rchit -o geometry/closesthit_wavefront_indexed_triangle_lists.spv
+
+glslangValidator -V geometry/closesthit_ply_mesh.rchit -o geometry/closesthit_ply_mesh.spv
 
 
 glslangValidator -V path_tracer/raygen.rgen -o path_tracer/raygen.spv

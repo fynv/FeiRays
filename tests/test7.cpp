@@ -28,7 +28,7 @@ int main()
 
 	PathTracer pt;
 
-	Image target(view_width, view_height, nullptr, 1 << 18);
+	Image target(view_width, view_height, nullptr);
 	pt.set_target(&target);
 
 	/*int cubeWidth, cubeHeight, cubeChannels, isCube;
