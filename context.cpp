@@ -325,7 +325,7 @@ DownloadBuffer::DownloadBuffer(VkDeviceSize size) :
 
 DownloadBuffer::~DownloadBuffer() {}
 
-void DownloadBuffer::download(void* hdata)
+void DownloadBuffer::download(void* hdata) const
 {
 	if (m_size == 0) return;
 
@@ -374,7 +374,7 @@ void DeviceBuffer::zero()
 	}
 }
 
-void DeviceBuffer::download(void* hdata, VkDeviceSize begin, VkDeviceSize end)
+void DeviceBuffer::download(void* hdata, VkDeviceSize begin, VkDeviceSize end) const
 {
 	if (end > m_size) end = m_size;
 	if (end <= begin) return;

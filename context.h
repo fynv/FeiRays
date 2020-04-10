@@ -88,7 +88,7 @@ public:
 	DownloadBuffer(VkDeviceSize size);
 	virtual ~DownloadBuffer();
 
-	void download(void* hdata);
+	void download(void* hdata) const;
 };
 
 class DeviceBuffer : public Buffer
@@ -99,7 +99,7 @@ public:
 
 	void upload(const void* hdata);
 	void zero();
-	void download(void* hdata, VkDeviceSize begin = 0, VkDeviceSize end = (VkDeviceSize)(-1));
+	void download(void* hdata, VkDeviceSize begin = 0, VkDeviceSize end = (VkDeviceSize)(-1)) const;
 
 };
 
