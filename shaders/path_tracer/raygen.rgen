@@ -344,14 +344,25 @@ void rt_main(int ix, int iy, inout RNGState rng_state)
 
 void main()
 {
-    uint ray_id = gl_LaunchIDNV.x;
-    uint step = gl_LaunchSizeNV.x;
-    uint total = uint(target.width)*uint(target.height);
-    for (int i=int(ray_id); i<int(total); i+= int(step))
+    int ray_id = int(gl_LaunchIDNV.x);
+    int d = ray_id & 0x3F;
+    int b = ray_id >> 6;
+    int dx = (d&1)|((d&4)>>1)|((d&16)>>2);
+    int dy = ((d&2)>>1)|((d&8)>>2)|((d&32)>>3);
+
+    int step = int(gl_LaunchSizeNV.x)>>6;
+    int bw = (target.width+7)>>3;
+    int bh = (target.height+7)>>3;
+    int total = bw*bh;
+
+    for (int i=b; i<total; i+=step)
     {
-        int ix = i%target.width;
-        int iy = i/target.width;
-        rt_main(ix, iy, states[ray_id]);
+        int i_bx = i%bw;
+        int i_by = i/bw;
+        int ix = (i_bx<<3) + dx;
+        int iy = (i_by<<3) + dy;
+        if (ix<target.width && iy<target.height)
+            rt_main(ix, iy, states[ray_id]);
     }
 }
 

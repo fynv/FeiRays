@@ -256,6 +256,8 @@ Image::Image(int width, int height, float* hdata, int batch_size)
 		m_batch_size = batch_size;
 	}
 
+	m_batch_size = (m_batch_size + 63) / 64 * 64; // 8x8 blocks
+
 	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT, true);
 
 	if (hdata != nullptr)
