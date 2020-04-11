@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string>
 #include "RNGInitializer.h"
 #include "xor_wow_data.hpp"
 #include "RNGState_xorwow.h"

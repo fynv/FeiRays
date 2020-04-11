@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string>
 #include "SRGBConverter.h"
 
 static VkShaderModule _createShaderModule_from_spv(const char* fn)
