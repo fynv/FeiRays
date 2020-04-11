@@ -577,7 +577,7 @@ Texture::Texture(int width, int height, int pixel_size, VkFormat format, VkImage
 	imageInfo.format = format;
 	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	imageInfo.usage = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -717,6 +717,69 @@ void Texture::uploadTexture(const void* hdata)
 
 		}
 	}
+}
+
+
+void Texture::downloadTexture(void* hdata) const
+{
+	if (m_width == 0 || m_height == 0) return;
+	DownloadBuffer staging_buf(m_width*m_height*m_pixel_size);
+
+	{
+		NTimeCommandBuffer cmdBuf;
+
+		{
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = m_image;
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseMipLevel = 0;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+			vkCmdPipelineBarrier(
+				cmdBuf.buf(),
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &barrier
+			);
+		}
+
+
+		{
+
+			VkBufferImageCopy region = {};
+			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.imageSubresource.layerCount = 1;
+			region.imageExtent = {
+				(uint32_t)m_width,
+				(uint32_t)m_height,
+				1
+			};
+
+			vkCmdCopyImageToBuffer(
+				cmdBuf.buf(),
+				m_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				staging_buf.buf(),
+				1,
+				&region
+			);
+		}
+
+	}
+	staging_buf.download(hdata);
+
 }
 
 Cubemap::Cubemap(int width, int height, int pixel_size, VkFormat format, VkImageAspectFlags aspectFlags, VkImageUsageFlags usage)

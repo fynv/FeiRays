@@ -17,6 +17,7 @@ add_subdirectory(thirdparty/volk)
 set (SOURCE
 context.cpp
 RNGInitializer.cpp
+SRGBConverter.cpp
 PathTracer.cpp
 ColoredIndexedTriangleList.cpp
 ColoredUnitSphere.cpp
@@ -33,6 +34,7 @@ RNGState_xorwow.h
 xor_wow_data.hpp
 Material.h
 RNGInitializer.h
+SRGBConverter.h
 PathTracer.h
 ColoredIndexedTriangleList.h
 ColoredUnitSphere.h

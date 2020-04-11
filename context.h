@@ -153,6 +153,7 @@ public:
 	~Texture();
 
 	void uploadTexture(const void* hdata);
+	void downloadTexture(void* hdata) const;
 
 private:
 	int m_width;

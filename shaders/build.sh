@@ -1,5 +1,7 @@
 #!/bin/sh
 glslangValidator -V common/rand_init.comp -o common/rand_init.spv
+glslangValidator -V common/vert_srgb.vert -o common/vert_srgb.spv
+glslangValidator -V common/frag_srgb.vert -o common/frag_srgb.spv
 
 glslangValidator -V common/miss.rmiss -o common/miss.spv
 glslangValidator -V common/miss_tex_sky.rmiss -o common/miss_tex_sky.spv

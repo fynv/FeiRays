@@ -14,6 +14,7 @@
 #include "RNGState_xorwow.h"
 //#include "rand_state_init_xorwow.hpp"
 #include "RNGInitializer.h"
+#include "SRGBConverter.h"
 #include "Timing.h"
 
 #ifndef PI
@@ -409,20 +410,18 @@ inline float clamp01(float f)
 void Image::to_host_srgb(unsigned char* hdata, float boost) const
 {
 	unsigned count = unsigned(m_width*m_height);
-	std::vector<float> raw(count * 4);
-	to_host_raw(raw.data());
+	const SRGBConverter& converter = SRGBConverter::get_converter();
+	Texture colBuf(m_width, m_height, 4, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	converter.convert(m_width, m_height, m_data, &colBuf);
+	std::vector<unsigned char> raw(count * 4);
+	colBuf.downloadTexture(raw.data());
 	for (unsigned i = 0; i < count; i++)
 	{
-		const float* pIn = &raw[i * 4];
-		unsigned char* pOut = hdata + i * 3;
-		float power = 1.0f / 2.2f;
-		float r = clamp01(powf(pIn[0] * boost, power));
-		float g = clamp01(powf(pIn[1] * boost, power));
-		float b = clamp01(powf(pIn[2] * boost, power));
-
-		pOut[0] = (unsigned char)(r *255.0f + 0.5f);
-		pOut[1] = (unsigned char)(g *255.0f + 0.5f);
-		pOut[2] = (unsigned char)(b *255.0f + 0.5f);
+		const unsigned char* pIn = &raw[i * 4];
+		unsigned char* pOut = hdata + i * 3;		
+		pOut[0] = pIn[0];
+		pOut[1] = pIn[1];
+		pOut[2] = pIn[2];
 	}
 }
 
