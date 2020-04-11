@@ -152,13 +152,15 @@ SRGBConverter::~SRGBConverter()
 	*/
 }
 
-void SRGBConverter::convert(int width, int height, DeviceBuffer* buf_in, Texture* tex_srgb, float boost) const
+void SRGBConverter::convert(Texture* dst_srgb, DeviceBuffer* src_rgb, float boost) const
 {
+	int width = dst_srgb->width();
+	int height = dst_srgb->height();
 	const Context& ctx = Context::get_context();
 	UBO ubo;
 	ubo.img.width = width;
 	ubo.img.height = height;
-	ubo.img.data = buf_in->get_device_address();
+	ubo.img.data = src_rgb->get_device_address();
 	ubo.boost = boost;
 	m_ubo->upload(&ubo);
 
@@ -256,7 +258,7 @@ void SRGBConverter::convert(int width, int height, DeviceBuffer* buf_in, Texture
 	}
 
 	VkFramebuffer framebuffer;
-	VkImageView colView = tex_srgb->view();
+	VkImageView colView = dst_srgb->view();
 	{
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

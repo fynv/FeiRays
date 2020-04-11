@@ -412,7 +412,7 @@ void Image::to_host_srgb(unsigned char* hdata, float boost) const
 	unsigned count = unsigned(m_width*m_height);
 	const SRGBConverter& converter = SRGBConverter::get_converter();
 	Texture colBuf(m_width, m_height, 4, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-	converter.convert(m_width, m_height, m_data, &colBuf);
+	converter.convert(&colBuf, m_data, boost);
 	std::vector<unsigned char> raw(count * 4);
 	colBuf.downloadTexture(raw.data());
 	for (unsigned i = 0; i < count; i++)

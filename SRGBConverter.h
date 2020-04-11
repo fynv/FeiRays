@@ -6,7 +6,7 @@ class SRGBConverter
 public:
 	static const SRGBConverter& get_converter();
 
-	void convert(int width, int height, DeviceBuffer* buf_in, Texture* tex_srgb, float boost = 1.0f) const;
+	void convert(Texture* dst_srgb, DeviceBuffer* src_rgb, float boost = 1.0f) const;
 
 private:
 	SRGBConverter();
