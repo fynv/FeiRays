@@ -43,7 +43,7 @@ static VkShaderModule _createShaderModule_from_spv(const char* fn)
 
 RNGInitializer::RNGInitializer()
 {
-	m_seq_mat = new DeviceBuffer(sizeof(xorwow_sequence_matrix), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT);
+	m_seq_mat = new DeviceBuffer(sizeof(xorwow_sequence_matrix), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 	m_seq_mat->upload(xorwow_sequence_matrix);
 
 	const Context& ctx = Context::get_context();

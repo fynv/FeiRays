@@ -6,36 +6,42 @@ void TexturedTriangleList::_blas_create()
 {
 	const Context& ctx = Context::get_context();
 
-	VkGeometryNV geometry = {};
-	geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
-	geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
-	geometry.geometry.triangles = {};
-	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
-	geometry.geometry.triangles.vertexData = m_vertexBuffer->buf();
-	geometry.geometry.triangles.vertexOffset = 0;
-	geometry.geometry.triangles.vertexCount = (unsigned)(m_vertexBuffer->size() / sizeof(Vertex));
-	geometry.geometry.triangles.vertexStride = sizeof(Vertex);
-	geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-	geometry.geometry.triangles.indexData = nullptr;
-	geometry.geometry.triangles.indexOffset = 0;
-	geometry.geometry.triangles.indexCount = 0;
-	geometry.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_NV;
-	geometry.geometry.triangles.transformData = VK_NULL_HANDLE;
-	geometry.geometry.triangles.transformOffset = 0;
-	geometry.geometry.aabbs = { VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV };
-	geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+	VkAccelerationStructureCreateGeometryTypeInfoKHR acceleration_create_geometry_info{};
+	acceleration_create_geometry_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_GEOMETRY_TYPE_INFO_KHR;
+	acceleration_create_geometry_info.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+	acceleration_create_geometry_info.maxPrimitiveCount = (unsigned)(m_vertexBuffer->size() / sizeof(Vertex)/3);
+	acceleration_create_geometry_info.indexType = VK_INDEX_TYPE_NONE_KHR;
+	acceleration_create_geometry_info.maxVertexCount = (unsigned)(m_vertexBuffer->size() / sizeof(Vertex));
+	acceleration_create_geometry_info.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+	acceleration_create_geometry_info.allowsTransforms = VK_FALSE;
 
-	m_blas = new BaseLevelAS(1, &geometry);
+	VkAccelerationStructureGeometryKHR acceleration_geometry{};
+	acceleration_geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+	acceleration_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+	acceleration_geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+	acceleration_geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+	acceleration_geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+	acceleration_geometry.geometry.triangles.vertexData.deviceAddress = m_vertexBuffer->get_device_address();
+	acceleration_geometry.geometry.triangles.vertexStride = sizeof(Vertex);
+	acceleration_geometry.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_KHR;
+
+	VkAccelerationStructureBuildOffsetInfoKHR acceleration_build_offset_info{};
+	acceleration_build_offset_info.primitiveCount = (unsigned)(m_vertexBuffer->size() / sizeof(Vertex) / 3);
+	acceleration_build_offset_info.primitiveOffset = 0x0;
+	acceleration_build_offset_info.firstVertex = 0;
+	acceleration_build_offset_info.transformOffset = 0x0;
+
+	m_blas = new BaseLevelAS(1, &acceleration_create_geometry_info, &acceleration_geometry, &acceleration_build_offset_info);
 }
 
 
 TexturedTriangleList::TexturedTriangleList(const glm::mat4x4& model, const std::vector<Vertex>& vertices, const std::vector<Material>& materials, const int* materialIdx) : Geometry(model)
 {
-	m_vertexBuffer = new DeviceBuffer(sizeof(Vertex)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_vertexBuffer = new DeviceBuffer(sizeof(Vertex)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	m_vertexBuffer->upload(vertices.data());
-	m_materialBuffer = new DeviceBuffer(sizeof(Material)* materials.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_materialBuffer = new DeviceBuffer(sizeof(Material)* materials.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	m_materialBuffer->upload(materials.data());
-	m_materialIdxBuffer = new DeviceBuffer(sizeof(int)* vertices.size() /3, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_materialIdxBuffer = new DeviceBuffer(sizeof(int)* vertices.size() /3, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	m_materialIdxBuffer->upload(materialIdx);
 
 	_blas_create();

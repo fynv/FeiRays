@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #extension GL_EXT_buffer_reference2 : enable
-#extension GL_NV_ray_tracing : enable
+#extension GL_EXT_ray_tracing : enable
 
 #include "../common/bindings.h"
 #include "../common/payload.shinc"
@@ -11,7 +11,7 @@
 #include "../common/light_source_dist.shinc"
 #include "raygen_params.shinc"
 
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(std430, binding = 2) buffer BufStates
 {
@@ -43,7 +43,7 @@ layout(std430, binding = 7) buffer Sunlights
 };
 
 
-layout(location = 0) rayPayloadNV Payload payload;
+layout(location = 0) rayPayloadEXT Payload payload;
 
 
 vec3 directional_scatter(inout RNGState state, in vec3 base, in float order)
@@ -118,8 +118,8 @@ void rt_main(int ix, int iy, inout RNGState rng_state)
             f_att*=1.0/max_att;
         }       
 
-        uint rayFlags = gl_RayFlagsOpaqueNV;
-        traceNV(topLevelAS, rayFlags, cullMask, 0, 0, 0, ray_origin, tmin, direction, tmax, 0);
+        uint rayFlags = gl_RayFlagsOpaqueEXT;
+        traceRayEXT(topLevelAS, rayFlags, cullMask, 0, 0, 0, ray_origin, tmin, direction, tmax, 0);
 
         float t = payload.t;
   
@@ -309,7 +309,7 @@ void rt_main(int ix, int iy, inout RNGState rng_state)
             float cosine = dot(dir, direction);
             if (cosine>0.0)
             {
-                traceNV(topLevelAS, rayFlags, cullMask, 0, 0, 0, ray_origin, tmin, dir, tmax, 0);
+                traceRayEXT(topLevelAS, rayFlags, cullMask, 0, 0, 0, ray_origin, tmin, dir, tmax, 0);
 
                 if ((payload.material_bits & MAT_LIGHT_SOURCE_BIT)!=0 && floatBitsToInt(payload.f0)==id_light)
                 {                
@@ -344,13 +344,13 @@ void rt_main(int ix, int iy, inout RNGState rng_state)
 
 void main()
 {
-    int ray_id = int(gl_LaunchIDNV.x);
+    int ray_id = int(gl_LaunchIDEXT.x);
     int d = ray_id & 0x3F;
     int b = ray_id >> 6;
     int dx = (d&1)|((d&4)>>1)|((d&16)>>2);
     int dy = ((d&2)>>1)|((d&8)>>2)|((d&32)>>3);
 
-    int step = int(gl_LaunchSizeNV.x)>>6;
+    int step = int(gl_LaunchSizeEXT.x)>>6;
     int bw = (target.width+7)>>3;
     int bh = (target.height+7)>>3;
     int total = bw*bh;

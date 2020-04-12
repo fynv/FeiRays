@@ -9,9 +9,9 @@ WavefrontIndexedTriangleList::WavefrontIndexedTriangleList(const glm::mat4x4& mo
 	const std::vector<Index>& indices,
 	std::vector<Material>& materials, const int* materialIdx) : Geometry(model)
 {
-	m_normalBuffer = new DeviceBuffer(sizeof(glm::vec3)* normals.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_normalBuffer = new DeviceBuffer(sizeof(glm::vec3)* normals.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	m_normalBuffer->upload(normals.data());
-	m_texcoordBuffer = new DeviceBuffer(sizeof(glm::vec2)* texcoords.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_texcoordBuffer = new DeviceBuffer(sizeof(glm::vec2)* texcoords.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	m_texcoordBuffer->upload(texcoords.data());
 
 	struct Index2
@@ -27,9 +27,9 @@ WavefrontIndexedTriangleList::WavefrontIndexedTriangleList(const glm::mat4x4& mo
 		indices2[i].texcoord_index = indices[i].texcoord_index;
 	}
 
-	m_indexBuffer = new DeviceBuffer(sizeof(Index2)* indices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_indexBuffer = new DeviceBuffer(sizeof(Index2)* indices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	m_indexBuffer->upload(indices2.data());
-	m_materialBuffer = new DeviceBuffer(sizeof(Material)* materials.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_materialBuffer = new DeviceBuffer(sizeof(Material)* materials.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	m_materialBuffer->upload(materials.data());
 
 	struct Face
@@ -69,17 +69,17 @@ WavefrontIndexedTriangleList::WavefrontIndexedTriangleList(const glm::mat4x4& mo
 		}
 	}
 
-	m_faceBuffer = new DeviceBuffer(sizeof(Face)* indices.size() / 3, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	m_faceBuffer = new DeviceBuffer(sizeof(Face)* indices.size() / 3, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	m_faceBuffer->upload(faces.data());
 
 	std::vector<unsigned> pos_indices(indices.size());
 	for (size_t i = 0; i < indices.size(); i++)
 		pos_indices[i] = indices[i].vertex_index;
 
-	DeviceBuffer posBuf(sizeof(glm::vec3)* positions.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	DeviceBuffer posBuf(sizeof(glm::vec3)* positions.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	posBuf.upload(positions.data());
 
-	DeviceBuffer pos_index_buffer(sizeof(unsigned)* indices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	DeviceBuffer pos_index_buffer(sizeof(unsigned)* indices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	pos_index_buffer.upload(pos_indices.data());
 
 	_blas_create_indexed_triangles(&posBuf, &pos_index_buffer);

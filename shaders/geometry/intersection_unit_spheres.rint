@@ -2,16 +2,16 @@
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #extension GL_EXT_buffer_reference2 : enable
-#extension GL_NV_ray_tracing : enable
+#extension GL_EXT_ray_tracing : enable
 
-hitAttributeNV vec3 hitpoint;
+hitAttributeEXT vec3 hitpoint;
 
 void main()
 {
-	vec3 origin = gl_ObjectRayOriginNV;
-	vec3 direction = gl_ObjectRayDirectionNV;
-	float tMin = gl_RayTminNV;
-	float tMax = gl_RayTmaxNV;
+	vec3 origin = gl_ObjectRayOriginEXT;
+	vec3 direction = gl_ObjectRayDirectionEXT;
+	float tMin = gl_RayTminEXT;
+	float tMax = gl_RayTmaxEXT;
 
 	const float a = dot(direction, direction);
 	const float b = dot(origin, direction);
@@ -35,7 +35,7 @@ void main()
 				t = t2;
 				hitpoint = origin + direction * t2;
 			}
-			reportIntersectionNV(t, 0);
+			reportIntersectionEXT(t, 0);
 		}
 	}
 

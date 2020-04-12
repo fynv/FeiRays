@@ -100,5 +100,4 @@ The class "PathTracer" maintains a list of the geometries and path-traces them.
 
 ### Next
 
-* VK_NV_ray_tracing -> VK_KHR_ray_tracing 
 * Implement a bidirectional path-tracer.

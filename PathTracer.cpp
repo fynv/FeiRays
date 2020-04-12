@@ -3,8 +3,6 @@
 #include <VersionHelpers.h>
 #endif
 
-#include "volk.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -49,46 +47,58 @@ void Geometry::_blas_create_procedure(DeviceBuffer* aabb_buf)
 {
 	const Context& ctx = Context::get_context();
 
-	VkGeometryNV geometry = {};
-	geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
-	geometry.geometryType = VK_GEOMETRY_TYPE_AABBS_NV;
-	geometry.geometry.triangles = {};
-	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
-	geometry.geometry.aabbs = {};
-	geometry.geometry.aabbs.sType = VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV;
-	geometry.geometry.aabbs.aabbData = aabb_buf->buf();
-	geometry.geometry.aabbs.offset = 0;
-	geometry.geometry.aabbs.numAABBs = 1;
-	geometry.geometry.aabbs.stride = 0;
-	geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+	VkAccelerationStructureCreateGeometryTypeInfoKHR acceleration_create_geometry_info={};
+	acceleration_create_geometry_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_GEOMETRY_TYPE_INFO_KHR;
+	acceleration_create_geometry_info.geometryType = VK_GEOMETRY_TYPE_AABBS_KHR;
+	acceleration_create_geometry_info.maxPrimitiveCount = 1;
 
-	m_blas = new BaseLevelAS(1, &geometry);
+	VkAccelerationStructureGeometryKHR acceleration_geometry={};
+	acceleration_geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+	acceleration_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+	acceleration_geometry.geometryType = VK_GEOMETRY_TYPE_AABBS_KHR;
+	acceleration_geometry.geometry.aabbs.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_AABBS_DATA_KHR;
+	acceleration_geometry.geometry.aabbs.data.deviceAddress = aabb_buf->get_device_address();
+	acceleration_geometry.geometry.aabbs.stride = 0;
+
+	VkAccelerationStructureBuildOffsetInfoKHR acceleration_build_offset_info{};
+	acceleration_build_offset_info.primitiveCount = 1;
+	acceleration_build_offset_info.primitiveOffset = 0x0;
+	acceleration_build_offset_info.firstVertex = 0;
+	acceleration_build_offset_info.transformOffset = 0x0;
+
+	m_blas = new BaseLevelAS(1, &acceleration_create_geometry_info, &acceleration_geometry, &acceleration_build_offset_info);
 }
 
 void Geometry::_blas_create_indexed_triangles(DeviceBuffer* positionBuffer, DeviceBuffer* indexBuffer)
 {
 	const Context& ctx = Context::get_context();
 
-	VkGeometryNV geometry = {};
-	geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
-	geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
-	geometry.geometry.triangles = {};
-	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
-	geometry.geometry.triangles.vertexData = positionBuffer->buf();
-	geometry.geometry.triangles.vertexOffset = 0;
-	geometry.geometry.triangles.vertexCount = (unsigned)(positionBuffer->size() / sizeof(glm::vec3));
-	geometry.geometry.triangles.vertexStride = sizeof(glm::vec3);
-	geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-	geometry.geometry.triangles.indexData = indexBuffer->buf();
-	geometry.geometry.triangles.indexOffset = 0;
-	geometry.geometry.triangles.indexCount = (unsigned)(indexBuffer->size() / sizeof(unsigned));
-	geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
-	geometry.geometry.triangles.transformData = VK_NULL_HANDLE;
-	geometry.geometry.triangles.transformOffset = 0;
-	geometry.geometry.aabbs = { VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV };
-	geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+	VkAccelerationStructureCreateGeometryTypeInfoKHR acceleration_create_geometry_info={};
+	acceleration_create_geometry_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_GEOMETRY_TYPE_INFO_KHR;
+	acceleration_create_geometry_info.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+	acceleration_create_geometry_info.maxPrimitiveCount = (unsigned)(indexBuffer->size() / sizeof(unsigned)/3);
+	acceleration_create_geometry_info.indexType = VK_INDEX_TYPE_UINT32;
+	acceleration_create_geometry_info.maxVertexCount = (unsigned)(positionBuffer->size() / sizeof(glm::vec3));
+	acceleration_create_geometry_info.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
 
-	m_blas = new BaseLevelAS(1, &geometry);
+	VkAccelerationStructureGeometryKHR acceleration_geometry={};
+	acceleration_geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+	acceleration_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+	acceleration_geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+	acceleration_geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+	acceleration_geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+	acceleration_geometry.geometry.triangles.vertexData.deviceAddress = positionBuffer->get_device_address();
+	acceleration_geometry.geometry.triangles.vertexStride = sizeof(glm::vec3);
+	acceleration_geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+	acceleration_geometry.geometry.triangles.indexData.deviceAddress = indexBuffer->get_device_address();
+
+	VkAccelerationStructureBuildOffsetInfoKHR acceleration_build_offset_info={};
+	acceleration_build_offset_info.primitiveCount = (unsigned)(indexBuffer->size() / sizeof(unsigned) / 3);
+	acceleration_build_offset_info.primitiveOffset = 0x0;
+	acceleration_build_offset_info.firstVertex = 0;
+	acceleration_build_offset_info.transformOffset = 0x0;
+
+	m_blas = new BaseLevelAS(1, &acceleration_create_geometry_info, &acceleration_geometry, &acceleration_build_offset_info);
 }
 
 SphereLight::SphereLight(const glm::vec3& center, float r, const glm::vec3& color) : Geometry(s_sphere_model(center, r))
@@ -98,7 +108,7 @@ SphereLight::SphereLight(const glm::vec3& center, float r, const glm::vec3& colo
 	m_color = color;
 	static float s_aabb[6] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
 
-	DeviceBuffer aabb_buf(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT | VK_BUFFER_USAGE_RAY_TRACING_BIT_NV);
+	DeviceBuffer aabb_buf(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
 	aabb_buf.upload(s_aabb);
 	_blas_create_procedure(&aabb_buf);
 }
@@ -262,7 +272,7 @@ Image::Image(int width, int height, float* hdata, int batch_size)
 
 	m_batch_size = (m_batch_size + 63) / 64 * 64; // 8x8 blocks
 
-	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT);
+	m_data = new DeviceBuffer(sizeof(float) * 4 * width * height, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 
 	if (hdata != nullptr)
 		m_data->upload(hdata);
@@ -546,8 +556,8 @@ void PathTracer::_tlas_create(RayTrace& rt) const
 	size_t num_hitgroups = m_geo_lists.size();
 	std::vector<size_t> num_instances(num_hitgroups);
 
-	std::vector<std::vector<VkAccelerationStructureNV>> blases(num_hitgroups);
-	std::vector<const VkAccelerationStructureNV*> pblases(num_hitgroups);
+	std::vector<std::vector<VkAccelerationStructureKHR>> blases(num_hitgroups);
+	std::vector<const VkAccelerationStructureKHR*> pblases(num_hitgroups);
 
 	std::vector<std::vector<glm::mat4x4>> transforms(num_hitgroups);
 	std::vector<const glm::mat4x4*> ptransforms(num_hitgroups);
@@ -634,7 +644,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 	if (total_lights>0)
 	{
-		rt.buf_light_source_dist = new DeviceBuffer(sizeof(float)*total_lights, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT);
+		rt.buf_light_source_dist = new DeviceBuffer(sizeof(float)*total_lights, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 	}
 	else
 	{
@@ -655,44 +665,44 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 	descriptorSetLayoutBindings[0] = {};
 	descriptorSetLayoutBindings[0].binding = 0;
-	descriptorSetLayoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+	descriptorSetLayoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 	descriptorSetLayoutBindings[0].descriptorCount = 1;
-	descriptorSetLayoutBindings[0].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
+	descriptorSetLayoutBindings[0].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 	descriptorSetLayoutBindings[1] = {};
 	descriptorSetLayoutBindings[1].binding = 1;
 	descriptorSetLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorSetLayoutBindings[1].descriptorCount = 1;
-	descriptorSetLayoutBindings[1].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_COMPUTE_BIT;
+	descriptorSetLayoutBindings[1].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_COMPUTE_BIT;
 	descriptorSetLayoutBindings[2] = {};
 	descriptorSetLayoutBindings[2].binding = 2;
 	descriptorSetLayoutBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	descriptorSetLayoutBindings[2].descriptorCount = 1;
-	descriptorSetLayoutBindings[2].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
+	descriptorSetLayoutBindings[2].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 	descriptorSetLayoutBindings[3] = {};
 	descriptorSetLayoutBindings[3].binding = 3;
 	descriptorSetLayoutBindings[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorSetLayoutBindings[3].descriptorCount = (uint32_t)(m_textures.size());
-	descriptorSetLayoutBindings[3].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+	descriptorSetLayoutBindings[3].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 	descriptorSetLayoutBindings[4] = {};
 	descriptorSetLayoutBindings[4].binding = 4;
 	descriptorSetLayoutBindings[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorSetLayoutBindings[4].descriptorCount = (uint32_t)(m_cubemaps.size());
-	descriptorSetLayoutBindings[4].stageFlags = VK_SHADER_STAGE_MISS_BIT_NV;
+	descriptorSetLayoutBindings[4].stageFlags = VK_SHADER_STAGE_MISS_BIT_KHR;
 	descriptorSetLayoutBindings[5] = {};
 	descriptorSetLayoutBindings[5].binding = 5;
 	descriptorSetLayoutBindings[5].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorSetLayoutBindings[5].descriptorCount = 1;
-	descriptorSetLayoutBindings[5].stageFlags = VK_SHADER_STAGE_MISS_BIT_NV;
+	descriptorSetLayoutBindings[5].stageFlags = VK_SHADER_STAGE_MISS_BIT_KHR;
 	descriptorSetLayoutBindings[6] = {};
 	descriptorSetLayoutBindings[6].binding = 6;
 	descriptorSetLayoutBindings[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorSetLayoutBindings[6].descriptorCount = 1;
-	descriptorSetLayoutBindings[6].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_MISS_BIT_NV;
+	descriptorSetLayoutBindings[6].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 	descriptorSetLayoutBindings[7] = {};
 	descriptorSetLayoutBindings[7].binding = 7;
 	descriptorSetLayoutBindings[7].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	descriptorSetLayoutBindings[7].descriptorCount = 1;
-	descriptorSetLayoutBindings[7].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_MISS_BIT_NV;
+	descriptorSetLayoutBindings[7].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 
 
 	i = 0;
@@ -703,10 +713,10 @@ void PathTracer::_args_create(RayTrace& rt) const
 		descriptorSetLayoutBindings[BINDING_START + i].binding = iter->second.cls.binding_view;
 		descriptorSetLayoutBindings[BINDING_START + i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		descriptorSetLayoutBindings[BINDING_START + i].descriptorCount = 1;
-		descriptorSetLayoutBindings[BINDING_START + i].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+		descriptorSetLayoutBindings[BINDING_START + i].stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 
 		if (iter->first == "SphereLight")
-			descriptorSetLayoutBindings[BINDING_START + i].stageFlags |= VK_SHADER_STAGE_RAYGEN_BIT_NV;
+			descriptorSetLayoutBindings[BINDING_START + i].stageFlags |= VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
 		iter++;
 		i++;
@@ -720,7 +730,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 	vkCreateDescriptorSetLayout(ctx.device(), &descriptorSetLayoutCreateInfo, nullptr, &rt.descriptorSetLayout);
 
 	VkDescriptorPoolSize descriptorPoolSize[4];
-	descriptorPoolSize[0].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+	descriptorPoolSize[0].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 	descriptorPoolSize[0].descriptorCount = 1;
 	descriptorPoolSize[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorPoolSize[1].descriptorCount = 3;
@@ -744,8 +754,8 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 	vkAllocateDescriptorSets(ctx.device(), &descriptorSetAllocateInfo, &rt.descriptorSet);
 
-	VkWriteDescriptorSetAccelerationStructureNV descriptorAccelerationStructureInfo = {};
-	descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
+	VkWriteDescriptorSetAccelerationStructureKHR descriptorAccelerationStructureInfo = {};
+	descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 	descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
 	descriptorAccelerationStructureInfo.pAccelerationStructures = &rt.tlas->structure();
 
@@ -803,7 +813,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 	writeDescriptorSet[0].dstSet = rt.descriptorSet;
 	writeDescriptorSet[0].dstBinding = 0;
 	writeDescriptorSet[0].descriptorCount = 1;
-	writeDescriptorSet[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+	writeDescriptorSet[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 	writeDescriptorSet[0].pNext = &descriptorAccelerationStructureInfo;
 
 	writeDescriptorSet[1] = {};
@@ -991,12 +1001,12 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	std::vector<VkPipelineShaderStageCreateInfo> stages(stage_count);
 
 	stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[0].stage = VK_SHADER_STAGE_RAYGEN_BIT_NV;
+	stages[0].stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 	stages[0].module = rayGenModule;
 	stages[0].pName = s_main;
 
 	stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[1].stage = VK_SHADER_STAGE_MISS_BIT_NV;
+	stages[1].stage = VK_SHADER_STAGE_MISS_BIT_KHR;
 	stages[1].module = missModule;
 	stages[1].pName = s_main;
 
@@ -1006,54 +1016,54 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 		if (intersection_modules[i] != nullptr)
 		{
 			stages[i_stages].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			stages[i_stages].stage = VK_SHADER_STAGE_INTERSECTION_BIT_NV;
+			stages[i_stages].stage = VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
 			stages[i_stages].module = intersection_modules[i];
 			stages[i_stages].pName = s_main;
 			i_stages++;
 		}
 		stages[i_stages].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		stages[i_stages].stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+		stages[i_stages].stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 		stages[i_stages].module = closesthit_modules[i];
 		stages[i_stages].pName = s_main;
 		i_stages++;
 	}
 
-	std::vector<VkRayTracingShaderGroupCreateInfoNV> groups(group_count);
+	std::vector<VkRayTracingShaderGroupCreateInfoKHR> groups(group_count);
 
-	groups[0].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
-	groups[0].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
+	groups[0].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+	groups[0].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
 	groups[0].generalShader = 0;
-	groups[0].closestHitShader = VK_SHADER_UNUSED_NV;
-	groups[0].anyHitShader = VK_SHADER_UNUSED_NV;
-	groups[0].intersectionShader = VK_SHADER_UNUSED_NV;
+	groups[0].closestHitShader = VK_SHADER_UNUSED_KHR;
+	groups[0].anyHitShader = VK_SHADER_UNUSED_KHR;
+	groups[0].intersectionShader = VK_SHADER_UNUSED_KHR;
 
-	groups[1].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
-	groups[1].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
+	groups[1].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+	groups[1].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
 	groups[1].generalShader = 1;
-	groups[1].closestHitShader = VK_SHADER_UNUSED_NV;
-	groups[1].anyHitShader = VK_SHADER_UNUSED_NV;
-	groups[1].intersectionShader = VK_SHADER_UNUSED_NV;
+	groups[1].closestHitShader = VK_SHADER_UNUSED_KHR;
+	groups[1].anyHitShader = VK_SHADER_UNUSED_KHR;
+	groups[1].intersectionShader = VK_SHADER_UNUSED_KHR;
 
 	i_stages = 2;
 	for (size_t i = 0; i < num_hitgroups; i++)
 	{
 		if (intersection_modules[i] == nullptr)
 		{
-			groups[2 + i].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
-			groups[2 + i].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV;
-			groups[2 + i].generalShader = VK_SHADER_UNUSED_NV;
+			groups[2 + i].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+			groups[2 + i].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+			groups[2 + i].generalShader = VK_SHADER_UNUSED_KHR;
 			groups[2 + i].closestHitShader = i_stages++;
-			groups[2 + i].anyHitShader = VK_SHADER_UNUSED_NV;
-			groups[2 + i].intersectionShader = VK_SHADER_UNUSED_NV;
+			groups[2 + i].anyHitShader = VK_SHADER_UNUSED_KHR;
+			groups[2 + i].intersectionShader = VK_SHADER_UNUSED_KHR;
 		}
 		else
 		{
-			groups[2 + i].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
-			groups[2 + i].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_NV;
-			groups[2 + i].generalShader = VK_SHADER_UNUSED_NV;
+			groups[2 + i].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+			groups[2 + i].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR;
+			groups[2 + i].generalShader = VK_SHADER_UNUSED_KHR;
 			groups[2 + i].intersectionShader = i_stages++;
 			groups[2 + i].closestHitShader = i_stages++;
-			groups[2 + i].anyHitShader = VK_SHADER_UNUSED_NV;			
+			groups[2 + i].anyHitShader = VK_SHADER_UNUSED_KHR;			
 		}
 	}
 
@@ -1064,16 +1074,17 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 
 	vkCreatePipelineLayout(ctx.device(), &pipelineLayoutCreateInfo, nullptr, &rt.rt_pipelineLayout);
 
-	VkRayTracingPipelineCreateInfoNV rayPipelineInfo = {};
-	rayPipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;
+	VkRayTracingPipelineCreateInfoKHR rayPipelineInfo = {};
+	rayPipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
 	rayPipelineInfo.stageCount = (uint32_t)stage_count;
 	rayPipelineInfo.pStages = stages.data();
 	rayPipelineInfo.groupCount = (uint32_t)group_count;
 	rayPipelineInfo.pGroups = groups.data();
 	rayPipelineInfo.maxRecursionDepth = 1;
 	rayPipelineInfo.layout = rt.rt_pipelineLayout;
+	rayPipelineInfo.libraries.sType = VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR;
 
-	vkCreateRayTracingPipelinesNV(ctx.device(), nullptr, 1, &rayPipelineInfo, nullptr, &rt.rt_pipeline);
+	vkCreateRayTracingPipelinesKHR(ctx.device(), nullptr, 1, &rayPipelineInfo, nullptr, &rt.rt_pipeline);
 
 	// shader binding table
 	unsigned progIdSize = ctx.raytracing_properties().shaderGroupHandleSize;
@@ -1082,7 +1093,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	rt.shaderBindingTableBuffer = new UploadBuffer(sbtSize);
 
 	unsigned char* shaderHandleStorage = (unsigned char*)malloc(group_count *progIdSize);
-	vkGetRayTracingShaderGroupHandlesNV(ctx.device(), rt.rt_pipeline, 0, (uint32_t)group_count, progIdSize * (unsigned)group_count, shaderHandleStorage);
+	vkGetRayTracingShaderGroupHandlesKHR(ctx.device(), rt.rt_pipeline, 0, (uint32_t)group_count, progIdSize * (unsigned)group_count, shaderHandleStorage);
 	rt.shaderBindingTableBuffer->upload(shaderHandleStorage);
 
 	free(shaderHandleStorage);
@@ -1262,6 +1273,7 @@ void PathTracer::trace(int num_iter, int interval) const
 	_calc_raygen(rt);
 	_calc_light_source_dist(rt);
 
+
 	double time1 = GetTime();
 	printf("Done preparing ray-tracing.. %f secs\n", time1-time0);
 
@@ -1269,6 +1281,27 @@ void PathTracer::trace(int num_iter, int interval) const
 
 	const Context& ctx = Context::get_context();
 	unsigned progIdSize = ctx.raytracing_properties().shaderGroupHandleSize;
+	size_t num_hitgroups = m_geo_lists.size();
+
+	VkStridedBufferRegionKHR raygen_shader_sbt_entry{};
+	raygen_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
+	raygen_shader_sbt_entry.offset = 0;
+	raygen_shader_sbt_entry.stride = progIdSize;
+	raygen_shader_sbt_entry.size = progIdSize;
+
+	VkStridedBufferRegionKHR miss_shader_sbt_entry{};
+	miss_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
+	miss_shader_sbt_entry.offset = progIdSize;
+	miss_shader_sbt_entry.stride = progIdSize;
+	miss_shader_sbt_entry.size = progIdSize;
+
+	VkStridedBufferRegionKHR hit_shader_sbt_entry{};
+	hit_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
+	hit_shader_sbt_entry.offset = progIdSize * 2;
+	hit_shader_sbt_entry.stride = progIdSize;
+	hit_shader_sbt_entry.size = progIdSize* num_hitgroups;
+
+	VkStridedBufferRegionKHR callable_shader_sbt_entry{};
 
 	if (interval == -1) interval = num_iter;
 	
@@ -1283,20 +1316,16 @@ void PathTracer::trace(int num_iter, int interval) const
 
 		{
 			NTimeCommandBuffer cmdBuf(end-i);
-			vkCmdBindPipeline(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, rt.rt_pipeline);
-			vkCmdBindDescriptorSets(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, rt.rt_pipelineLayout, 0, 1, &rt.descriptorSet, 0, nullptr);
-			vkCmdTraceRaysNV(cmdBuf.buf(),
-				rt.shaderBindingTableBuffer->buf(), 0,
-				rt.shaderBindingTableBuffer->buf(), progIdSize, progIdSize,
-				rt.shaderBindingTableBuffer->buf(), progIdSize * 2, progIdSize,
-				VK_NULL_HANDLE, 0, 0, m_target->batch_size(), 1, 1);
+			vkCmdBindPipeline(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, rt.rt_pipeline);
+			vkCmdBindDescriptorSets(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, rt.rt_pipelineLayout, 0, 1, &rt.descriptorSet, 0, nullptr);
+			vkCmdTraceRaysKHR(cmdBuf.buf(), &raygen_shader_sbt_entry, &miss_shader_sbt_entry, &hit_shader_sbt_entry, &callable_shader_sbt_entry, m_target->batch_size(), 1, 1);
 
 			VkMemoryBarrier memoryBarrier = {};
 			memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 			memoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
 			memoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-			vkCmdPipelineBarrier(cmdBuf.buf(), VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
+			vkCmdPipelineBarrier(cmdBuf.buf(), VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 			
 			i = end;
 		}

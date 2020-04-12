@@ -13,7 +13,7 @@ public:
 
 	const VkInstance& instance() const { return m_instance; }
 	const VkPhysicalDevice& physicalDevice() const { return m_physicalDevice; }
-	const VkPhysicalDeviceRayTracingPropertiesNV& raytracing_properties()  const { return m_raytracingProperties; }
+	const VkPhysicalDeviceRayTracingPropertiesKHR& raytracing_properties()  const { return m_raytracingProperties; }
 	const VkDevice& device() const { return m_device; }
 	const VkQueue& queue() const { return m_graphicsQueue; }
 	const VkCommandPool& commandPool() const { return m_commandPool_graphics; }
@@ -24,8 +24,9 @@ private:
 	VkPhysicalDevice m_physicalDevice;
 	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures;
 	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures;
+	VkPhysicalDeviceRayTracingFeaturesKHR m_raytracingFeatures;
 	VkPhysicalDeviceFeatures2 m_features2;
-	VkPhysicalDeviceRayTracingPropertiesNV m_raytracingProperties;
+	VkPhysicalDeviceRayTracingPropertiesKHR m_raytracingProperties;
 	uint32_t m_graphicsQueueFamily;
 	float m_queuePriority;
 	VkDevice m_device;
@@ -58,7 +59,7 @@ public:
 	const VkBuffer& buf() const { return m_buf; }
 	const VkDeviceMemory& memory() const { return m_mem; }
 	
-	uint64_t get_device_address() const;
+	VkDeviceAddress get_device_address() const;
 
 protected:
 	VkDeviceSize m_size;
@@ -106,18 +107,18 @@ public:
 class AS
 {
 public:
-	const VkAccelerationStructureNV& structure() const { return m_structure; }
+	const VkAccelerationStructureKHR & structure() const { return m_structure; }
 
 protected:
 	AS();
 	virtual ~AS();
-	VkAccelerationStructureNV m_structure;
+	VkAccelerationStructureKHR  m_structure;
 };
 
 class BaseLevelAS : public AS
 {
 public:
-	BaseLevelAS(uint32_t geometryCount, const VkGeometryNV* pGeometries);
+	BaseLevelAS(uint32_t geometryCount, const VkAccelerationStructureCreateGeometryTypeInfoKHR* geoTypeInfo, const VkAccelerationStructureGeometryKHR* pGeometries, const VkAccelerationStructureBuildOffsetInfoKHR* offsets);
 	virtual ~BaseLevelAS();
 
 private:
@@ -128,7 +129,7 @@ private:
 class TopLevelAS : public AS
 {
 public:
-	TopLevelAS(size_t num_hitgroups, size_t* num_instances, const VkAccelerationStructureNV** pblases, const glm::mat4x4** ptransforms);
+	TopLevelAS(size_t num_hitgroups, size_t* num_instances, const VkAccelerationStructureKHR** pblases, const glm::mat4x4** ptransforms);
 	virtual ~TopLevelAS();
 
 private:

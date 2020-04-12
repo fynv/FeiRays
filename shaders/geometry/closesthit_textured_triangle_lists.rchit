@@ -2,14 +2,14 @@
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #extension GL_EXT_buffer_reference2 : enable
-#extension GL_NV_ray_tracing : enable
+#extension GL_EXT_ray_tracing : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
 #include "../common/payload.shinc"
 #include "../common/bindings.h"
 
-layout(location = 0) rayPayloadInNV Payload payload;
-hitAttributeNV vec2 attribs;
+layout(location = 0) rayPayloadInEXT Payload payload;
+hitAttributeEXT vec2 attribs;
 
 layout(binding = 3) uniform sampler2D[] textureSamplers;
 
@@ -85,7 +85,7 @@ layout(std430, binding = BINDING_TexturedTriangleList) buffer Params
 
 void main()
 {
-	TexturedTriangleList instance = texturedTriangleList[gl_InstanceCustomIndexNV];
+	TexturedTriangleList instance = texturedTriangleList[gl_InstanceCustomIndexEXT];
 
 	Vertex v0 = UnpackVertex(instance.vertexBuf[3 * gl_PrimitiveID].v);
 	Vertex v1 = UnpackVertex(instance.vertexBuf[3 * gl_PrimitiveID + 1].v);
@@ -105,7 +105,7 @@ void main()
 		c*= texture(textureSamplers[mat.textureId], texCoord).xyz;
 	}
 
-	payload.t = gl_HitTNV;
+	payload.t = gl_HitTEXT;
 	payload.material_bits = MAT_OPAQUE_BIT | MAT_DIFFUSE_BIT;
 	payload.color1 = c;
 	payload.f0 = 0.0;
