@@ -38,8 +38,8 @@ img.save("breakfast_room.png")
 Building the project is simple. 
 
 [Volk](https://github.com/zeux/volk.git) and [Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers.git) are included as submodules,
-so it should be fine to build without Vulkan SDK, and the resulted executables should be adaptive to different Vulkan versions. 
-But be sure to have a driver that supports Vulkan 1.2. Nvidia users should use one from [https://developer.nvidia.com/vulkan-driver](https://developer.nvidia.com/vulkan-driver).
+so it should be fine to build without Vulkan SDK. But be sure to have a driver that supports Vulkan 1.2. 
+Nvidia users should use one of the "beta" drivers from [https://developer.nvidia.com/vulkan-driver](https://developer.nvidia.com/vulkan-driver).
 
 * Clone the repo and update the submodules
 * Use CMake to generate a VS solution at FeiRays/build.
