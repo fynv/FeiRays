@@ -74,19 +74,20 @@ bool Context::_init_vulkan()
 		m_physicalDevice = ph_devices[0];
 	}
 
-	m_bufferDeviceAddressFeatures = {};
+	// seems VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES is not properly by some drivers
+	//m_bufferDeviceAddressFeatures = {};
 	m_descriptorIndexingFeatures = {};
 	{
-		m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
-		m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-		m_bufferDeviceAddressFeatures.pNext = &m_descriptorIndexingFeatures;
+		//m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+		//m_bufferDeviceAddressFeatures.pNext = &m_descriptorIndexingFeatures;
+
+		m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;		
 		m_features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		m_features2.pNext = &m_bufferDeviceAddressFeatures;
+		//m_features2.pNext = &m_bufferDeviceAddressFeatures;
+		m_features2.pNext = &m_descriptorIndexingFeatures;
 		m_features2.features = {};
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &m_features2);
 	}
-
-	m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 
 	m_raytracingProperties = {};
 	{
