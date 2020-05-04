@@ -11,36 +11,6 @@ const RNGInitializer& RNGInitializer::get_initializer()
 }
 
 
-static VkShaderModule _createShaderModule_from_spv(const char* fn)
-{
-	std::string fullname = "../shaders/";
-	fullname += fn;
-
-	const Context& ctx = Context::get_context();
-
-	FILE* fp = fopen(fullname.data(), "rb");
-	fseek(fp, 0, SEEK_END);
-	size_t bytes = (size_t)ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	char* buf = new char[bytes];
-	fread(buf, 1, bytes, fp);
-
-	VkShaderModuleCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = bytes;
-	createInfo.pCode = reinterpret_cast<const uint32_t*>(buf);
-	VkShaderModule shaderModule;
-	vkCreateShaderModule(ctx.device(), &createInfo, nullptr, &shaderModule);
-
-	delete[] buf;
-
-	fclose(fp);
-
-	return shaderModule;
-}
-
-
 RNGInitializer::RNGInitializer()
 {
 	m_seq_mat = new DeviceBuffer(sizeof(xorwow_sequence_matrix), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
@@ -70,7 +40,7 @@ RNGInitializer::RNGInitializer()
 
 	}
 	{
-		VkShaderModule compModule = _createShaderModule_from_spv("common/rand_init.spv");
+		VkShaderModule compModule = ctx.get_shader("common/rand_init.spv");
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -91,8 +61,6 @@ RNGInitializer::RNGInitializer()
 		pipelineInfo.layout = m_pipelineLayout;
 
 		vkCreateComputePipelines(ctx.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline);
-
-		vkDestroyShaderModule(ctx.device(), compModule, nullptr);
 	}
 
 	m_ubo = new DeviceBuffer(sizeof(UBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);

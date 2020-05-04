@@ -906,69 +906,14 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 }
 
-
-
-class ShaderCache : public std::unordered_map<std::string, VkShaderModule>
-{
-public:
-	ShaderCache() {}
-	virtual ~ShaderCache()
-	{
-		/*const Context& ctx = Context::get_context();
-		auto iter = begin();
-		while (iter != end())
-		{
-			vkDestroyShaderModule(ctx.device(), iter->second, nullptr);
-			iter++;
-		}*/
-	}
-};
-
-
-static VkShaderModule _createShaderModule_from_spv(const char* fn)
-{
-	static ShaderCache s_shader_cache;
-	auto iter = s_shader_cache.find(fn);
-	if (iter != s_shader_cache.end()) return iter->second;
-
-	std::string fullname = "../shaders/";
-	fullname += fn;
-
-	const Context& ctx = Context::get_context();
-
-	FILE* fp = fopen(fullname.data(), "rb");
-	fseek(fp, 0, SEEK_END);
-	size_t bytes = (size_t)ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	char* buf = new char[bytes];
-	fread(buf, 1, bytes, fp);
-
-	VkShaderModuleCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = bytes;
-	createInfo.pCode = reinterpret_cast<const uint32_t*>(buf);
-	VkShaderModule shaderModule;
-	vkCreateShaderModule(ctx.device(), &createInfo, nullptr, &shaderModule);
-
-	delete[] buf;
-
-	fclose(fp);
-
-	s_shader_cache[fn] = shaderModule;
-
-	return shaderModule;
-}
-
-
 void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 {
 	const Context& ctx = Context::get_context();
 	size_t num_hitgroups = m_geo_lists.size();
 	SkyCls sky_cls = m_current_sky->cls();
 
-	VkShaderModule rayGenModule = _createShaderModule_from_spv("path_tracer/raygen.spv");
-	VkShaderModule missModule = _createShaderModule_from_spv(sky_cls.fn_missing);
+	VkShaderModule rayGenModule = ctx.get_shader("path_tracer/raygen.spv");
+	VkShaderModule missModule = ctx.get_shader(sky_cls.fn_missing);
 
 	std::vector<VkShaderModule> intersection_modules(num_hitgroups);
 	std::vector<VkShaderModule> closesthit_modules(num_hitgroups);
@@ -980,14 +925,14 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	{
 		if (iter->second.cls.fn_intersection != nullptr)
 		{
-			intersection_modules[i] = _createShaderModule_from_spv(iter->second.cls.fn_intersection);
+			intersection_modules[i] = ctx.get_shader(iter->second.cls.fn_intersection);
 			count_intersection++;
 		}
 		else
 		{
 			intersection_modules[i] = nullptr;
 		}
-		closesthit_modules[i] = _createShaderModule_from_spv(iter->second.cls.fn_closesthit);
+		closesthit_modules[i] = ctx.get_shader(iter->second.cls.fn_closesthit);
 
 		iter++;
 		i++;
@@ -1104,7 +1049,7 @@ void PathTracer::_comp_pipeline_create(RayTrace& rt) const
 	static const char s_main[] = "main";
 
 	const Context& ctx = Context::get_context();
-	VkShaderModule finalModule = _createShaderModule_from_spv("path_tracer/final.spv");
+	VkShaderModule finalModule = ctx.get_shader("path_tracer/final.spv");
 
 	VkPipelineShaderStageCreateInfo computeShaderStageInfo = {};
 	computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

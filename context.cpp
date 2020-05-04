@@ -1,7 +1,10 @@
 #include "context.h"
+#include "shaders_packed.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <string>
+#include <unordered_map>
 
 const Context& Context::get_context()
 {
@@ -165,6 +168,61 @@ Context::~Context()
 	vkDestroyCommandPool(m_device, m_commandPool_graphics, nullptr);
 	vkDestroyDevice(m_device, nullptr);
 	vkDestroyInstance(m_instance, nullptr);*/
+}
+
+VkShaderModule Context::get_shader(const char* name) const
+{
+	static std::unordered_map<std::string, int> s_name2spv;
+	static std::unordered_map<std::string, VkShaderModule> s_name2module;
+	static bool initialized = false;
+
+	if (!initialized)
+	{
+		for (int i = 0; i < s_num_shaders; i++)
+			s_name2spv[s_name_shaders[i]] = i;
+		initialized = true;
+	}
+	auto iter = s_name2module.find(name);
+	if (iter != s_name2module.end()) return iter->second;
+
+	int size;
+	const char* spv;
+	std::vector<char> buf;
+
+	auto iter2 = s_name2spv.find(name);
+	if (iter2 != s_name2spv.end())
+	{
+		size = s_size_shaders[iter2->second];
+		spv = s_content_shaders[iter2->second];
+	}
+	else
+	{
+		std::string fullname = "../shaders/";
+		fullname += name;
+
+		FILE* fp = fopen(fullname.data(), "rb");
+		fseek(fp, 0, SEEK_END);
+		size = (int)ftell(fp);
+		fseek(fp, 0, SEEK_SET);		
+		buf.resize(size);
+		fread(buf.data(), 1, size, fp);
+		fclose(fp);
+
+		spv = buf.data();
+	}
+
+	const Context& ctx = Context::get_context();
+
+	VkShaderModuleCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = size;
+	createInfo.pCode = reinterpret_cast<const uint32_t*>(spv);
+	VkShaderModule shaderModule;
+	vkCreateShaderModule(ctx.device(), &createInfo, nullptr, &shaderModule);
+
+	s_name2module[name] = shaderModule;
+
+	return shaderModule;
 }
 
 NTimeCommandBuffer::NTimeCommandBuffer(size_t n) : m_n(n)

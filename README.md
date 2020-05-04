@@ -15,7 +15,9 @@ The "sponza" model, 900x600x1000 rays, rendered in 11.2 seconds using RTX 2060 s
 
 The "breakfast_room" model, 900x600x1000 rays, rendered in 18.4 seconds using RTX 2060 super.
 
-Using the newly added Python frontend, the above case can be rendered using the following Python script:
+A Python frontend can be found in the "python" folder.
+
+Using the Python frontend, the above case can be rendered using the following Python script:
 
 ```python
 import FeiRays
@@ -32,6 +34,12 @@ img = scene.get_image()
 img.save("breakfast_room.png")
 ```
 (It is assumed that the model file "breakfast_room.obj" is located in the folder "breakfast_room".)
+
+The Python frontend (prebuilt for Win64 and Linux64) can be fetched from Pypi:
+
+```
+# pip install FeiRays
+```
 
 ## Building and Running
 

@@ -2,35 +2,6 @@
 #include <string>
 #include "SRGBConverter.h"
 
-static VkShaderModule _createShaderModule_from_spv(const char* fn)
-{
-	std::string fullname = "../shaders/";
-	fullname += fn;
-
-	const Context& ctx = Context::get_context();
-
-	FILE* fp = fopen(fullname.data(), "rb");
-	fseek(fp, 0, SEEK_END);
-	size_t bytes = (size_t)ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	char* buf = new char[bytes];
-	fread(buf, 1, bytes, fp);
-
-	VkShaderModuleCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = bytes;
-	createInfo.pCode = reinterpret_cast<const uint32_t*>(buf);
-	VkShaderModule shaderModule;
-	vkCreateShaderModule(ctx.device(), &createInfo, nullptr, &shaderModule);
-
-	delete[] buf;
-
-	fclose(fp);
-
-	return shaderModule;
-}
-
 const SRGBConverter& SRGBConverter::get_converter()
 {
 	static SRGBConverter coverter;
@@ -101,8 +72,8 @@ SRGBConverter::SRGBConverter()
 	}
 
 	{
-		m_vertShaderModule = _createShaderModule_from_spv("common/vert_srgb.spv");
-		m_fragShaderModule = _createShaderModule_from_spv("common/frag_srgb.spv");
+		m_vertShaderModule = ctx.get_shader("common/vert_srgb.spv");
+		m_fragShaderModule = ctx.get_shader("common/frag_srgb.spv");
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -146,8 +117,6 @@ SRGBConverter::~SRGBConverter()
 
 	vkDestroyPipelineLayout(ctx.device(), m_pipelineLayout, nullptr);
 	vkDestroyDescriptorSetLayout(ctx.device(), m_descriptorSetLayout, nullptr);
-	vkDestroyShaderModule(ctx.device(), m_fragShaderModule, nullptr);
-	vkDestroyShaderModule(ctx.device(), m_vertShaderModule, nullptr);
 	vkDestroyRenderPass(ctx.device(), m_renderPass, nullptr);
 	*/
 }

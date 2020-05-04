@@ -1,12 +1,6 @@
 import os
+import sys
 from cffi import FFI
-
-FeiRaysPath = os.path.dirname(__file__)
-
-if os.name == 'nt':
-    FeiRaysPath += '/../PyFeiRays.dll'
-elif os.name == "posix":
-    FeiRaysPath += '/../libPyFeiRays.so'
 
 ffi  = FFI()
 
@@ -35,6 +29,15 @@ ffi.cdef("""
     void n_scene_trace(void* ptr_scene, int num_iter, int interval);
 """)
 
-native = ffi.dlopen(FeiRaysPath)
+if os.name == 'nt':
+    fn_feirays = 'PyFeiRays.dll'
+elif os.name == "posix":
+    fn_feirays = 'libPyFeiRays.so'
+
+path_feirays = sys.prefix+"/Fei/"+fn_feirays
+if not os.path.isfile(path_feirays):
+    path_feirays = os.path.dirname(__file__)+"/../"+fn_feirays
+
+native = ffi.dlopen(path_feirays)
 
 

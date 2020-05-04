@@ -15,6 +15,16 @@ include_directories(${INCLUDE_DIR})
 
 add_subdirectory(thirdparty/volk)
 
+
+add_executable(PackShaders pack_shaders.cpp)
+add_custom_target(Run_PackShaders
+COMMAND PackShaders
+WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+COMMENT "Running PackShaders in ${CMAKE_CURRENT_SOURCE_DIR}"
+SOURCES pack_shaders.cpp
+)
+
+
 set (SOURCE
 context.cpp
 RNGInitializer.cpp
@@ -59,6 +69,9 @@ endif()
 add_definitions(${DEFINES})
 
 add_library(FeiRays ${SOURCE} ${HEADER})
+
+add_dependencies(Run_PackShaders PackShaders)
+add_dependencies(FeiRays Run_PackShaders)
 
 add_executable(test_rng tests/test_rng.cpp)
 target_link_libraries(test_rng FeiRays volk)

@@ -18,6 +18,8 @@ public:
 	const VkQueue& queue() const { return m_graphicsQueue; }
 	const VkCommandPool& commandPool() const { return m_commandPool_graphics; }
 
+	VkShaderModule get_shader(const char* name) const;
+
 private:
 	VkDebugUtilsMessengerEXT m_debugMessenger;
 	VkInstance m_instance;
