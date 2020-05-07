@@ -1,5 +1,6 @@
 import os
 import sys
+import site
 from cffi import FFI
 
 ffi  = FFI()
@@ -36,7 +37,9 @@ elif os.name == "posix":
 
 path_feirays = sys.prefix+"/Fei/"+fn_feirays
 if not os.path.isfile(path_feirays):
-    path_feirays = os.path.dirname(__file__)+"/../"+fn_feirays
+    path_feirays = site.USER_BASE+"/Fei/"+fn_feirays
+    if not os.path.isfile(path_feirays):
+        path_feirays = os.path.dirname(__file__)+"/../"+fn_feirays
 
 native = ffi.dlopen(path_feirays)
 
