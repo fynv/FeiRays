@@ -9,7 +9,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
 	name = 'FeiRays',
-	version = '0.0.4',
+	version = '0.0.5',
 	description = 'Vulkan based Monte-Carol Ray-tracing',
 	long_description=long_description,
 	long_description_content_type='text/markdown',  
@@ -19,7 +19,7 @@ setup(
 	author_email='hyangfeih@gmail.com',
 	keywords='Vulkan pathtracer xorwow ray-tracing',
 	packages=['FeiRays'],
-	data_files=[("Fei", ["PyFeiRays.dll", "libPyFeiRays.so"])],
+	package_data = { 'FeiRays': ['*.dll', '*.so']},
 	install_requires = ['cffi','pillow'],	
 )
 
