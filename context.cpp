@@ -79,12 +79,16 @@ bool Context::_init_vulkan()
 	m_bufferDeviceAddressFeatures = {};
 	m_descriptorIndexingFeatures = {};
 	m_raytracingFeatures = {};
+	m_scalarBlockLayoutFeatures = {};
 	{
 		m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 		m_bufferDeviceAddressFeatures.pNext = &m_descriptorIndexingFeatures;
 		m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 		m_descriptorIndexingFeatures.pNext = &m_raytracingFeatures;
 		m_raytracingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
+		m_raytracingFeatures.pNext = &m_scalarBlockLayoutFeatures;
+		m_scalarBlockLayoutFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT;
+
 		m_features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 		m_features2.pNext = &m_bufferDeviceAddressFeatures;
 		m_features2.features = {};
@@ -127,7 +131,8 @@ bool Context::_init_vulkan()
 			VK_KHR_RAY_TRACING_EXTENSION_NAME,
 			VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
 			VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
-			VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME			
+			VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME,
+			VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME
 		};
 
 		VkDeviceCreateInfo createInfo = {};

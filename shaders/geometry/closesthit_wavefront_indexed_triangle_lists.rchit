@@ -4,6 +4,7 @@
 #extension GL_EXT_buffer_reference2 : enable
 #extension GL_EXT_ray_tracing : enable
 #extension GL_EXT_nonuniform_qualifier : enable
+#extension GL_EXT_scalar_block_layout : enable
 
 #include "../common/payload.shinc"
 #include "../common/bindings.h"
@@ -12,26 +13,6 @@ layout(location = 0) rayPayloadInEXT Payload payload;
 hitAttributeEXT vec2 attribs;
 
 layout(binding = 3) uniform sampler2D[] textureSamplers;
-
-struct CompVec3
-{
-	float a, b, c;
-};
-
-vec3 UnpackVec3(in CompVec3 compv)
-{
-	return vec3(compv.a, compv.b, compv.c);
-}
-
-struct CompVec2
-{
-	float a, b;
-};
-
-vec2 UnpackVec2(in CompVec2 compv)
-{
-	return vec2(compv.a, compv.b);
-}
 
 struct Index
 {
@@ -53,28 +34,6 @@ struct Material
 	int mask;
 };
 
-struct CompMaterial
-{
-	float a, b, c, d, e, f, g, h, i, j;
-	int k, l, m, n, o, p;
-};
-
-Material UnpackMaterial(in CompMaterial compMat)
-{
-	Material m;
-	m.diffuse = vec3(compMat.a, compMat.b, compMat.c);
-	m.specular = vec3(compMat.d, compMat.e, compMat.f);
-	m.emission = vec3(compMat.g, compMat.h, compMat.i);
-	m.shininess = compMat.j;
-	m.texId_diffuse = compMat.k;
-	m.texId_specular = compMat.l;
-	m.texId_emission = compMat.m;
-	m.texId_bumpmap = compMat.n;
-	m.texId_mask = compMat.o;
-	m.mask = compMat.p;	
-	return m;
-}
-
 struct Face
 {
 	vec3 T;
@@ -82,44 +41,29 @@ struct Face
 	int materialIdx;
 };
 
-struct CompFace
+layout(buffer_reference, scalar, buffer_reference_align = 4) buffer Vec3Buf
 {
-	float a, b, c, d, e, f;
-	int g;
+	vec3 v;
 };
 
-Face UnpackFace(in CompFace compFace)
+layout(buffer_reference, scalar, buffer_reference_align = 4) buffer Vec2Buf
 {
-	Face f;
-	f.T = vec3(compFace.a, compFace.b, compFace.c);
-	f.B = vec3(compFace.d, compFace.e, compFace.f);
-	f.materialIdx = compFace.g;
-	return f;
-}
-
-layout(buffer_reference, std430, buffer_reference_align = 4) buffer Vec3Buf
-{
-	CompVec3 v;
+	vec2 v;
 };
 
-layout(buffer_reference, std430, buffer_reference_align = 4) buffer Vec2Buf
-{
-	CompVec2 v;
-};
-
-layout(buffer_reference, std430, buffer_reference_align = 4) buffer IndexBuf
+layout(buffer_reference, scalar, buffer_reference_align = 4) buffer IndexBuf
 {
 	Index i;
 };
 
-layout(buffer_reference, std430, buffer_reference_align = 4) buffer MaterialBuf
+layout(buffer_reference, scalar, buffer_reference_align = 4) buffer MaterialBuf
 {
-	CompMaterial m;
+	Material m;
 };
 
-layout(buffer_reference, std430, buffer_reference_align = 4) buffer FaceBuf
+layout(buffer_reference, scalar, buffer_reference_align = 4) buffer FaceBuf
 {
-	CompFace f;
+	Face f;
 };
 
 struct WavefrontIndexedTriangleList
@@ -148,8 +92,8 @@ void main()
 	Index i1 = instance.indexBuf[3 * gl_PrimitiveID + 1].i;
 	Index i2 = instance.indexBuf[3 * gl_PrimitiveID + 2].i;
 
-	Face face = UnpackFace(instance.faceBuf[gl_PrimitiveID].f);
-	Material mat = UnpackMaterial(instance.materialBuf[face.materialIdx].m);
+	Face face = instance.faceBuf[gl_PrimitiveID].f;
+	Material mat = instance.materialBuf[face.materialIdx].m;
 
 	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 
@@ -157,9 +101,9 @@ void main()
 
 	if (i0.texcoord_index>=0)
 	{
-		vec2 texCoord0 = UnpackVec2(instance.texcoordBuf[i0.texcoord_index].v);
-		vec2 texCoord1 = UnpackVec2(instance.texcoordBuf[i1.texcoord_index].v);
-		vec2 texCoord2 = UnpackVec2(instance.texcoordBuf[i2.texcoord_index].v);
+		vec2 texCoord0 = instance.texcoordBuf[i0.texcoord_index].v;
+		vec2 texCoord1 = instance.texcoordBuf[i1.texcoord_index].v;
+		vec2 texCoord2 = instance.texcoordBuf[i2.texcoord_index].v;
 		texCoord = texCoord0 * barycentrics.x + texCoord1 * barycentrics.y + texCoord2 * barycentrics.z;
 	}
 
@@ -175,9 +119,9 @@ void main()
 
 	vec3 normal;
 	{
-		vec3 norm0 = UnpackVec3(instance.normalBuf[i0.normal_index].v);
-		vec3 norm1 = UnpackVec3(instance.normalBuf[i1.normal_index].v);
-		vec3 norm2 = UnpackVec3(instance.normalBuf[i2.normal_index].v);
+		vec3 norm0 = instance.normalBuf[i0.normal_index].v;
+		vec3 norm1 = instance.normalBuf[i1.normal_index].v;
+		vec3 norm2 = instance.normalBuf[i2.normal_index].v;
 		normal = norm0 * barycentrics.x + norm1 * barycentrics.y + norm2 * barycentrics.z;
 
 		if (mat.texId_bumpmap >= 0)

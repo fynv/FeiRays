@@ -3,6 +3,7 @@
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #extension GL_EXT_buffer_reference2 : enable
 #extension GL_EXT_ray_tracing : enable
+#extension GL_EXT_scalar_block_layout : enable
 
 #include "../common/payload.shinc"
 #include "../common/bindings.h"
@@ -10,22 +11,12 @@
 layout(location = 0) rayPayloadInEXT Payload payload;
 hitAttributeEXT vec2 attribs;
 
-struct CompVec3
+layout(buffer_reference, scalar, buffer_reference_align = 4) buffer VextexBuf
 {
-	float a, b, c;
+	vec3 v;
 };
 
-vec3 UnpackVec3(in CompVec3 compv)
-{
-	return vec3(compv.a, compv.b, compv.c);
-}
-
-layout(buffer_reference, std430, buffer_reference_align = 4) buffer VextexBuf
-{
-	CompVec3 v;
-};
-
-layout(buffer_reference, std430, buffer_reference_align = 4) buffer IndexBuf
+layout(buffer_reference, scalar, buffer_reference_align = 4) buffer IndexBuf
 {
 	uint i;
 };
@@ -63,9 +54,9 @@ void main()
 	uint i1 = instance.indexBuf[3 * gl_PrimitiveID + 1].i;
 	uint i2 = instance.indexBuf[3 * gl_PrimitiveID + 2].i;
 
-	vec3 norm0 = UnpackVec3(instance.vertexBuf[i0].v);
-	vec3 norm1 = UnpackVec3(instance.vertexBuf[i1].v);
-	vec3 norm2 = UnpackVec3(instance.vertexBuf[i2].v);
+	vec3 norm0 = instance.vertexBuf[i0].v;
+	vec3 norm1 = instance.vertexBuf[i1].v;
+	vec3 norm2 = instance.vertexBuf[i2].v;
 
 	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 
