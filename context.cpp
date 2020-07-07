@@ -25,10 +25,10 @@ bool Context::_init_vulkan()
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "FeiRays";
-		appInfo.applicationVersion = VK_MAKE_VERSION(1, 1, 0);
+		appInfo.applicationVersion = VK_MAKE_VERSION(1, 2, 0);
 		appInfo.pEngineName = "No Engine";
-		appInfo.engineVersion = VK_MAKE_VERSION(1, 1, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_1;
+		appInfo.engineVersion = VK_MAKE_VERSION(1, 2, 0);
+		appInfo.apiVersion = VK_API_VERSION_1_2;
 
 		const char* name_extensions[] = {
 			VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
