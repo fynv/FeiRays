@@ -1033,15 +1033,21 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 
 	// shader binding table
 	unsigned progIdSize = ctx.raytracing_properties().shaderGroupHandleSize;
-	unsigned sbtSize = progIdSize * (unsigned)group_count;
+	unsigned baseAlignment = ctx.raytracing_properties().shaderGroupBaseAlignment;
+	unsigned sbtSize_get = progIdSize * (unsigned)group_count;
+	unsigned sbtSize = baseAlignment * (unsigned)group_count;
 
 	rt.shaderBindingTableBuffer = new UploadBuffer(sbtSize);
 
-	unsigned char* shaderHandleStorage = (unsigned char*)malloc(group_count *progIdSize);
-	vkGetRayTracingShaderGroupHandlesKHR(ctx.device(), rt.rt_pipeline, 0, (uint32_t)group_count, progIdSize * (unsigned)group_count, shaderHandleStorage);
-	rt.shaderBindingTableBuffer->upload(shaderHandleStorage);
+	unsigned char* shaderHandleStorage_get = (unsigned char*)malloc(sbtSize_get);
+	unsigned char* shaderHandleStorage = (unsigned char*)malloc(sbtSize);
+	vkGetRayTracingShaderGroupHandlesKHR(ctx.device(), rt.rt_pipeline, 0, (uint32_t)group_count, sbtSize_get, shaderHandleStorage_get);
+	for (unsigned i = 0; i < group_count; i++)
+		memcpy(shaderHandleStorage + i * baseAlignment, shaderHandleStorage_get + i * progIdSize, progIdSize);
 
+	rt.shaderBindingTableBuffer->upload(shaderHandleStorage);
 	free(shaderHandleStorage);
+	free(shaderHandleStorage_get);
 }
 
 void PathTracer::_comp_pipeline_create(RayTrace& rt) const
@@ -1225,26 +1231,26 @@ void PathTracer::trace(int num_iter, int interval) const
 	m_target->clear();
 
 	const Context& ctx = Context::get_context();
-	unsigned progIdSize = ctx.raytracing_properties().shaderGroupHandleSize;
+	unsigned baseAlignment = ctx.raytracing_properties().shaderGroupBaseAlignment;
 	size_t num_hitgroups = m_geo_lists.size();
 
 	VkStridedBufferRegionKHR raygen_shader_sbt_entry{};
 	raygen_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
 	raygen_shader_sbt_entry.offset = 0;
-	raygen_shader_sbt_entry.stride = progIdSize;
-	raygen_shader_sbt_entry.size = progIdSize;
+	raygen_shader_sbt_entry.stride = baseAlignment;
+	raygen_shader_sbt_entry.size = baseAlignment;
 
 	VkStridedBufferRegionKHR miss_shader_sbt_entry{};
 	miss_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
-	miss_shader_sbt_entry.offset = progIdSize;
-	miss_shader_sbt_entry.stride = progIdSize;
-	miss_shader_sbt_entry.size = progIdSize;
+	miss_shader_sbt_entry.offset = baseAlignment;
+	miss_shader_sbt_entry.stride = baseAlignment;
+	miss_shader_sbt_entry.size = baseAlignment;
 
 	VkStridedBufferRegionKHR hit_shader_sbt_entry{};
 	hit_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
-	hit_shader_sbt_entry.offset = progIdSize * 2;
-	hit_shader_sbt_entry.stride = progIdSize;
-	hit_shader_sbt_entry.size = progIdSize* num_hitgroups;
+	hit_shader_sbt_entry.offset = baseAlignment * 2;
+	hit_shader_sbt_entry.stride = baseAlignment;
+	hit_shader_sbt_entry.size = baseAlignment * num_hitgroups;
 
 	VkStridedBufferRegionKHR callable_shader_sbt_entry{};
 
