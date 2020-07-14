@@ -108,4 +108,4 @@ The class "PathTracer" maintains a list of the geometries and path-traces them.
 
 ### Next
 
-* Implement a bidirectional path-tracer.
+As I've started [FeiRaysInline](https://github.com/fynv/feiraysinline), further exploration will happen there.
