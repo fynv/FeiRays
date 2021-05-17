@@ -13,34 +13,41 @@ public:
 
 	const VkInstance& instance() const { return m_instance; }
 	const VkPhysicalDevice& physicalDevice() const { return m_physicalDevice; }
-	const VkPhysicalDeviceRayTracingPropertiesKHR& raytracing_properties()  const { return m_raytracingProperties; }
+	const VkPhysicalDeviceRayTracingPipelinePropertiesKHR& raytracing_properties()  const { return m_rayTracingPipelineProperties; }
 	const VkDevice& device() const { return m_device; }
 	const VkQueue& queue() const { return m_graphicsQueue; }
 	const VkCommandPool& commandPool() const { return m_commandPool_graphics; }
 
 	VkShaderModule get_shader(const char* name) const;
-
 private:
-	VkDebugUtilsMessengerEXT m_debugMessenger;
-	VkInstance m_instance;
-	VkPhysicalDevice m_physicalDevice;
-	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures;
-	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures;
-	VkPhysicalDeviceRayTracingFeaturesKHR m_raytracingFeatures;
-	VkPhysicalDeviceScalarBlockLayoutFeatures m_scalarBlockLayoutFeatures;
-	VkPhysicalDeviceFeatures2 m_features2;
-	VkPhysicalDeviceRayTracingPropertiesKHR m_raytracingProperties;
+	VkDebugUtilsMessengerEXT m_debugMessenger = VK_NULL_HANDLE;
+	VkInstance m_instance = VK_NULL_HANDLE;
+	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+
+	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures{};
+	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures{};
+
+	VkPhysicalDeviceRayTracingPipelineFeaturesKHR m_rayTracingPipelineFeatures{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR m_accelerationStructureFeatures{};
+	
+	VkPhysicalDeviceScalarBlockLayoutFeatures m_scalarBlockLayoutFeatures{};
+	VkPhysicalDeviceFeatures2 m_features2{};
+
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  m_rayTracingPipelineProperties{};
+
 	uint32_t m_graphicsQueueFamily;
 	float m_queuePriority;
 	VkDevice m_device;
 	VkQueue m_graphicsQueue;
 	VkCommandPool m_commandPool_graphics;
 
+
 	bool _init_vulkan();
 	Context();
 	~Context();
 
 };
+
 
 class NTimeCommandBuffer
 {
@@ -61,7 +68,7 @@ public:
 	VkDeviceSize size() const { return m_size; }
 	const VkBuffer& buf() const { return m_buf; }
 	const VkDeviceMemory& memory() const { return m_mem; }
-	
+
 	VkDeviceAddress get_device_address() const;
 
 protected:
@@ -121,13 +128,18 @@ protected:
 class BaseLevelAS : public AS
 {
 public:
-	BaseLevelAS(uint32_t geometryCount, const VkAccelerationStructureCreateGeometryTypeInfoKHR* geoTypeInfo, const VkAccelerationStructureGeometryKHR* pGeometries, const VkAccelerationStructureBuildOffsetInfoKHR* offsets);
+	BaseLevelAS(
+		const VkAccelerationStructureBuildGeometryInfoKHR& geoBuildInfo,
+		const VkAccelerationStructureGeometryKHR* pGeometries,
+		const VkAccelerationStructureBuildRangeInfoKHR** ranges);
+
 	virtual ~BaseLevelAS();
 
 private:
 	DeviceBuffer* m_scratchBuffer;
 	DeviceBuffer* m_resultBuffer;
 };
+
 
 class TopLevelAS : public AS
 {
@@ -139,7 +151,6 @@ private:
 	DeviceBuffer* m_scratchBuffer;
 	DeviceBuffer* m_resultBuffer;
 	DeviceBuffer* m_instancesBuffer;
-
 };
 
 class Texture
@@ -147,9 +158,9 @@ class Texture
 public:
 	int width() const { return m_width; }
 	int height() const { return m_height; }
-	int pixel_size() const { return m_pixel_size;  }
+	int pixel_size() const { return m_pixel_size; }
 	const VkFormat& format() const { return m_format; }
-	const VkImage& image() const { return m_image;}
+	const VkImage& image() const { return m_image; }
 	const VkDeviceMemory& memory() const { return m_mem; }
 	const VkImageView& view() const { return m_view; }
 
@@ -210,3 +221,4 @@ public:
 private:
 	VkSampler m_sampler;
 };
+

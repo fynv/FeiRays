@@ -11,6 +11,7 @@ class Texture;
 class Cubemap;
 class Sampler;
 
+
 struct GeoCls
 {
 	std::string name;
@@ -49,7 +50,7 @@ class SphereLight : public Geometry
 public:
 	const glm::vec3& center() const { return m_center; }
 	float radius() const { return m_radius; }
-	const glm::vec3& color() const { return m_color;  }
+	const glm::vec3& color() const { return m_color; }
 
 	SphereLight(const glm::vec3& center, float r, const glm::vec3& color);
 	virtual ~SphereLight();
@@ -94,16 +95,17 @@ private:
 	glm::vec3 m_color1;
 };
 
+
 class RGBATexture
 {
 public:
 	Texture* data() const { return m_data; }
 
 	RGBATexture(int width, int height, void* data, bool srgb = true);
-	~RGBATexture();	
+	~RGBATexture();
 
 private:
-	Texture *m_data;	
+	Texture *m_data;
 };
 
 class RGBACubemap
@@ -138,12 +140,12 @@ class Image
 {
 public:
 	DeviceBuffer* data() const { return m_data; }
-	DeviceBuffer* rng_states(); 
+	DeviceBuffer* rng_states();
 	int width() const { return m_width; }
 	int height() const { return m_height; }
 	int batch_size() const { return m_batch_size; }
 
-	Image(int width, int height, float* hdata = nullptr, int batch_size = 1<<18);
+	Image(int width, int height, float* hdata = nullptr, int batch_size = 1 << 18);
 	~Image();
 
 	void clear();
@@ -163,11 +165,8 @@ private:
 	int m_height;
 	int m_batch_size;
 
-#if 0
-	void _rand_init_cpu() const;
-	void _rand_init_cuda() const;
-#endif
 };
+
 
 struct GeoList
 {
@@ -182,8 +181,8 @@ class PathTracer
 public:
 	PathTracer();
 	~PathTracer();
-	
-	void set_target(Image* target) { m_target = target;  }
+
+	void set_target(Image* target) { m_target = target; }
 	void set_sky(Sky* sky);
 	void add_geometry(Geometry* geo);
 	void add_sunlight(glm::vec3 direction, float radian, glm::vec3 color);
@@ -225,5 +224,5 @@ private:
 		glm::vec4 color;
 	};
 	std::vector<Sunlight> m_sunlights;
-	
+
 };

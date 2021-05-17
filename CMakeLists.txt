@@ -10,9 +10,7 @@ thirdparty/glm/glm
 .
 )
 
-add_definitions(-D"VK_ENABLE_BETA_EXTENSIONS")
 include_directories(${INCLUDE_DIR})
-
 add_subdirectory(thirdparty/volk)
 
 

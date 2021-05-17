@@ -362,7 +362,9 @@ void main()
         int ix = (i_bx<<3) + dx;
         int iy = (i_by<<3) + dy;
         if (ix<target.width && iy<target.height)
-            rt_main(ix, iy, states[ray_id]);
+        {
+            rt_main(ix, iy, states[ray_id]);            
+        }
     }
 }
 

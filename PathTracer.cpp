@@ -1,8 +1,3 @@
-#ifdef _WIN64
-#include <windows.h>
-#include <VersionHelpers.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -10,7 +5,6 @@
 #include "PathTracer.h"
 #include "shaders/common/bindings.h"
 #include "RNGState_xorwow.h"
-//#include "rand_state_init_xorwow.hpp"
 #include "RNGInitializer.h"
 #include "SRGBConverter.h"
 #include "Timing.h"
@@ -47,12 +41,7 @@ void Geometry::_blas_create_procedure(DeviceBuffer* aabb_buf)
 {
 	const Context& ctx = Context::get_context();
 
-	VkAccelerationStructureCreateGeometryTypeInfoKHR acceleration_create_geometry_info={};
-	acceleration_create_geometry_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_GEOMETRY_TYPE_INFO_KHR;
-	acceleration_create_geometry_info.geometryType = VK_GEOMETRY_TYPE_AABBS_KHR;
-	acceleration_create_geometry_info.maxPrimitiveCount = 1;
-
-	VkAccelerationStructureGeometryKHR acceleration_geometry={};
+	VkAccelerationStructureGeometryKHR acceleration_geometry = {};
 	acceleration_geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
 	acceleration_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
 	acceleration_geometry.geometryType = VK_GEOMETRY_TYPE_AABBS_KHR;
@@ -60,46 +49,56 @@ void Geometry::_blas_create_procedure(DeviceBuffer* aabb_buf)
 	acceleration_geometry.geometry.aabbs.data.deviceAddress = aabb_buf->get_device_address();
 	acceleration_geometry.geometry.aabbs.stride = 0;
 
-	VkAccelerationStructureBuildOffsetInfoKHR acceleration_build_offset_info{};
-	acceleration_build_offset_info.primitiveCount = 1;
-	acceleration_build_offset_info.primitiveOffset = 0x0;
-	acceleration_build_offset_info.firstVertex = 0;
-	acceleration_build_offset_info.transformOffset = 0x0;
+	VkAccelerationStructureBuildGeometryInfoKHR geoBuildInfo{};
+	geoBuildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+	geoBuildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+	geoBuildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	geoBuildInfo.geometryCount = 1;
+	geoBuildInfo.pGeometries = &acceleration_geometry;
 
-	m_blas = new BaseLevelAS(1, &acceleration_create_geometry_info, &acceleration_geometry, &acceleration_build_offset_info);
+	VkAccelerationStructureBuildRangeInfoKHR range{};
+	range.primitiveCount = 1;
+	range.primitiveOffset = 0;
+	range.firstVertex = 0;
+	range.transformOffset = 0;
+	const VkAccelerationStructureBuildRangeInfoKHR* ranges = &range;
+
+	m_blas = new BaseLevelAS(geoBuildInfo, &acceleration_geometry, &ranges);
 }
 
 void Geometry::_blas_create_indexed_triangles(DeviceBuffer* positionBuffer, DeviceBuffer* indexBuffer)
 {
 	const Context& ctx = Context::get_context();
 
-	VkAccelerationStructureCreateGeometryTypeInfoKHR acceleration_create_geometry_info={};
-	acceleration_create_geometry_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_GEOMETRY_TYPE_INFO_KHR;
-	acceleration_create_geometry_info.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-	acceleration_create_geometry_info.maxPrimitiveCount = (unsigned)(indexBuffer->size() / sizeof(unsigned)/3);
-	acceleration_create_geometry_info.indexType = VK_INDEX_TYPE_UINT32;
-	acceleration_create_geometry_info.maxVertexCount = (unsigned)(positionBuffer->size() / sizeof(glm::vec3));
-	acceleration_create_geometry_info.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-
-	VkAccelerationStructureGeometryKHR acceleration_geometry={};
+	VkAccelerationStructureGeometryKHR acceleration_geometry = {};
 	acceleration_geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
 	acceleration_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
 	acceleration_geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
 	acceleration_geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
 	acceleration_geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
 	acceleration_geometry.geometry.triangles.vertexData.deviceAddress = positionBuffer->get_device_address();
+	acceleration_geometry.geometry.triangles.maxVertex = (unsigned)(positionBuffer->size() / sizeof(glm::vec3));
 	acceleration_geometry.geometry.triangles.vertexStride = sizeof(glm::vec3);
 	acceleration_geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
 	acceleration_geometry.geometry.triangles.indexData.deviceAddress = indexBuffer->get_device_address();
 
-	VkAccelerationStructureBuildOffsetInfoKHR acceleration_build_offset_info={};
-	acceleration_build_offset_info.primitiveCount = (unsigned)(indexBuffer->size() / sizeof(unsigned) / 3);
-	acceleration_build_offset_info.primitiveOffset = 0x0;
-	acceleration_build_offset_info.firstVertex = 0;
-	acceleration_build_offset_info.transformOffset = 0x0;
+	VkAccelerationStructureBuildGeometryInfoKHR geoBuildInfo{};
+	geoBuildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+	geoBuildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+	geoBuildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	geoBuildInfo.geometryCount = 1;
+	geoBuildInfo.pGeometries = &acceleration_geometry;
 
-	m_blas = new BaseLevelAS(1, &acceleration_create_geometry_info, &acceleration_geometry, &acceleration_build_offset_info);
+	VkAccelerationStructureBuildRangeInfoKHR range{};
+	range.primitiveCount = (unsigned)(indexBuffer->size() / sizeof(unsigned) / 3);
+	range.primitiveOffset = 0;
+	range.firstVertex = 0;
+	range.transformOffset = 0;
+	const VkAccelerationStructureBuildRangeInfoKHR* ranges = &range;
+
+	m_blas = new BaseLevelAS(geoBuildInfo, &acceleration_geometry, &ranges);
 }
+
 
 SphereLight::SphereLight(const glm::vec3& center, float r, const glm::vec3& color) : Geometry(s_sphere_model(center, r))
 {
@@ -108,14 +107,14 @@ SphereLight::SphereLight(const glm::vec3& center, float r, const glm::vec3& colo
 	m_color = color;
 	static float s_aabb[6] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
 
-	DeviceBuffer aabb_buf(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
+	DeviceBuffer aabb_buf(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
 	aabb_buf.upload(s_aabb);
 	_blas_create_procedure(&aabb_buf);
 }
 
 SphereLight::~SphereLight()
 {
-	
+
 }
 
 struct View_SphereLight
@@ -181,7 +180,6 @@ void GradientSky::get_view(void* view_buf) const
 	view.color1 = glm::vec4(m_color1, 1.0f);
 }
 
-
 RGBATexture::RGBATexture(int width, int height, void* data, bool srgb)
 {
 	if (srgb)
@@ -207,11 +205,11 @@ RGBACubemap::RGBACubemap(int width, int height, void* data, bool srgb)
 	m_data->uploadTexture(data);
 }
 
-
 RGBACubemap::~RGBACubemap()
 {
 	delete m_data;
 }
+
 
 TexturedSkyBox::TexturedSkyBox(int texId)
 {
@@ -255,11 +253,11 @@ Image::Image(int width, int height, float* hdata, int batch_size)
 {
 	m_width = width;
 	m_height = height;
-	if (batch_size>m_width*m_height)
+	if (batch_size > m_width*m_height)
 	{
 		m_batch_size = m_width * m_height;
 	}
-	else if (batch_size<1024)
+	else if (batch_size < 1024)
 	{
 		m_batch_size = 1024;
 	}
@@ -286,94 +284,6 @@ Image::~Image()
 	delete m_data;
 }
 
-#if 0
-void Image::_rand_init_cpu() const
-{
-	unsigned count = unsigned(m_batch_size);
-	RNGState* states = new RNGState[count];
-
-	RNG rng;
-	rng.p_sequence_matrix = xorwow_sequence_matrix;
-
-	for (int i = 0; i < m_batch_size; i++)
-		rng.state_init(1234, i, states[i]);
-
-	m_rng_states->upload(states);
-
-	delete[] states;
-}
-
-
-#ifdef _WIN64 // For windows
-HANDLE getVkMemHandle(DeviceBuffer& buf, VkExternalMemoryHandleTypeFlagsKHR externalMemoryHandleType)
-{
-	const Context& ctx = Context::get_context();
-
-	HANDLE handle;
-
-	VkMemoryGetWin32HandleInfoKHR vkMemoryGetWin32HandleInfoKHR = {};
-	vkMemoryGetWin32HandleInfoKHR.sType = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
-	vkMemoryGetWin32HandleInfoKHR.pNext = NULL;
-	vkMemoryGetWin32HandleInfoKHR.memory = buf.memory();
-	vkMemoryGetWin32HandleInfoKHR.handleType = (VkExternalMemoryHandleTypeFlagBitsKHR)externalMemoryHandleType;
-
-	vkGetMemoryWin32HandleKHR(ctx.device(), &vkMemoryGetWin32HandleInfoKHR, &handle);
-	return handle;
-}
-#else
-int getVkMemHandle(DeviceBuffer& buf, VkExternalMemoryHandleTypeFlagsKHR externalMemoryHandleType)
-{
-	const Context& ctx = Context::get_context();
-
-	if (externalMemoryHandleType == VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) {
-		int fd;
-
-		VkMemoryGetFdInfoKHR vkMemoryGetFdInfoKHR = {};
-		vkMemoryGetFdInfoKHR.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
-		vkMemoryGetFdInfoKHR.pNext = NULL;
-		vkMemoryGetFdInfoKHR.memory = buf.memory();
-		vkMemoryGetFdInfoKHR.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
-
-		vkGetMemoryFdKHR(ctx.device(), &vkMemoryGetFdInfoKHR, &fd);
-
-		return fd;
-	}
-	return -1;
-}
-#endif
-
-void cu_rand_init(unsigned count, RNGState* d_states);
-void h_rand_init(unsigned count, RNGState* h_states);
-
-
-void Image::_rand_init_cuda() const
-{
-	unsigned count = unsigned(m_batch_size);
-
-	cudaExternalMemoryHandleDesc cudaExtMemHandleDesc = {};
-#ifdef _WIN64
-	cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueWin32Kmt;
-	cudaExtMemHandleDesc.handle.win32.handle = getVkMemHandle(*m_rng_states, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT);
-#else
-	cudaExtMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueFd;
-	cudaExtMemHandleDesc.handle.fd = getVkMemHandle(*m_rng_states, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT);
-#endif
-	cudaExtMemHandleDesc.size = sizeof(RNGState) * count;
-
-	cudaExternalMemory_t cudaExtMemVertexBuffer;
-	cudaImportExternalMemory(&cudaExtMemVertexBuffer, &cudaExtMemHandleDesc);
-
-	cudaExternalMemoryBufferDesc cudaExtBufferDesc;
-	cudaExtBufferDesc.offset = 0;
-	cudaExtBufferDesc.size = sizeof(RNGState) * count;
-	cudaExtBufferDesc.flags = 0;
-
-	RNGState* d_states;
-	cudaExternalMemoryGetMappedBuffer((void**)&d_states, cudaExtMemVertexBuffer, &cudaExtBufferDesc);
-	cu_rand_init(count, d_states);
-	cudaDestroyExternalMemory(cudaExtMemVertexBuffer);
-}
-#endif
 
 DeviceBuffer* Image::rng_states()
 {
@@ -384,8 +294,6 @@ DeviceBuffer* Image::rng_states()
 		{
 			printf("Initializing RNG states..\n");
 			double time0 = GetTime();
-			//_rand_init_cuda();
-			//_rand_init_cpu();
 			const RNGInitializer& initializer = RNGInitializer::get_initializer();
 			initializer.InitRNGs(m_rng_states);
 			double time1 = GetTime();
@@ -393,7 +301,7 @@ DeviceBuffer* Image::rng_states()
 		}
 
 	}
-	
+
 	return m_rng_states;
 }
 
@@ -428,12 +336,13 @@ void Image::to_host_srgb(unsigned char* hdata, float boost) const
 	for (unsigned i = 0; i < count; i++)
 	{
 		const unsigned char* pIn = &raw[i * 4];
-		unsigned char* pOut = hdata + i * 3;		
+		unsigned char* pOut = hdata + i * 3;
 		pOut[0] = pIn[0];
 		pOut[1] = pIn[1];
 		pOut[2] = pIn[2];
 	}
 }
+
 
 PathTracer::PathTracer()
 {
@@ -533,7 +442,7 @@ struct RayTrace
 	std::vector<DeviceBuffer*> buf_views;
 	DeviceBuffer* params_raygen;
 	DeviceBuffer* params_sky;
-	
+
 	DeviceBuffer* buf_light_source_dist;
 	DeviceBuffer* light_source_dist;
 	DeviceBuffer* sunlights;
@@ -545,7 +454,7 @@ struct RayTrace
 	VkPipelineLayout rt_pipelineLayout;
 	VkPipeline rt_pipeline;
 
-	UploadBuffer* shaderBindingTableBuffer;
+	DeviceBuffer* shaderBindingTableBuffer;
 
 	VkPipelineLayout comp_pipelineLayout;
 	VkPipeline comp_pipeline;
@@ -586,7 +495,7 @@ void PathTracer::_tlas_create(RayTrace& rt) const
 		i++;
 	}
 
-	rt.tlas = new TopLevelAS (num_hitgroups, num_instances.data(), pblases.data(), ptransforms.data());
+	rt.tlas = new TopLevelAS(num_hitgroups, num_instances.data(), pblases.data(), ptransforms.data());
 }
 
 void PathTracer::_args_create(RayTrace& rt) const
@@ -642,7 +551,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 	int num_sunlights = (int)m_sunlights.size();
 	int total_lights = num_sphere_lights + num_sunlights;
 
-	if (total_lights>0)
+	if (total_lights > 0)
 	{
 		rt.buf_light_source_dist = new DeviceBuffer(sizeof(float)*total_lights, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 	}
@@ -653,7 +562,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 
 	if (m_sunlights.size() > 0)
 	{
-		rt.sunlights = new DeviceBuffer(sizeof(Sunlight), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+		rt.sunlights = new DeviceBuffer(sizeof(Sunlight) * m_sunlights.size(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 		rt.sunlights->upload(m_sunlights.data());
 	}
 	else
@@ -737,12 +646,12 @@ void PathTracer::_args_create(RayTrace& rt) const
 	descriptorPoolSize[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	descriptorPoolSize[2].descriptorCount = (uint32_t)(2 + num_hitgroups);
 	descriptorPoolSize[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorPoolSize[3].descriptorCount = (uint32_t)(m_textures.size()+ m_cubemaps.size());
+	descriptorPoolSize[3].descriptorCount = (uint32_t)(m_textures.size() + m_cubemaps.size());
 
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
 	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	descriptorPoolCreateInfo.maxSets = 1;
-	descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSize[3].descriptorCount>0?4:3;
+	descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSize[3].descriptorCount > 0 ? 4 : 3;
 	descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSize;
 	vkCreateDescriptorPool(ctx.device(), &descriptorPoolCreateInfo, nullptr, &rt.descriptorPool);
 
@@ -786,7 +695,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 	}
 
 	VkDescriptorBufferInfo descriptorBufferInfo_sky = {};
-	if (rt.params_sky!=nullptr)
+	if (rt.params_sky != nullptr)
 		descriptorBufferInfo_sky.buffer = rt.params_sky->buf();
 	descriptorBufferInfo_sky.range = VK_WHOLE_SIZE;
 
@@ -867,7 +776,7 @@ void PathTracer::_args_create(RayTrace& rt) const
 		writeDescriptorSet.push_back(wds);
 	}
 
-	if (rt.params_sky!=nullptr)
+	if (rt.params_sky != nullptr)
 	{
 		VkWriteDescriptorSet wds = {};
 		wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -917,7 +826,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 
 	std::vector<VkShaderModule> intersection_modules(num_hitgroups);
 	std::vector<VkShaderModule> closesthit_modules(num_hitgroups);
-	
+
 	size_t i = 0;
 	size_t count_intersection = 0;
 	auto iter = m_geo_lists.begin();
@@ -1008,7 +917,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 			groups[2 + i].generalShader = VK_SHADER_UNUSED_KHR;
 			groups[2 + i].intersectionShader = i_stages++;
 			groups[2 + i].closestHitShader = i_stages++;
-			groups[2 + i].anyHitShader = VK_SHADER_UNUSED_KHR;			
+			groups[2 + i].anyHitShader = VK_SHADER_UNUSED_KHR;
 		}
 	}
 
@@ -1025,11 +934,10 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	rayPipelineInfo.pStages = stages.data();
 	rayPipelineInfo.groupCount = (uint32_t)group_count;
 	rayPipelineInfo.pGroups = groups.data();
-	rayPipelineInfo.maxRecursionDepth = 1;
-	rayPipelineInfo.layout = rt.rt_pipelineLayout;
-	rayPipelineInfo.libraries.sType = VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR;
+	rayPipelineInfo.maxPipelineRayRecursionDepth = 1;
+	rayPipelineInfo.layout = rt.rt_pipelineLayout;	
 
-	vkCreateRayTracingPipelinesKHR(ctx.device(), nullptr, 1, &rayPipelineInfo, nullptr, &rt.rt_pipeline);
+	vkCreateRayTracingPipelinesKHR(ctx.device(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &rayPipelineInfo, nullptr, &rt.rt_pipeline);
 
 	// shader binding table
 	unsigned progIdSize = ctx.raytracing_properties().shaderGroupHandleSize;
@@ -1037,7 +945,7 @@ void PathTracer::_rt_pipeline_create(RayTrace& rt) const
 	unsigned sbtSize_get = progIdSize * (unsigned)group_count;
 	unsigned sbtSize = baseAlignment * (unsigned)group_count;
 
-	rt.shaderBindingTableBuffer = new UploadBuffer(sbtSize);
+	rt.shaderBindingTableBuffer = new DeviceBuffer(sbtSize, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 
 	unsigned char* shaderHandleStorage_get = (unsigned char*)malloc(sbtSize_get);
 	unsigned char* shaderHandleStorage = (unsigned char*)malloc(sbtSize);
@@ -1118,7 +1026,7 @@ void PathTracer::_calc_light_source_dist(RayTrace& rt) const
 {
 	LightSourceDist lsd;
 	lsd.number_sphere_lights = 0;
-	
+
 	auto iter = m_geo_lists.find("SphereLight");
 	if (iter != m_geo_lists.end())
 	{
@@ -1127,7 +1035,7 @@ void PathTracer::_calc_light_source_dist(RayTrace& rt) const
 	lsd.number_sun_lights = (int)m_sunlights.size();
 	std::vector<float> h_dist(lsd.number_sphere_lights + lsd.number_sun_lights);
 
-	if (h_dist.size()>0)
+	if (h_dist.size() > 0)
 	{
 		float p1 = (float)lsd.number_sphere_lights / (float)h_dist.size();
 		float p2 = (float)lsd.number_sun_lights / (float)h_dist.size();
@@ -1166,13 +1074,13 @@ void PathTracer::_calc_light_source_dist(RayTrace& rt) const
 			int j = i + lsd.number_sphere_lights;
 			h_dist[j] *= p2 / total2;
 			if (j > 0) h_dist[j] += h_dist[j - 1];
-		}	
+		}
 
 		rt.buf_light_source_dist->upload(h_dist.data());
 		lsd.buf = rt.buf_light_source_dist->get_device_address();
 	}
 	rt.light_source_dist->upload(&lsd);
-	
+
 }
 
 
@@ -1226,7 +1134,7 @@ void PathTracer::trace(int num_iter, int interval) const
 
 
 	double time1 = GetTime();
-	printf("Done preparing ray-tracing.. %f secs\n", time1-time0);
+	printf("Done preparing ray-tracing.. %f secs\n", time1 - time0);
 
 	m_target->clear();
 
@@ -1234,28 +1142,25 @@ void PathTracer::trace(int num_iter, int interval) const
 	unsigned baseAlignment = ctx.raytracing_properties().shaderGroupBaseAlignment;
 	size_t num_hitgroups = m_geo_lists.size();
 
-	VkStridedBufferRegionKHR raygen_shader_sbt_entry{};
-	raygen_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
-	raygen_shader_sbt_entry.offset = 0;
+	VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{};
+	raygen_shader_sbt_entry.deviceAddress = rt.shaderBindingTableBuffer->get_device_address();
 	raygen_shader_sbt_entry.stride = baseAlignment;
 	raygen_shader_sbt_entry.size = baseAlignment;
 
-	VkStridedBufferRegionKHR miss_shader_sbt_entry{};
-	miss_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
-	miss_shader_sbt_entry.offset = baseAlignment;
+	VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{};
+	miss_shader_sbt_entry.deviceAddress = raygen_shader_sbt_entry.deviceAddress + baseAlignment;
 	miss_shader_sbt_entry.stride = baseAlignment;
 	miss_shader_sbt_entry.size = baseAlignment;
 
-	VkStridedBufferRegionKHR hit_shader_sbt_entry{};
-	hit_shader_sbt_entry.buffer = rt.shaderBindingTableBuffer->buf();
-	hit_shader_sbt_entry.offset = baseAlignment * 2;
+	VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{};
+	hit_shader_sbt_entry.deviceAddress = miss_shader_sbt_entry.deviceAddress + baseAlignment;
 	hit_shader_sbt_entry.stride = baseAlignment;
 	hit_shader_sbt_entry.size = baseAlignment * num_hitgroups;
 
-	VkStridedBufferRegionKHR callable_shader_sbt_entry{};
+	VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
 	if (interval == -1) interval = num_iter;
-	
+
 	printf("Doing ray-tracing..\n");
 	double time2 = GetTime();
 
@@ -1266,7 +1171,7 @@ void PathTracer::trace(int num_iter, int interval) const
 		if (end > num_iter) end = num_iter;
 
 		{
-			NTimeCommandBuffer cmdBuf(end-i);
+			NTimeCommandBuffer cmdBuf(end - i);
 			vkCmdBindPipeline(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, rt.rt_pipeline);
 			vkCmdBindDescriptorSets(cmdBuf.buf(), VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, rt.rt_pipelineLayout, 0, 1, &rt.descriptorSet, 0, nullptr);
 			vkCmdTraceRaysKHR(cmdBuf.buf(), &raygen_shader_sbt_entry, &miss_shader_sbt_entry, &hit_shader_sbt_entry, &callable_shader_sbt_entry, m_target->batch_size(), 1, 1);
@@ -1277,7 +1182,7 @@ void PathTracer::trace(int num_iter, int interval) const
 			memoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 			vkCmdPipelineBarrier(cmdBuf.buf(), VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
-			
+
 			i = end;
 		}
 

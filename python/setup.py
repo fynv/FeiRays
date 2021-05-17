@@ -9,7 +9,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
 	name = 'FeiRays',
-	version = '0.0.5',
+	version = '0.0.6',
 	description = 'Vulkan based Monte-Carol Ray-tracing',
 	long_description=long_description,
 	long_description_content_type='text/markdown',  

@@ -9,7 +9,7 @@ UnitSphereCheckerTex::UnitSphereCheckerTex(const glm::mat4x4& model, float inter
 	m_interval = interval;
 
 	static float s_aabb[6] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
-	DeviceBuffer aabb_buf(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
+	DeviceBuffer aabb_buf(sizeof(float) * 6, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
 	aabb_buf.upload(s_aabb);
 	_blas_create_procedure(&aabb_buf);
 }

@@ -14,12 +14,12 @@ ColoredIndexedTriangleList::ColoredIndexedTriangleList(const glm::mat4x4& model,
 		norms[i] = vertices[i].Normal;
 	}
 
-	m_vertexBuffer = new DeviceBuffer(sizeof(glm::vec3)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
+	m_vertexBuffer = new DeviceBuffer(sizeof(glm::vec3)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
 	m_vertexBuffer->upload(norms.data());
-	m_indexBuffer = new DeviceBuffer(sizeof(unsigned)*indices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
+	m_indexBuffer = new DeviceBuffer(sizeof(unsigned)*indices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
 	m_indexBuffer->upload(indices.data());
 
-	DeviceBuffer posBuf(sizeof(glm::vec3)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR);
+	DeviceBuffer posBuf(sizeof(glm::vec3)* vertices.size(), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
 	posBuf.upload(positions.data());
 
 	_blas_create_indexed_triangles(&posBuf, m_indexBuffer);
